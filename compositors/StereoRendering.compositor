@@ -19,9 +19,9 @@ abstract target main_stereo_render
 
 		overlays	off
 
-		cull_camera VrCullCamera
+		//cull_camera VrCullCamera
 
-		shadows		ShadowMapDebuggingShadowNode
+		//shadows		ShadowMapDebuggingShadowNode
 
 		instanced_stereo true
 		viewport 0 0.0 0.0 0.5 1.0
@@ -38,28 +38,7 @@ abstract target main_stereo_render
 	}
 }
 
-
-compositor_node InstancedStereoNodeRDM
-{
-	in 0 stereo_output
-
-	texture rtt target_width target_height target_format msaa 1
-
-	target rtt : main_stereo_render	{}
-
-	target stereo_output
-	{
-		pass compute
-		{
-			job VR/RadialDensityMaskReconstruct
-
-			input 0 rtt
-			uav 0 stereo_output write PFG_RGBA8_UNORM
-		}
-	}
-}
-
-compositor_node InstancedStereoNodeNoRDM
+compositor_node InstancedStereoNode
 {
 	in 0 stereo_output
 
@@ -88,14 +67,9 @@ compositor_node InstancedStereoMirrorWindowNode
 	}
 }
 
-workspace InstancedStereoWorkspaceRDM
+workspace InstancedStereoWorkspace
 {
-	connect_output InstancedStereoNodeRDM 0
-}
-
-workspace InstancedStereoWorkspaceNoRDM
-{
-	connect_output InstancedStereoNodeNoRDM 0
+	connect_output InstancedStereoNode 0
 }
 
 workspace InstancedStereoMirrorWindowWorkspace

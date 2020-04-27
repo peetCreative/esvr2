@@ -33,7 +33,7 @@ namespace Demo {
         StereoRenderingGameState *gfxGameState = new StereoRenderingGameState(
         "Description of what we are doing" );
 
-        GraphicsSystem *graphicsSystem = new StereoGraphicsSystem( gfxGameState, WS_TWO_CAMERAS_STEREO );
+        GraphicsSystem *graphicsSystem = new StereoGraphicsSystem( gfxGameState, WS_INSTANCED_STEREO );
 
         gfxGameState->_notifyGraphicsSystem( graphicsSystem );
 
