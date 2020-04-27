@@ -55,7 +55,7 @@ namespace Demo
     //-----------------------------------------------------------------------------------
     void StereoRenderingGameState::update( float timeSinceLast )
     {
-        //update Pointcloud or so
+        //update Pointcloud
 
         TutorialGameState::update( timeSinceLast );
     }
