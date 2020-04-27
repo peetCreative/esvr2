@@ -30,3 +30,8 @@
 *.exe
 *.out
 *.app
+
+bin
+build
+src/OgreCommon
+include/OgreCommon
