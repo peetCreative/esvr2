@@ -1,5 +1,6 @@
 
 #include "GraphicsSystem.h"
+#include "StereoRendering.h"
 #include "StereoRenderingGameState.h"
 
 #include "OgreSceneManager.h"
@@ -37,31 +38,31 @@ namespace Demo
                     createChildSceneNode( Ogre::SCENE_DYNAMIC );
             mCamerasNode->setName( "Cameras Node" );
 
-            mCamerasNode->setPosition( 0, 5, 15 );
+            mCamerasNode->setPosition( 0, 0, 0 );
 
             mEyeCameras[0] = mSceneManager->createCamera( "Left Eye" );
             mEyeCameras[1] = mSceneManager->createCamera( "Right Eye" );
 
-            const Ogre::Real eyeDistance        = 0.5f;
-            const Ogre::Real eyeFocusDistance   = 0.45f;
+            const Ogre::Real eyeDistance        = 0.06f;
+            const Ogre::Real eyeFocusDistance   = 0.06f;
 
-            for( int i=0; i<2; ++i )
+            for( int leftOrRight = 0; leftOrRight < 2; ++leftOrRight )
             {
-                const Ogre::Vector3 camPos( eyeDistance * (i * 2 - 1), 0, 0 );
-                mEyeCameras[i]->setPosition( camPos );
+                const Ogre::Vector3 camPos( eyeDistance * (leftOrRight * 2 - 1), 0, 0 );
+                mEyeCameras[leftOrRight]->setPosition( camPos );
 
-                Ogre::Vector3 lookAt( eyeFocusDistance * (i * 2 - 1), -5, -15 );
+                Ogre::Vector3 lookAt( eyeFocusDistance * (leftOrRight * 2 - 1), 0, -1 );
                 //Ogre::Vector3 lookAt( 0, 0, 0 );
 
                 // Look back along -Z
-                mEyeCameras[i]->lookAt( lookAt );
-                mEyeCameras[i]->setNearClipDistance( 0.2f );
-                mEyeCameras[i]->setFarClipDistance( 1000.0f );
-                mEyeCameras[i]->setAutoAspectRatio( true );
+                mEyeCameras[leftOrRight]->lookAt( lookAt );
+                mEyeCameras[leftOrRight]->setNearClipDistance( 0.2f );
+                mEyeCameras[leftOrRight]->setFarClipDistance( 1000.0f );
+                mEyeCameras[leftOrRight]->setAutoAspectRatio( true );
 
                 //By default cameras are attached to the Root Scene Node.
-                mEyeCameras[i]->detachFromParent();
-                mCamerasNode->attachObject( mEyeCameras[i] );
+                mEyeCameras[leftOrRight]->detachFromParent();
+                mCamerasNode->attachObject( mEyeCameras[leftOrRight] );
             }
 
             mCamera = mEyeCameras[0];
@@ -78,9 +79,9 @@ namespace Demo
             vpModifierMask  = 0x01;
             executionMask   = 0x01;
             vpOffsetScale   = Ogre::Vector4( 0.0f, 0.0f, 0.5f, 1.0f );
-            mEyeWorkspaces[0] = compositorManager->addWorkspace( mSceneManager,
+            mEyeWorkspaces[LEFT] = compositorManager->addWorkspace( mSceneManager,
                                                                  mRenderWindow->getTexture(),
-                                                                 mEyeCameras[0], workspaceName,
+                                                                 mEyeCameras[LEFT], workspaceName,
                                                                  true, -1, (Ogre::UavBufferPackedVec*)0,
                                                                  (Ogre::ResourceLayoutMap*)0,
                                                                  (Ogre::ResourceAccessMap*)0,
@@ -91,9 +92,9 @@ namespace Demo
             vpModifierMask  = 0x02;
             executionMask   = 0x02;
             vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f, 0.5f, 1.0f );
-            mEyeWorkspaces[1] = compositorManager->addWorkspace( mSceneManager,
+            mEyeWorkspaces[LEFT] = compositorManager->addWorkspace( mSceneManager,
                                                                  mRenderWindow->getTexture(),
-                                                                 mEyeCameras[1], workspaceName,
+                                                                 mEyeCameras[RIGHT], workspaceName,
                                                                  true, -1, (Ogre::UavBufferPackedVec*)0,
                                                                  (Ogre::ResourceLayoutMap*)0,
                                                                  (Ogre::ResourceAccessMap*)0,
