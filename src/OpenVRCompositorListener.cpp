@@ -141,8 +141,9 @@ namespace Demo
                 mVrTexture->getPixelFormat() );
 
     }
+
     //-------------------------------------------------------------------------
-    Ogre::Matrix4 OpenVRCompositorListener::convertSteamVRMatrixToMatrix4( vr::HmdMatrix34_t matPose )
+    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose )
     {
         Ogre::Matrix4 matrixObj(
                     matPose.m[0][0], matPose.m[0][1], matPose.m[0][2], matPose.m[0][3],
@@ -151,8 +152,9 @@ namespace Demo
                                0.0f,            0.0f,            0.0f,            1.0f );
         return matrixObj;
     }
+
     //-------------------------------------------------------------------------
-    Ogre::Matrix4 OpenVRCompositorListener::convertSteamVRMatrixToMatrix4( vr::HmdMatrix44_t matPose )
+    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix44_t matPose )
     {
         Ogre::Matrix4 matrixObj(
                     matPose.m[0][0], matPose.m[0][1], matPose.m[0][2], matPose.m[0][3],
@@ -200,10 +202,10 @@ namespace Demo
                 if (mHMD)
                 {
                     vr::EVREye eyeIdx = static_cast<vr::EVREye>( i );
-                    eyeToHead[i] = convertSteamVRMatrixToMatrix4(
+                    eyeToHead[i] = convertSteamVRMatrixToMatrix(
                         mHMD->GetEyeToHeadTransform( eyeIdx ) );
                     projectionMatrix[i] =
-                            convertSteamVRMatrixToMatrix4(
+                            convertSteamVRMatrixToMatrix(
                                 mHMD->GetProjectionMatrix( eyeIdx,
                                 camNear, camFar ) );
                     mHMD->GetProjectionRaw(

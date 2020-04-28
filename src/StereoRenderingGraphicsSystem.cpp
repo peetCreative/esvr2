@@ -199,7 +199,7 @@ namespace Demo
             vpOffsetScale   = Ogre::Vector4( 0.0f, 0.0f, 0.5f, 1.0f );
             mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
                 mSceneManager,
-                mRenderWindow->getTexture(),
+                mVrTexture,
                 mEyeCameras[LEFT], workspaceName,
                 true, -1, (Ogre::UavBufferPackedVec*)0,
                 (Ogre::ResourceLayoutMap*)0,
@@ -213,7 +213,7 @@ namespace Demo
             vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f, 0.5f, 1.0f );
             mVrWorkspaces[RIGHT] = compositorManager->addWorkspace(
                 mSceneManager,
-                mRenderWindow->getTexture(),
+                mVrTexture,
                 mEyeCameras[RIGHT], workspaceName,
                 true, -1, (Ogre::UavBufferPackedVec*)0,
                 (Ogre::ResourceLayoutMap*)0,
