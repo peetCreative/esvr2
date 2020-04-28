@@ -57,7 +57,7 @@ namespace Demo
         Ogre::Root          *mRoot;
         Ogre::RenderSystem  *mRenderSystem;
 
-        Ogre::CompositorWorkspace *mWorkspace;
+        Ogre::CompositorWorkspace *mWorkspaces[2];
 
         int mValidPoseCount;
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
@@ -65,7 +65,7 @@ namespace Demo
         vr::ETextureType        mApiTextureType;
         Ogre::VrData            mVrData;
         HmdConfig               mHmdConfig;
-        Ogre::Camera            *mCamera;
+        Ogre::Camera            *mCameras[2];
         Ogre::Camera            *mVrCullCamera;
         Ogre::Vector3           mCullCameraOffset;
 
@@ -118,8 +118,8 @@ namespace Demo
         OpenVRCompositorListener(
             vr::IVRSystem *hmd, vr::IVRCompositor *vrCompositor,
             Ogre::TextureGpu *vrTexture, Ogre::Root *root,
-            Ogre::CompositorWorkspace *workspace,
-            Ogre::Camera *camera, Ogre::Camera *cullCamera,
+            Ogre::CompositorWorkspace *workspace[2],
+            Ogre::Camera *camera[2], Ogre::Camera *cullCamera,
             int refreshFrameNum , HmdConfig hmdConfig );
         virtual ~OpenVRCompositorListener();
 

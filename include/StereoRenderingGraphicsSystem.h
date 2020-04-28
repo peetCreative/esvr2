@@ -26,9 +26,9 @@ namespace Demo
         //two real cameras and two workspaces (two cameras rendering) or
         //only use one VR Camera and workspace (Instanced Rendering)
         Ogre::Camera                *mEyeCameras[2];
-        Ogre::CompositorWorkspace   *mEyeWorkspaces[2];
+        Ogre::CompositorWorkspace   *mVrWorkspaces[2];
         //but there is never the less only one cull camera
-        Ogre::CompositorWorkspace   *mVrWorkspace;
+        Ogre::CompositorWorkspace   *mMirrorWorkspace;
         Ogre::Camera                *mVrCullCamera;
         Ogre::TextureGpu            *mVrTexture;
 

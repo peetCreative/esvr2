@@ -29,19 +29,19 @@ namespace Demo
     OpenVRCompositorListener::OpenVRCompositorListener(
             vr::IVRSystem *hmd, vr::IVRCompositor *vrCompositor3D,
             Ogre::TextureGpu *vrTexture, Ogre::Root *root,
-            Ogre::CompositorWorkspace *workspace,
-            Ogre::Camera *camera, Ogre::Camera *cullCamera,
+            Ogre::CompositorWorkspace *workspaces[2],
+            Ogre::Camera *cameras[2], Ogre::Camera *cullCamera,
             int refreshFrameNum, HmdConfig hmdConfig ) :
         mHMD( hmd ),
         mVrCompositor3D( vrCompositor3D ),
         mVrTexture( vrTexture ),
         mRoot( root ),
         mRenderSystem( root->getRenderSystem() ),
-        mWorkspace( workspace ),
+        mWorkspaces{ workspaces[LEFT], workspaces[RIGHT] },
         mValidPoseCount( 0 ),
         mApiTextureType( vr::TextureType_Invalid ),
         mHmdConfig( hmdConfig ),
-        mCamera( camera ),
+        mCameras{ cameras[LEFT], cameras[RIGHT] },
         mVrCullCamera( cullCamera ),
         mCullCameraOffset( Ogre::Vector3::ZERO ),
         mWaitingMode( VrWaitingMode::BeforeSceneGraph ),
@@ -65,7 +65,7 @@ namespace Demo
         mAlign.rightLeft = 0;
         mAlign.rightTop = 0;
 
-        mCamera->setVrData( &mVrData );
+        mCameras[0]->setVrData( &mVrData );
         LOG << "sync camera Projection" << LOGEND;
         syncCameraProjection( true );
         if(mHMD)
@@ -83,7 +83,7 @@ namespace Demo
         }
 
         mRoot->addFrameListener( this );
-        mWorkspace->setListener( this );
+        mWorkspaces[0]->setListener( this );
 
         const Ogre::String &renderSystemName = mRenderSystem->getName();
         if( renderSystemName == "OpenGL 3+ Rendering Subsystem" )
@@ -103,11 +103,11 @@ namespace Demo
         //Do not free the pointer if texture's paging strategy is GpuPageOutStrategy::AlwaysKeepSystemRamCopy
         OGRE_FREE_SIMD( mImageData, MEMCATEGORY_RESOURCE );
         mImageData = 0;
-        if( mCamera )
-            mCamera->setVrData( 0 );
+        if( mCameras[0] )
+            mCameras[0]->setVrData( 0 );
 
-        if( mWorkspace->getListener() == this )
-            mWorkspace->setListener( 0 );
+        if( mWorkspaces[0]->getListener() == this )
+            mWorkspaces[0]->setListener( 0 );
         mRoot->removeFrameListener( this );
     }
 
@@ -185,8 +185,8 @@ namespace Demo
     //-------------------------------------------------------------------------
     void OpenVRCompositorListener::syncCameraProjection( bool bForceUpdate )
     {
-        const Ogre::Real camNear = mCamera->getNearClipDistance();
-        const Ogre::Real camFar  = mCamera->getFarClipDistance();
+        const Ogre::Real camNear = mCameras[0]->getNearClipDistance();
+        const Ogre::Real camFar  = mCameras[0]->getFarClipDistance();
 
         if( mLastCamNear != camNear || mLastCamFar != camFar || bForceUpdate )
         {

@@ -45,7 +45,7 @@ compositor_node InstancedStereoNode
 	target stereo_output : main_stereo_render	{}
 }
 
-compositor_node InstancedStereoMirrorWindowNode
+compositor_node StereoMirrorWindowNode
 {
 	in 0 rt_renderwindow
 	in 1 stereo_results
@@ -72,10 +72,10 @@ workspace InstancedStereoWorkspace
 	connect_output InstancedStereoNode 0
 }
 
-workspace InstancedStereoMirrorWindowWorkspace
+workspace StereoMirrorWindowWorkspace
 {
-	connect_external 0 InstancedStereoMirrorWindowNode 0
-	connect_external 1 InstancedStereoMirrorWindowNode 1
+	connect_external 0 StereoMirrorWindowNode 0
+	connect_external 1 StereoMirrorWindowNode 1
 }
 
 compositor_node TwoCamerasNode

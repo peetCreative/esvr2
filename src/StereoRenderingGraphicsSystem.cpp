@@ -26,8 +26,8 @@ namespace Demo
         if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
         {
 
-            mEyeCameras[0] = mSceneManager->createCamera( "Left Eye" );
-            mEyeCameras[1] = mSceneManager->createCamera( "Right Eye" );
+            mEyeCameras[LEFT] = mSceneManager->createCamera( "Left Eye" );
+            mEyeCameras[RIGHT] = mSceneManager->createCamera( "Right Eye" );
 
             const Ogre::Real eyeDistance        = 0.06f;
             const Ogre::Real eyeFocusDistance   = 0.06f;
@@ -51,7 +51,7 @@ namespace Demo
                 mCamerasNode->attachObject( mEyeCameras[leftOrRight] );
             }
 
-            mCamera = mEyeCameras[0];
+            mCamera = mEyeCameras[LEFT];
         }
         if (mWorkSpaceType == WS_INSTANCED_STEREO)
         {
@@ -66,6 +66,7 @@ namespace Demo
             mCamera->setAutoAspectRatio( true );
             mCamera->detachFromParent();
             mCamerasNode->attachObject( mCamera );
+            mEyeCameras[LEFT] = mCamera;
         }
 
     }
@@ -73,76 +74,21 @@ namespace Demo
     Ogre::CompositorWorkspace* StereoGraphicsSystem::setupCompositor(void)
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
-        const Ogre::IdString workspaceName( "TwoCamerasWorkspace" );
 
-        if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
-        {
-            Ogre::uint8 vpModifierMask, executionMask;
-            Ogre::Vector4 vpOffsetScale;
+        mVrCullCamera = mSceneManager->createCamera( "VrCullCamera" );
+        initOpenVR();
 
-            vpModifierMask  = 0x01;
-            executionMask   = 0x01;
-            vpOffsetScale   = Ogre::Vector4( 0.0f, 0.0f, 0.5f, 1.0f );
-            mEyeWorkspaces[LEFT] = compositorManager->addWorkspace(
-                mSceneManager,
-                mRenderWindow->getTexture(),
-                mEyeCameras[LEFT], workspaceName,
-                true, -1, (Ogre::UavBufferPackedVec*)0,
-                (Ogre::ResourceLayoutMap*)0,
-                (Ogre::ResourceAccessMap*)0,
-                vpOffsetScale,
-                vpModifierMask,
-                executionMask );
+        const Ogre::IdString workspaceName( "StereoMirrorWindowWorkspace" );
 
-            vpModifierMask  = 0x02;
-            executionMask   = 0x02;
-            vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f, 0.5f, 1.0f );
-            mEyeWorkspaces[LEFT] = compositorManager->addWorkspace(
-                mSceneManager,
-                mRenderWindow->getTexture(),
-                mEyeCameras[RIGHT], workspaceName,
-                true, -1, (Ogre::UavBufferPackedVec*)0,
-                (Ogre::ResourceLayoutMap*)0,
-                (Ogre::ResourceAccessMap*)0,
-                vpOffsetScale,
-                vpModifierMask,
-                executionMask);
-        }
-        if (mWorkSpaceType == WS_INSTANCED_STEREO)
-        {
-//             mEyeWorkspaces[0] = compositorManager->addWorkspace(
-//                 mSceneManager, mRenderWindow->getTexture(), mCamera,
-//                 "InstancedStereoWorkspace", true );
+        Ogre::CompositorChannelVec channels( 2u );
+        channels[0] = mRenderWindow->getTexture();
+        channels[1] = mVrTexture;
+        mMirrorWorkspace = compositorManager->addWorkspace(
+            mSceneManager, channels, mCamera,
+            workspaceName, true );
 
-            mVrCullCamera = mSceneManager->createCamera( "VrCullCamera" );
-            mEyeWorkspaces[0] = nullptr;
 
-            initOpenVR();
-
-            Ogre::CompositorManager2 *compositorManager =
-                mRoot->getCompositorManager2();
-            Ogre::CompositorChannelVec channels( 2u );
-            channels[0] = mRenderWindow->getTexture();
-            channels[1] = mVrTexture;
-            mEyeWorkspaces[0] = compositorManager->addWorkspace(
-                mSceneManager, channels, mCamera,
-                "InstancedStereoMirrorWindowWorkspace", true );
-
-            int frames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
-            HmdConfig hmdConfig{
-                { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-                { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-                { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45} }
-            };
-            mOvrCompositorListener =
-                new Demo::OpenVRCompositorListener(
-                    mHMD, mVRCompositor, mVrTexture,
-                    mRoot, mVrWorkspace,
-                    mCamera, mVrCullCamera,
-                    frames, hmdConfig );
-        }
-
-        return mEyeWorkspaces[0];
+        return mMirrorWorkspace;
     }
 
     //-----------------------------------------------------------------------------
@@ -241,11 +187,61 @@ namespace Demo
 
         Ogre::CompositorManager2 *compositorManager =
             mRoot->getCompositorManager2();
-        mVrWorkspace = compositorManager->addWorkspace(
-            mSceneManager, mVrTexture,
-            mCamera, "InstancedStereoWorkspace", true, 0 );
 
-//         createHiddenAreaMeshVR();
+        if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
+        {
+            const Ogre::IdString workspaceName( "TwoCamerasWorkspace" );
+            Ogre::uint8 vpModifierMask, executionMask;
+            Ogre::Vector4 vpOffsetScale;
+
+            vpModifierMask  = 0x01;
+            executionMask   = 0x01;
+            vpOffsetScale   = Ogre::Vector4( 0.0f, 0.0f, 0.5f, 1.0f );
+            mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
+                mSceneManager,
+                mRenderWindow->getTexture(),
+                mEyeCameras[LEFT], workspaceName,
+                true, -1, (Ogre::UavBufferPackedVec*)0,
+                (Ogre::ResourceLayoutMap*)0,
+                (Ogre::ResourceAccessMap*)0,
+                vpOffsetScale,
+                vpModifierMask,
+                executionMask );
+
+            vpModifierMask  = 0x02;
+            executionMask   = 0x02;
+            vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f, 0.5f, 1.0f );
+            mVrWorkspaces[RIGHT] = compositorManager->addWorkspace(
+                mSceneManager,
+                mRenderWindow->getTexture(),
+                mEyeCameras[RIGHT], workspaceName,
+                true, -1, (Ogre::UavBufferPackedVec*)0,
+                (Ogre::ResourceLayoutMap*)0,
+                (Ogre::ResourceAccessMap*)0,
+                vpOffsetScale,
+                vpModifierMask,
+                executionMask);
+        }
+        else if (mWorkSpaceType == WS_INSTANCED_STEREO)
+        {
+            mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
+                mSceneManager, mVrTexture,
+                mCamera, "InstancedStereoWorkspace", true, 0 );
+        }
+
+        int frames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
+        HmdConfig hmdConfig{
+            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+            { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45} }
+        };
+
+        mOvrCompositorListener =
+            new Demo::OpenVRCompositorListener(
+                mHMD, mVRCompositor, mVrTexture,
+                mRoot, mVrWorkspaces,
+                mEyeCameras, mVrCullCamera,
+                frames, hmdConfig );
     }
 
     StereoGraphicsSystem::StereoGraphicsSystem( GameState* gameState, WorkspaceType wsType ) :
@@ -253,8 +249,8 @@ namespace Demo
         mWorkSpaceType( wsType ),
         mCamerasNode( nullptr ),
         mEyeCameras{ nullptr, nullptr },
-        mEyeWorkspaces{ nullptr, nullptr },
-        mVrWorkspace( nullptr ),
+        mVrWorkspaces{ nullptr, nullptr },
+        mMirrorWorkspace( nullptr ),
         mVrCullCamera( nullptr ),
         mVrTexture( nullptr ),
         mOvrCompositorListener( nullptr ),
