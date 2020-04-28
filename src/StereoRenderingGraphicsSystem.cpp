@@ -1,5 +1,9 @@
 #include "StereoRenderingGraphicsSystem.h"
 
+#include "StereoRendering.h"
+#include "OpenVRCompositorListener.h"
+
+#include "OgreTextureGpuManager.h"
 #include "OgreSceneManager.h"
 #include "OgreCamera.h"
 #include "OgreRoot.h"
@@ -58,7 +62,7 @@ namespace Demo
             // Look back along -Z
             mCamera->lookAt( Ogre::Vector3( 0, 0, -1.0 ) );
             mCamera->setNearClipDistance( 0.2f );
-            mCamera->setFarClipDistance( 20.0f );
+            mCamera->setFarClipDistance( 1000.0f );
             mCamera->setAutoAspectRatio( true );
             mCamera->detachFromParent();
             mCamerasNode->attachObject( mCamera );
@@ -66,7 +70,7 @@ namespace Demo
 
     }
 
-    Ogre::CompositorWorkspace* StereoGraphicsSystem::setupCompositor()
+    Ogre::CompositorWorkspace* StereoGraphicsSystem::setupCompositor(void)
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
         const Ogre::IdString workspaceName( "TwoCamerasWorkspace" );
@@ -106,45 +110,161 @@ namespace Demo
         }
         if (mWorkSpaceType == WS_INSTANCED_STEREO)
         {
-            mEyeWorkspaces[0] = compositorManager->addWorkspace(
-                mSceneManager, mRenderWindow->getTexture(), mCamera,
-                "InstancedStereoWorkspace", true );
+//             mEyeWorkspaces[0] = compositorManager->addWorkspace(
+//                 mSceneManager, mRenderWindow->getTexture(), mCamera,
+//                 "InstancedStereoWorkspace", true );
 
-/*            mVrCullCamera = mSceneManager->createCamera( "VrCullCamera" );
-            Ogre::CompositorWorkspace* vrCompositor = nullptr;
-            vr::IVRCompositor *vrCompositor3D = nullptr;
-//             Ogre::LogManager::getSingleton().logMessage(
-//                 "setupCompositor");
-            Ogre::CompositorManager2 *compositorManager =
-                mRoot->getCompositorManager2();
+            mVrCullCamera = mSceneManager->createCamera( "VrCullCamera" );
+            mEyeWorkspaces[0] = nullptr;
+
             initOpenVR();
 
+            Ogre::CompositorManager2 *compositorManager =
+                mRoot->getCompositorManager2();
             Ogre::CompositorChannelVec channels( 2u );
             channels[0] = mRenderWindow->getTexture();
             channels[1] = mVrTexture;
-            vrCompositor = compositorManager->addWorkspace(
+            mEyeWorkspaces[0] = compositorManager->addWorkspace(
                 mSceneManager, channels, mCamera,
                 "InstancedStereoMirrorWindowWorkspace", true );
-            vrCompositor3D =
-                vr::VRCompositor();
+
             int frames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
+            HmdConfig hmdConfig{
+                { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+                { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+                { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45} }
+            };
             mOvrCompositorListener =
                 new Demo::OpenVRCompositorListener(
-                    mHMD, vrCompositor3D, mVrTexture,
+                    mHMD, mVRCompositor, mVrTexture,
                     mRoot, mVrWorkspace,
                     mCamera, mVrCullCamera,
-                    frames );
-
-            return vrCompositor*/;
+                    frames, hmdConfig );
         }
 
         return mEyeWorkspaces[0];
     }
 
-    StereoGraphicsSystem::StereoGraphicsSystem( GameState* gameState, WorkspaceType wsType ) :
-        GraphicsSystem( gameState, "../Data/" )
+    //-----------------------------------------------------------------------------
+    // Purpose: Helper to get a string from a tracked device property and turn it
+    //			into a std::string
+    //-----------------------------------------------------------------------------
+    std::string StereoGraphicsSystem::GetTrackedDeviceString(
+        vr::TrackedDeviceIndex_t unDevice,
+        vr::TrackedDeviceProperty prop,
+        vr::TrackedPropertyError *peError)
     {
-        mWorkSpaceType = wsType;
+        vr::IVRSystem *vrSystem = vr::VRSystem();
+        uint32_t unRequiredBufferLen =
+            vrSystem->GetStringTrackedDeviceProperty(
+                unDevice, prop,
+                NULL, 0, peError );
+        if( unRequiredBufferLen == 0 )
+            return "";
+
+        char *pchBuffer = new char[ unRequiredBufferLen ];
+        unRequiredBufferLen = vrSystem->GetStringTrackedDeviceProperty(
+            unDevice, prop, pchBuffer,
+            unRequiredBufferLen, peError );
+        std::string sResult = pchBuffer;
+        delete [] pchBuffer;
+        return sResult;
+    }
+
+    void StereoGraphicsSystem::initCompositorVR(void)
+    {
+        mVRCompositor = vr::VRCompositor();
+        if ( !mVRCompositor )
+        {
+            OGRE_EXCEPT( Ogre::Exception::ERR_RENDERINGAPI_ERROR,
+                         "VR Compositor initialization failed. See log file for details",
+                         "StereoRenderingGraphicsSystem::initCompositorVR" );
+        }
+    }
+
+    void StereoGraphicsSystem::initOpenVR(void)
+    {
+        // Loading the SteamVR via OpenVR Runtime
+        LOG << "initOpenVR" << LOGEND;
+        if(vr::VR_IsHmdPresent())
+        {
+            vr::EVRInitError eError = vr::VRInitError_None;
+            mHMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
+            if( eError != vr::VRInitError_None )
+            {
+                mHMD = nullptr;
+                LOG << "OpenVR not even if HMD seems to be present. Have you started SteamVR?" << LOGEND;
+            }
+        }
+
+        uint32_t width, height, new_width;
+        if ( mHMD )
+        {
+            mStrDriver = "No Driver";
+            mStrDisplay = "No Display";
+
+            mStrDriver = GetTrackedDeviceString(
+                vr::k_unTrackedDeviceIndex_Hmd,
+                vr::Prop_TrackingSystemName_String );
+            mStrDisplay = GetTrackedDeviceString(
+                vr::k_unTrackedDeviceIndex_Hmd,
+                vr::Prop_SerialNumber_String );
+            mDeviceModelNumber = GetTrackedDeviceString(
+                vr::k_unTrackedDeviceIndex_Hmd,
+                vr::Prop_ModelNumber_String );
+
+            initCompositorVR();
+
+            //gives us the render target off one eye
+            mHMD->GetRecommendedRenderTargetSize( &width, &height );
+        }
+        else
+        {
+            width = mRenderWindow->getWidth();
+            height = mRenderWindow->getHeight();
+        }
+
+        Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
+        //Radial Density Mask requires the VR texture to be UAV & reinterpretable
+        mVrTexture = textureManager->createOrRetrieveTexture(
+            "OpenVR Both Eyes",
+            Ogre::GpuPageOutStrategy::Discard,
+            Ogre::TextureFlags::RenderToTexture|
+            Ogre::TextureFlags::Uav|
+            Ogre::TextureFlags::Reinterpretable,
+            Ogre::TextureTypes::Type2D );
+        new_width = width << 1u;
+        mVrTexture->setResolution( new_width, height);
+        mVrTexture->setPixelFormat( Ogre::PFG_RGBA8_UNORM );
+        mVrTexture->scheduleTransitionTo(
+            Ogre::GpuResidency::Resident );
+
+        Ogre::CompositorManager2 *compositorManager =
+            mRoot->getCompositorManager2();
+        mVrWorkspace = compositorManager->addWorkspace(
+            mSceneManager, mVrTexture,
+            mCamera, "InstancedStereoWorkspace", true, 0 );
+
+//         createHiddenAreaMeshVR();
+    }
+
+    StereoGraphicsSystem::StereoGraphicsSystem( GameState* gameState, WorkspaceType wsType ) :
+        GraphicsSystem( gameState, "../Data/" ),
+        mWorkSpaceType( wsType ),
+        mCamerasNode( nullptr ),
+        mEyeCameras{ nullptr, nullptr },
+        mEyeWorkspaces{ nullptr, nullptr },
+        mVrWorkspace( nullptr ),
+        mVrCullCamera( nullptr ),
+        mVrTexture( nullptr ),
+        mOvrCompositorListener( nullptr ),
+        mHMD( nullptr ),
+        mVRCompositor( nullptr ),
+        mStrDriver( "" ),
+        mStrDisplay( "" ),
+        mDeviceModelNumber( "" )
+    {
+        memset( mTrackedDevicePose, 0, sizeof (mTrackedDevicePose) );
     }
 
     StereoGraphicsSystem::~StereoGraphicsSystem()

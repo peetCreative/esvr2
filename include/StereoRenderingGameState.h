@@ -13,7 +13,7 @@ namespace Demo
 
     public:
         StereoRenderingGameState( const Ogre::String &helpDescription );
-
+        void createCube();
         virtual void createScene01(void);
 
         virtual void update( float timeSinceLast );

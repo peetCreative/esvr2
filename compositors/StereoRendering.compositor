@@ -19,7 +19,7 @@ abstract target main_stereo_render
 
 		overlays	off
 
-		//cull_camera VrCullCamera
+		cull_camera VrCullCamera
 
 		//shadows		ShadowMapDebuggingShadowNode
 

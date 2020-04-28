@@ -18,11 +18,32 @@ namespace Demo
     {
         memset( mSceneNode, 0, sizeof(mSceneNode) );
     }
+
+    void StereoRenderingGameState::createCube()
+    {
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
+        Ogre::Item *mCube = sceneManager->createItem(
+            "Cube_d.mesh",
+            Ogre::ResourceGroupManager::
+            AUTODETECT_RESOURCE_GROUP_NAME,
+            Ogre::SCENE_DYNAMIC );
+
+        mCube->setVisibilityFlags( 0x000000002 );
+        Ogre::SceneNode *mSceneNodeCube = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
+                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+
+        mSceneNodeCube->setPosition( 0, 0, 0 );
+
+        mSceneNodeCube->scale(0.25, 0.25, 0.25);
+        mSceneNodeCube->attachObject( mCube );
+    }
+
     //-----------------------------------------------------------------------------------
     void StereoRenderingGameState::createScene01(void)
     {
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
 
+        createCube();
         Ogre::ManualObject * manualObject = sceneManager->createManualObject();
 
         manualObject->begin("BaseWhite", Ogre::OT_TRIANGLE_LIST);

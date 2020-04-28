@@ -20,6 +20,16 @@ include( CMake/Dependencies/OGRE.cmake )
 
 setupOgre( OGRE_SOURCE, OGRE_BINARIES, OGRE_LIBRARIES, FALSE )
 
+find_package( OpenCV REQUIRED )
+#TODO: make the
+# set(OpenVR_DIR /usr/local/include/openvr/)
+find_package( OpenVR REQUIRED )
+if (NOT OpenVR_FOUND)
+	message("no openvr")
+	set(OpenVR_INCLUDE_DIRS /opt/include/openvr/)
+	set(OpenVR_LIBRARIES /opt/lib/libOpenVR.so)
+endif()
+
 # Setup our application
 set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}" )
 if( MSVC )
@@ -40,7 +50,7 @@ else()
 	endmacro()
 endif()
 
-include_directories( "./include" )
+include_directories( "./include" ${OpenVR_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} )
 
 add_recursive( ./src SOURCES )
 add_recursive( ./include HEADERS )
@@ -51,7 +61,7 @@ if( APPLE )
 endif()
 
 add_executable( ${PROJECT_NAME} WIN32 MACOSX_BUNDLE ${SOURCES} ${HEADERS} ${RESOURCES} )
-target_link_libraries( ${PROJECT_NAME} ${OGRE_LIBRARIES} )
+target_link_libraries( ${PROJECT_NAME} ${OGRE_LIBRARIES} ${OpenVR_LIBRARIES} ${OpenCV_LIBS} )
 
 if( APPLE )
 	set_target_properties( ${PROJECT_NAME} PROPERTIES XCODE_ATTRIBUTE_ENABLE_BITCODE "NO" )
