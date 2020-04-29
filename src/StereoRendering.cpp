@@ -24,7 +24,6 @@ int mainApp( int argc, const char *argv[] )
 }
 
 namespace Demo {
-
     void MainEntryPoints::createSystems( GameState **outGraphicsGameState,
                                          GraphicsSystem **outGraphicsSystem,
                                          GameState **outLogicGameState,
@@ -33,7 +32,15 @@ namespace Demo {
         StereoRenderingGameState *gfxGameState = new StereoRenderingGameState(
         "Description of what we are doing" );
 
-        GraphicsSystem *graphicsSystem = new StereoGraphicsSystem( gfxGameState, WS_INSTANCED_STEREO );
+        HmdConfig hmdConfig{
+            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+            { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45} }
+        };
+
+        GraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
+            gfxGameState, WS_TWO_CAMERAS_STEREO, hmdConfig );
+//         GraphicsSystem *graphicsSystem = new StereoGraphicsSystem( gfxGameState, WS_INSTANCED_STEREO );
 
         gfxGameState->_notifyGraphicsSystem( graphicsSystem );
 
@@ -54,4 +61,27 @@ namespace Demo {
     {
         return "Stereo Rendering Sample";
     }
+
+    //-------------------------------------------------------------------------
+    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose )
+    {
+        Ogre::Matrix4 matrixObj(
+                    matPose.m[0][0], matPose.m[0][1], matPose.m[0][2], matPose.m[0][3],
+                    matPose.m[1][0], matPose.m[1][1], matPose.m[1][2], matPose.m[1][3],
+                    matPose.m[2][0], matPose.m[2][1], matPose.m[2][2], matPose.m[2][3],
+                               0.0f,            0.0f,            0.0f,            1.0f );
+        return matrixObj;
+    }
+
+    //-------------------------------------------------------------------------
+    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix44_t matPose )
+    {
+        Ogre::Matrix4 matrixObj(
+                    matPose.m[0][0], matPose.m[0][1], matPose.m[0][2], matPose.m[0][3],
+                    matPose.m[1][0], matPose.m[1][1], matPose.m[1][2], matPose.m[1][3],
+                    matPose.m[2][0], matPose.m[2][1], matPose.m[2][2], matPose.m[2][3],
+                    matPose.m[3][0], matPose.m[3][1], matPose.m[3][2], matPose.m[3][3] );
+        return matrixObj;
+    }
+
 }

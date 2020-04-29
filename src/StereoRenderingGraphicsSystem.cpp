@@ -1,5 +1,6 @@
 #include "StereoRenderingGraphicsSystem.h"
 
+#include "OgrePlatform.h"
 #include "StereoRendering.h"
 #include "OpenVRCompositorListener.h"
 
@@ -9,6 +10,17 @@
 #include "OgreRoot.h"
 #include "OgreWindow.h"
 // #include "Compositor/OgreCompositorManager2.h"
+
+#include "OgreTextureGpuManager.h"
+#include "OgrePixelFormatGpuUtils.h"
+#include "OgreMemoryAllocatorConfig.h"
+#include "OgreGpuResource.h"
+#include "OgreStagingTexture.h"
+
+#include "opencv2/opencv.hpp"
+#include <sstream>
+#include <cmath>
+#include <mutex>
 
 using namespace Demo;
 
@@ -23,6 +35,10 @@ namespace Demo
         mCamerasNode->setName( "Cameras Node" );
 
         mCamerasNode->setPosition( 0, 0, 0 );
+        mVrCullCamera = mSceneManager->createCamera( "VrCullCamera" );
+        mVrCullCamera->detachFromParent();
+        mCamerasNode->attachObject( mVrCullCamera );
+
         if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
         {
 
@@ -65,17 +81,204 @@ namespace Demo
             mCamera->setFarClipDistance( 1000.0f );
             mCamera->setAutoAspectRatio( true );
             mCamera->detachFromParent();
+            mCamera->setVrData( &mVrData );
             mCamerasNode->attachObject( mCamera );
             mEyeCameras[LEFT] = mCamera;
         }
+        LOG << "sync camera Projection" << LOGEND;
+        syncCameraProjection( true );
 
+
+    }
+
+    inline void printMatrix4(Ogre::Matrix4 m)
+    {
+        LOG << m[0][0] << " "
+            << m[0][1] << " "
+            << m[0][2] << " "
+            << m[0][3] << " " << LOGEND
+            << m[1][0] << " "
+            << m[1][1] << " "
+            << m[1][2] << " "
+            << m[1][3] << " " << LOGEND
+            << m[2][0] << " "
+            << m[2][1] << " "
+            << m[2][2] << " "
+            << m[2][3] << " " << LOGEND
+            << m[3][0] << " "
+            << m[3][1] << " "
+            << m[3][2] << " "
+            << m[3][3] << " " << LOGEND;
+
+    }
+
+    //-------------------------------------------------------------------------
+    void StereoGraphicsSystem::syncCameraProjection( bool bForceUpdate )
+    {
+        const Ogre::Real camNear = mEyeCameras[0]->getNearClipDistance();
+        const Ogre::Real camFar  = mEyeCameras[0]->getFarClipDistance();
+
+        if( mCamNear != camNear || mCamFar != camFar || bForceUpdate )
+        {
+            Ogre::Matrix4 eyeToHead[2];
+            Ogre::Matrix4 projectionMatrix[2];
+            Ogre::Matrix4 projectionMatrixRS[2];
+            Ogre::Vector4 eyeFrustumExtents[2];
+
+            for( size_t i=0u; i<2u; ++i )
+            {
+                if (mHMD)
+                {
+                    vr::EVREye eyeIdx = static_cast<vr::EVREye>( i );
+                    eyeToHead[i] = convertSteamVRMatrixToMatrix(
+                        mHMD->GetEyeToHeadTransform( eyeIdx ) );
+                    projectionMatrix[i] =
+                            convertSteamVRMatrixToMatrix(
+                                mHMD->GetProjectionMatrix( eyeIdx,
+                                camNear, camFar ) );
+                    mHMD->GetProjectionRaw(
+                        eyeIdx,
+                        &eyeFrustumExtents[i].x, &eyeFrustumExtents[i].y,
+                        &eyeFrustumExtents[i].z, &eyeFrustumExtents[i].w );
+                }
+                else
+                {
+                    projectionMatrix[i] = mHmdConfig.projectionMatrix[i];
+                    eyeToHead[i] = mHmdConfig.eyeToHead[i];
+                    eyeFrustumExtents[i] = mHmdConfig.tan[i];
+                }
+                mRoot->getRenderSystem()->_convertOpenVrProjectionMatrix(
+                    projectionMatrix[i], projectionMatrixRS[i] );
+
+                LOG<< "eyeToHead"<< LOGEND;
+                printMatrix4(eyeToHead[i]);
+                LOG<< "projectionMatrix"<< LOGEND;
+                printMatrix4(projectionMatrix[i]);
+                LOG<< "projectionMatrixRS"<< LOGEND;
+                printMatrix4(projectionMatrixRS[i]);
+            }
+
+            mVrData.set( eyeToHead, projectionMatrixRS );
+            mCamNear = camNear;
+            mCamFar = camFar;
+
+            LOG << "camNear: " << camNear << LOGEND;
+
+            Ogre::Vector4 cameraCullFrustumExtents;
+            cameraCullFrustumExtents.x = std::min(
+                eyeFrustumExtents[0].x, eyeFrustumExtents[1].x );
+            cameraCullFrustumExtents.y = std::max(
+                eyeFrustumExtents[0].y, eyeFrustumExtents[1].y );
+            cameraCullFrustumExtents.z = std::max(
+                eyeFrustumExtents[0].z, eyeFrustumExtents[1].z );
+            cameraCullFrustumExtents.w = std::min(
+                eyeFrustumExtents[0].w, eyeFrustumExtents[1].w );
+
+            mVrCullCamera->setFrustumExtents(
+                cameraCullFrustumExtents.x,
+                cameraCullFrustumExtents.y,
+                cameraCullFrustumExtents.w,
+                cameraCullFrustumExtents.z,
+                Ogre::FET_TAN_HALF_ANGLES );
+
+            const float ipd = mVrData.mLeftToRight.x;
+            Ogre::Vector3 cullCameraOffset = Ogre::Vector3::ZERO;
+            cullCameraOffset.z = (ipd / 2.0f) / Ogre::Math::Abs( cameraCullFrustumExtents.x );
+
+            const Ogre::Real offset = cullCameraOffset.length();
+            mVrCullCamera->setNearClipDistance( camNear + offset );
+            mVrCullCamera->setFarClipDistance( camFar + offset );
+        }
+    }
+
+    bool StereoGraphicsSystem::calcAlign(CameraConfig &cameraConfig)
+    {
+//         if(!mHmdConfig || !mHMD)
+//             return false;
+        //now we have to know
+        if (!mImageRenderConfig)
+        {
+            mImageRenderConfig = new ImageRenderConfig();
+        }
+
+        size_t vr_width_half = mVrTexture->getWidth()/2;
+        size_t vr_height = mVrTexture->getHeight();
+
+//              left left
+//                 = -1.39377;
+//              left right
+//                 = 1.23437;
+//              left top
+//                  = -1.46653 ;
+//              left bottom
+//                 = 1.45802 ;
+//              right left
+//                 = -1.24354 ;
+//              right right
+//                 = 1.39482;
+//              right top
+//                 = -1.47209;
+//              right bottom
+//                 = 1.45965;
+        if (mHMD)
+        {
+            mHMD->GetProjectionRaw(
+                vr::Eye_Left,
+                &mHmdConfig.tan[LEFT][0], &mHmdConfig.tan[LEFT][1],
+                &mHmdConfig.tan[LEFT][2], &mHmdConfig.tan[LEFT][3]);
+            mHMD->GetProjectionRaw(
+                vr::Eye_Right,
+                &mHmdConfig.tan[RIGHT][0], &mHmdConfig.tan[RIGHT][1],
+                &mHmdConfig.tan[RIGHT][2], &mHmdConfig.tan[RIGHT][3]);
+        }
+
+        for (size_t eye = 0; eye < 2; eye++)
+        {
+            float c_vr_h = -mHmdConfig.tan[eye][0] * vr_width_half /
+                (-mHmdConfig.tan[eye][0] + mHmdConfig.tan[eye][1]);
+            float c_vr_v = -mHmdConfig.tan[eye][2] * vr_height /
+                (-mHmdConfig.tan[eye][3] + mHmdConfig.tan[eye][3]);
+
+            float img_size_resize_h = c_vr_h * cameraConfig.width[eye] /
+                (cameraConfig.f_x[eye] *-mHmdConfig.tan[eye][0]);
+            float img_size_resize_v = c_vr_v * cameraConfig.height[eye] /
+                (cameraConfig.f_y[eye] *-mHmdConfig.tan[eye][2]);
+
+            float img_middle_resize_h =
+                img_size_resize_h * cameraConfig.c_x[eye] / cameraConfig.width[eye];
+            float img_middle_resize_v =
+                img_size_resize_v * cameraConfig.c_y[eye] / cameraConfig.height[eye];
+
+            float align_f_h = c_vr_h - img_middle_resize_h;
+            float align_f_v = c_vr_v - img_middle_resize_v;
+
+            if (align_f_h <= 0 || align_f_v <= 0 )
+                return false;
+            mImageRenderConfig->leftAlign[eye] = 
+                (eye == RIGHT ? vr_width_half : 0) +
+                static_cast<size_t>(std::round(align_f_h));
+            mImageRenderConfig->topAlign[eye] =
+                static_cast<size_t>(std::round(align_f_v));
+            OGRE_ASSERT_MSG(img_size_resize_v > 0 && img_size_resize_h > 0, "img_height/width_resize smaller than/ equal zero");
+            mImageRenderConfig->size[eye] = {
+                static_cast<int>(std::round(img_size_resize_v)),
+                static_cast<int>(std::round(img_size_resize_h)) };
+
+            //for mDrawHelpers
+            mCVr[eye][0] = static_cast<size_t>(std::round(c_vr_v));
+            mCVr[eye][1] = static_cast<size_t>(std::round(c_vr_h));
+            mImgMiddleResize[eye][0] = static_cast<size_t>(
+                std::round(img_middle_resize_h));
+            mImgMiddleResize[eye][1] = static_cast<size_t>(
+                std::round(img_middle_resize_h));
+        }
+        return true;
     }
 
     Ogre::CompositorWorkspace* StereoGraphicsSystem::setupCompositor(void)
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
 
-        mVrCullCamera = mSceneManager->createCamera( "VrCullCamera" );
         initOpenVR();
 
         const Ogre::IdString workspaceName( "StereoMirrorWindowWorkspace" );
@@ -229,42 +432,222 @@ namespace Demo
                 mCamera, "InstancedStereoWorkspace", true, 0 );
         }
 
-        int frames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
-        HmdConfig hmdConfig{
-            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-            { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45} }
-        };
-
+        //TODO:probably we need two if we have two cameras
         mOvrCompositorListener =
             new Demo::OpenVRCompositorListener(
                 mHMD, mVRCompositor, mVrTexture,
                 mRoot, mVrWorkspaces,
-                mEyeCameras, mVrCullCamera,
-                frames, hmdConfig );
+                mCamerasNode
+            );
     }
 
-    StereoGraphicsSystem::StereoGraphicsSystem( GameState* gameState, WorkspaceType wsType ) :
+    void StereoGraphicsSystem::setupImageData()
+    {
+        Ogre::TextureGpuManager *textureManager =
+            mRoot->getRenderSystem()->getTextureGpuManager();
+        const Ogre::uint32 rowAlignment = 4u;
+        const size_t dataSize =
+            Ogre::PixelFormatGpuUtils::getSizeBytes(
+                mVrTexture->getWidth(),
+                mVrTexture->getHeight(),
+                mVrTexture->getDepth(),
+                mVrTexture->getNumSlices(),
+                mVrTexture->getPixelFormat(),
+                rowAlignment );
+
+        mImageData = reinterpret_cast<Ogre::uint8*>(
+            OGRE_MALLOC_SIMD( dataSize,
+            Ogre::MEMCATEGORY_RESOURCE ) );
+        memset(mImageData, 0, dataSize);
+
+        //We have to upload the data via a StagingTexture, which acts as an intermediate stash
+        //memory that is both visible to CPU and GPU.
+        mStagingTexture =
+            textureManager->getStagingTexture(
+                mVrTexture->getWidth(),
+                mVrTexture->getHeight(),
+                mVrTexture->getDepth(),
+                mVrTexture->getNumSlices(),
+                mVrTexture->getPixelFormat() );
+
+    }
+
+    bool StereoGraphicsSystem::fillTexture(void)
+    {
+        const size_t bytesPerPixel = 4u;
+        const size_t bytesPerRow =
+            mVrTexture->_getSysRamCopyBytesPerRow( 0 );
+
+//         LOG << mVrTexture->getWidth() << LOGEND;
+//         LOG << mVrTexture->getHeight() << LOGEND;
+//         LOG << width_resize << LOGEND;
+//         LOG << "height_resize1 " << height_resize << LOGEND;
+//         LOG << height_resize << LOGEND;
+
+//         LOG << "width_resize " << width_resize << LOGEND;
+//         LOG << "height_resize " << height_resize << LOGEND;
+//         LOG << "ldst.cols " << ldst.cols << LOGEND;
+//         LOG << "ldst.rows " << ldst.rows << LOGEND;
+
+        if ( mImageResize[LEFT].empty() || !mImageResize[RIGHT].empty() ||
+            !mImageRenderConfig)
+        {
+            return false;
+        }
+        size_t align_left;
+        size_t align_top;
+        cv::Mat* dst;
+        for(size_t eye = 0; eye < 2u; eye++) {
+            align_left = mImageRenderConfig->leftAlign[eye];
+            align_top = mImageRenderConfig->topAlign[eye];
+            dst = &mImageResize[eye];
+            size_t row_cnt = align_top * bytesPerRow;
+            for (int y = 0; y < mImageRenderConfig->size[eye].height; y++) {
+                size_t cnt = row_cnt + (align_left * bytesPerPixel);
+                uint8_t* img_row_ptr = dst->ptr<uint8_t>(y);
+                for (int x = 0; x < mImageRenderConfig->size[eye].width; x++) {
+                    mImageData[cnt++] = *(img_row_ptr+2);
+                    mImageData[cnt++] = *(img_row_ptr+1);
+                    mImageData[cnt++] = *img_row_ptr;
+                    img_row_ptr += 3;
+                    mImageData[cnt++] = 0;
+                }
+                row_cnt += bytesPerRow;
+            }
+        }
+
+        if (mDrawHelpers)
+        {
+            //redline for eye pupilar middle
+            for (size_t i = 0; i < mVrTexture->getHeight(); i++)
+            {
+                mImageData[(bytesPerRow*i) + (mCVr[LEFT][0] * bytesPerPixel)] = 255;
+                mImageData[(bytesPerRow*i) + (bytesPerRow/2) + (mCVr[RIGHT][0] * bytesPerPixel)+4] = 255;
+            }
+
+            //green line for middle
+            for (size_t i = 0; i < mVrTexture->getHeight()*4; i++)
+            {
+                mImageData[(bytesPerRow/4*i)+1] = 255;
+            }
+        }
+//         mVrTexture->_transitionTo( GpuResidency::Resident, imageData );
+        mVrTexture->_setNextResidencyStatus( Ogre::GpuResidency::Resident );
+
+        mStagingTexture->startMapRegion();
+        Ogre::TextureBox texBox = mStagingTexture->mapRegion(
+            mVrTexture->getWidth(),
+            mVrTexture->getHeight(),
+            mVrTexture->getDepth(),
+            mVrTexture->getNumSlices(),
+            mVrTexture->getPixelFormat() );
+        texBox.copyFrom( mImageData,
+                         mVrTexture->getWidth(),
+                         mVrTexture->getHeight(),
+                         bytesPerRow );
+        mStagingTexture->stopMapRegion();
+        mStagingTexture->upload( texBox, mVrTexture, 0, 0, 0, false );
+
+        mVrTexture->notifyDataIsReady();
+        return true;
+    }
+
+    StereoGraphicsSystem::StereoGraphicsSystem(
+            GameState* gameState,
+            WorkspaceType wsType,
+            HmdConfig hmdConfig,
+            Ogre::Real camNear, Ogre::Real camFar ) :
         GraphicsSystem( gameState, "../Data/" ),
         mWorkSpaceType( wsType ),
         mCamerasNode( nullptr ),
         mEyeCameras{ nullptr, nullptr },
+        mCamNear( camNear ),
+        mCamFar( camFar ),
         mVrWorkspaces{ nullptr, nullptr },
         mMirrorWorkspace( nullptr ),
         mVrCullCamera( nullptr ),
         mVrTexture( nullptr ),
         mOvrCompositorListener( nullptr ),
+        mHmdConfig( hmdConfig ),
         mHMD( nullptr ),
         mVRCompositor( nullptr ),
         mStrDriver( "" ),
         mStrDisplay( "" ),
-        mDeviceModelNumber( "" )
+        mDeviceModelNumber( "" ),
+        mImageRenderConfig( nullptr )
     {
         memset( mTrackedDevicePose, 0, sizeof (mTrackedDevicePose) );
+        memset( &mVrData, 0, sizeof( mVrData ) );
+
+//         int frames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
     }
 
     StereoGraphicsSystem::~StereoGraphicsSystem()
     {
     //             delete mEyeCameras;
+        Ogre::TextureGpuManager *textureManager =
+            mRoot->getRenderSystem()->getTextureGpuManager();
+        //Tell the TextureGpuManager we're done with this StagingTexture. Otherwise it will leak.
+        textureManager->removeStagingTexture( mStagingTexture );
+        mStagingTexture = 0;
+        //Do not free the pointer if texture's paging strategy is GpuPageOutStrategy::AlwaysKeepSystemRamCopy
+        OGRE_FREE_SIMD( mImageData, Ogre::MEMCATEGORY_RESOURCE );
+        mImageData = 0;
+        if( mEyeCameras[0] )
+            mEyeCameras[0]->setVrData( 0 );
+
+    }
+
+    void StereoGraphicsSystem::setImgPtr(const cv::Mat *left, const cv::Mat *right)
+    {
+        //why don't we just fire images to the lens as we have them
+        mMtxImageResize.lock();
+        resize(*left, mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
+        resize(*right, mImageResize[RIGHT], mImageRenderConfig->size[RIGHT]);
+
+        if (mDrawHelpers)
+        {
+            circle( mImageResize[LEFT],
+                cv::Point(mImgMiddleResize[LEFT][0],mImgMiddleResize[LEFT][1]),
+                5, cv::Scalar( 0, 0, 255 ), -1);
+            circle( mImageResize[RIGHT],
+                cv::Point(mImgMiddleResize[RIGHT][0],mImgMiddleResize[RIGHT][1]),
+                5, cv::Scalar( 0, 0, 255 ), -1);
+        }
+        mMtxImageResize.unlock();
+    }
+
+    //-------------------------------------------------------------------------
+    bool StereoGraphicsSystem::clearTexture(void)
+    {
+        const size_t bytesPerRow =
+            mVrTexture->_getSysRamCopyBytesPerRow( 0 );
+
+        const Ogre::uint32 rowAlignment = 4u;
+        const size_t dataSize =
+            Ogre::PixelFormatGpuUtils::getSizeBytes(
+                mVrTexture->getWidth(),
+                mVrTexture->getHeight(),
+                mVrTexture->getDepth(),
+                mVrTexture->getNumSlices(),
+                mVrTexture->getPixelFormat(),
+                rowAlignment );
+        memset(mImageData, 0, dataSize);
+        mStagingTexture->startMapRegion();
+        Ogre::TextureBox texBox = mStagingTexture->mapRegion(
+            mVrTexture->getWidth(),
+            mVrTexture->getHeight(),
+            mVrTexture->getDepth(),
+            mVrTexture->getNumSlices(),
+            mVrTexture->getPixelFormat() );
+        texBox.copyFrom( mImageData,
+                         mVrTexture->getWidth(),
+                         mVrTexture->getHeight(),
+                         bytesPerRow );
+        mStagingTexture->stopMapRegion();
+        mStagingTexture->upload( texBox, mVrTexture, 0, 0, 0, false );
+
+        mVrTexture->notifyDataIsReady();
+        return true;
     }
 }

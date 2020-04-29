@@ -1,8 +1,8 @@
-
 #ifndef _Demo_StereoRendering_H_
 #define _Demo_StereoRendering_H_
 
 #include "OgreMatrix4.h"
+#include "openvr.h"
 
 #define LEFT 0
 #define RIGHT 1
@@ -27,6 +27,9 @@ namespace Demo {
         float c_x[2] = {0, 0};
         float c_y[2] = {0, 0};
     } CameraConfig;
+
+    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose );
+    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix44_t matPose );
 }
 
 #endif

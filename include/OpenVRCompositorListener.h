@@ -5,15 +5,6 @@
 
 #include "OgreFrameListener.h"
 #include "Compositor/OgreCompositorWorkspaceListener.h"
-#include "OgreStagingTexture.h"
-
-#include "OgreMatrix4.h"
-#include "OgreCamera.h"
-
-#include "opencv2/opencv.hpp"
-
-#include <experimental/filesystem>
-#include <mutex>
 
 #if __cplusplus <= 199711L
     #ifndef nullptr
@@ -29,12 +20,11 @@
     #endif
 #endif
 
-namespace fs = std::experimental::filesystem;
-
 namespace Demo
 {
     namespace VrWaitingMode
     {
+        //for more information about this see OpenVR example in Ogre 2.2
         enum VrWaitingMode
         {
             AfterSwap,
@@ -51,76 +41,39 @@ namespace Demo
     {
     protected:
         vr::IVRSystem		*mHMD;
-        vr::IVRCompositor	*mVrCompositor3D;
+        vr::IVRCompositor	*mVrCompositor;
 
         Ogre::TextureGpu	*mVrTexture;
         Ogre::Root          *mRoot;
         Ogre::RenderSystem  *mRenderSystem;
 
         Ogre::CompositorWorkspace *mWorkspaces[2];
+        Ogre::SceneNode     *mCamerasNode;
 
-        int mValidPoseCount;
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
         Ogre::Matrix4           mDevicePose[vr::k_unMaxTrackedDeviceCount];
         vr::ETextureType        mApiTextureType;
-        Ogre::VrData            mVrData;
-        HmdConfig               mHmdConfig;
-        Ogre::Camera            *mCameras[2];
-        Ogre::Camera            *mVrCullCamera;
         Ogre::Vector3           mCullCameraOffset;
 
         VrWaitingMode::VrWaitingMode mWaitingMode;
         VrWaitingMode::VrWaitingMode mFirstGlitchFreeMode;
-        Ogre::Real              mLastCamNear;
-        Ogre::Real              mLastCamFar;
+
         bool                    mMustSyncAtEndOfFrame;
 
-        static Ogre::Matrix4 convertSteamVRMatrixToMatrix4( vr::HmdMatrix34_t matPose );
-        static Ogre::Matrix4 convertSteamVRMatrixToMatrix4( vr::HmdMatrix44_t matPose );
-        void updateHmdTrackingPose(void);
-
-        void syncCullCamera(void);
-        void syncCamera(void);
-        void syncCameraProjection( bool bForceUpdate );
-
-        void setupImageData();
-
-        //left_left, left_right right_left right_right
-        //left_top left_bottom  right_top right_bottom
-        struct Align {
-            int leftLeft;
-            int leftTop;
-            int rightLeft;
-            int rightTop;
-        } mAlign;
-        CameraConfig *mCameraConfig;
-        size_t mImgWidthOrig;
-        cv::Size mImageResizeSize[2];
-        int mCVr[4];
-        int mImgMiddleResize[4];
-
-        std::mutex mMtxImageResize;
-        cv::Mat mImageResize[2];
-        Ogre::uint8 *mImageData;
-        Ogre::StagingTexture *mStagingTexture;
-
-        int mRefreshFrameNum;
         int mFrameCnt;
-        bool calcAlign();
-
-        bool fillTexture(void);
-        bool clearTexture(void);
+        bool mTrackPose;
         bool mWriteTexture;
-        bool mShowMovie;
-        bool mDrawHelpers;
 
+        void syncCamera(void);
+        void updateHmdTrackingPose(void);
+//      TODO: use these functions, when we go to moving camera
+//         void syncCullCamera(void);
     public:
         OpenVRCompositorListener(
             vr::IVRSystem *hmd, vr::IVRCompositor *vrCompositor,
             Ogre::TextureGpu *vrTexture, Ogre::Root *root,
-            Ogre::CompositorWorkspace *workspace[2],
-            Ogre::Camera *camera[2], Ogre::Camera *cullCamera,
-            int refreshFrameNum , HmdConfig hmdConfig );
+            Ogre::CompositorWorkspace *workspaces[2],
+            Ogre::SceneNode *mCamerasNode );
         virtual ~OpenVRCompositorListener();
 
         virtual bool frameStarted( const Ogre::FrameEvent& evt );
@@ -137,18 +90,8 @@ namespace Demo
         void setWaitingMode( VrWaitingMode::VrWaitingMode waitingMode );
         VrWaitingMode::VrWaitingMode getWaitingMode(void)   { return mWaitingMode; }
 
-        void showMovie()
-        {
-            mShowMovie = !mShowMovie;
-            mFrameCnt = 3;
-        };
-        void triggerWriteTexture()
-        {mWriteTexture = true;};
-        float getImgScale();
-        void setImgScale(float imgScale);
-        void setImgPtr(const cv::Mat *left, const cv::Mat *right);
-        void setHmdConfig(HmdConfig hmdConfig);
-        void setCameraConfig(CameraConfig *cameraConfig);
+        void triggerWriteTexture(){mWriteTexture = true;};
+        int getFrameCnt(void){return mFrameCnt;};
 
         /** When operating in VrWaitingMode::AfterSceneGraph or later, there's a chance
             graphical artifacts appear if the camera transform is immediately changed after
