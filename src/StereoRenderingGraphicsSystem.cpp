@@ -85,10 +85,6 @@ namespace Demo
             mCamerasNode->attachObject( mCamera );
             mEyeCameras[LEFT] = mCamera;
         }
-        LOG << "sync camera Projection" << LOGEND;
-        syncCameraProjection( true );
-
-
     }
 
     inline void printMatrix4(Ogre::Matrix4 m)
@@ -280,6 +276,8 @@ namespace Demo
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
 
         initOpenVR();
+
+        syncCameraProjection( true );
 
         const Ogre::IdString workspaceName( "StereoMirrorWindowWorkspace" );
 
@@ -567,8 +565,8 @@ namespace Demo
         mMirrorWorkspace( nullptr ),
         mVrCullCamera( nullptr ),
         mVrTexture( nullptr ),
-        mOvrCompositorListener( nullptr ),
         mHmdConfig( hmdConfig ),
+        mOvrCompositorListener( nullptr ),
         mHMD( nullptr ),
         mVRCompositor( nullptr ),
         mStrDriver( "" ),
@@ -582,20 +580,57 @@ namespace Demo
 //         int frames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
     }
 
-    StereoGraphicsSystem::~StereoGraphicsSystem()
+    void StereoGraphicsSystem::deinitialize(void)
     {
-    //             delete mEyeCameras;
-        Ogre::TextureGpuManager *textureManager =
-            mRoot->getRenderSystem()->getTextureGpuManager();
-        //Tell the TextureGpuManager we're done with this StagingTexture. Otherwise it will leak.
-        textureManager->removeStagingTexture( mStagingTexture );
-        mStagingTexture = 0;
-        //Do not free the pointer if texture's paging strategy is GpuPageOutStrategy::AlwaysKeepSystemRamCopy
-        OGRE_FREE_SIMD( mImageData, Ogre::MEMCATEGORY_RESOURCE );
-        mImageData = 0;
-        if( mEyeCameras[0] )
-            mEyeCameras[0]->setVrData( 0 );
+        delete mOvrCompositorListener;
+        mOvrCompositorListener = 0;
 
+        if( mVrTexture )
+        {
+            Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
+            textureManager->destroyTexture( mVrTexture );
+            mVrTexture = 0;
+        }
+
+        if( mStagingTexture )
+        {
+            Ogre::TextureGpuManager *textureManager =
+            mRoot->getRenderSystem()->getTextureGpuManager();
+            //Tell the TextureGpuManager we're done with this StagingTexture. Otherwise it will leak.
+            textureManager->removeStagingTexture( mStagingTexture );
+            mStagingTexture = 0;
+        }
+
+        if( mImageData )
+        {
+            //Do not free the pointer if texture's paging strategy is GpuPageOutStrategy::AlwaysKeepSystemRamCopy
+            OGRE_FREE_SIMD( mImageData, Ogre::MEMCATEGORY_RESOURCE );
+            mImageData = 0;
+        }
+        if( mEyeCameras[LEFT] )
+        {
+            mSceneManager->destroyCamera( mEyeCameras[LEFT] );
+            mEyeCameras[LEFT] = nullptr;
+        }
+        if( mEyeCameras[RIGHT] )
+        {
+            mSceneManager->destroyCamera( mEyeCameras[RIGHT] );
+            mEyeCameras[RIGHT] = nullptr;
+        }
+
+        if( mVrCullCamera )
+        {
+            mSceneManager->destroyCamera( mVrCullCamera );
+            mVrCullCamera = 0;
+        }
+
+        if( mHMD )
+        {
+            vr::VR_Shutdown();
+            mHMD = NULL;
+        }
+
+        GraphicsSystem::deinitialize();
     }
 
     void StereoGraphicsSystem::setImgPtr(const cv::Mat *left, const cv::Mat *right)

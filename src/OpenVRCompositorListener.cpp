@@ -65,11 +65,13 @@ namespace Demo
     //-------------------------------------------------------------------------
     void OpenVRCompositorListener::updateHmdTrackingPose(void)
     {
+        // we have to call this so we get focus of the application
+        mVrCompositor->WaitGetPoses(
+            mTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
+
         if( !mVrCompositor || !mTrackPose )
             return;
 
-        mVrCompositor->WaitGetPoses(
-            mTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
 
         for( size_t nDevice = 0; nDevice < vr::k_unMaxTrackedDeviceCount; ++nDevice )
         {

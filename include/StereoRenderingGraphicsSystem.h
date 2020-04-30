@@ -100,7 +100,8 @@ namespace Demo
             WorkspaceType wsType,
             HmdConfig hmdConfig,
             Ogre::Real camNear = 0.1f, Ogre::Real camFar = 200.0f);
-        ~StereoGraphicsSystem();
+        virtual void deinitialize(void);
+
         void setImgPtr(const cv::Mat *left, const cv::Mat *right);
         bool calcAlign(CameraConfig &mCameraConfig);
     };
