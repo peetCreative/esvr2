@@ -41,6 +41,7 @@ namespace Demo
         Ogre::CompositorWorkspace   *mMirrorWorkspace;
         Ogre::Camera                *mVrCullCamera;
         Ogre::TextureGpu            *mVrTexture;
+        Ogre::TextureGpu            *mVideoTexture;
         Ogre::VrData                mVrData;
         HmdConfig                   mHmdConfig;
 
@@ -86,10 +87,10 @@ namespace Demo
             vr::TrackedPropertyError *peError = nullptr);
         void initCompositorVR(void);
         void initOpenVR(void);
+        void setupImageData();
 
         void syncCameraProjection( bool bForceUpdate );
 
-        void setupImageData();
         bool fillTexture(void);
         bool clearTexture(void);
 

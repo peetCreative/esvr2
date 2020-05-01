@@ -277,6 +277,8 @@ namespace Demo
 
         initOpenVR();
 
+        setupImageData();
+
         syncCameraProjection( true );
 
         const Ogre::IdString workspaceName( "StereoMirrorWindowWorkspace" );
@@ -443,14 +445,25 @@ namespace Demo
     {
         Ogre::TextureGpuManager *textureManager =
             mRoot->getRenderSystem()->getTextureGpuManager();
+
+        mVideoTexture = textureManager->createOrRetrieveTexture(
+            "VideoTexture",
+            Ogre::GpuPageOutStrategy::Discard,
+            Ogre::TextureFlags::Uav|
+            Ogre::TextureFlags::Reinterpretable,
+            Ogre::TextureTypes::Type2D );
+        mVideoTexture->setResolution( 100, 100);
+        mVideoTexture->setPixelFormat( Ogre::PFG_RGBA8_UNORM );
+        mVideoTexture->scheduleTransitionTo( Ogre::GpuResidency::Resident );
+
         const Ogre::uint32 rowAlignment = 4u;
         const size_t dataSize =
             Ogre::PixelFormatGpuUtils::getSizeBytes(
-                mVrTexture->getWidth(),
-                mVrTexture->getHeight(),
-                mVrTexture->getDepth(),
-                mVrTexture->getNumSlices(),
-                mVrTexture->getPixelFormat(),
+                mVideoTexture->getWidth(),
+                mVideoTexture->getHeight(),
+                mVideoTexture->getDepth(),
+                mVideoTexture->getNumSlices(),
+                mVideoTexture->getPixelFormat(),
                 rowAlignment );
 
         mImageData = reinterpret_cast<Ogre::uint8*>(
@@ -458,15 +471,20 @@ namespace Demo
             Ogre::MEMCATEGORY_RESOURCE ) );
         memset(mImageData, 0, dataSize);
 
+        Ogre::Image2 image;
+        image.loadDynamicImage( mImageData, mVideoTexture->getWidth(), mVideoTexture->getHeight(), 1u,
+                                           Ogre::TextureTypes::Type2DArray, mVideoTexture->getPixelFormat(),
+                                           true, 1u );
+        image.uploadTo( mVideoTexture, 0, mVideoTexture->getNumMipmaps() - 1u );
         //We have to upload the data via a StagingTexture, which acts as an intermediate stash
         //memory that is both visible to CPU and GPU.
         mStagingTexture =
             textureManager->getStagingTexture(
-                mVrTexture->getWidth(),
-                mVrTexture->getHeight(),
-                mVrTexture->getDepth(),
-                mVrTexture->getNumSlices(),
-                mVrTexture->getPixelFormat() );
+                mVideoTexture->getWidth(),
+                mVideoTexture->getHeight(),
+                mVideoTexture->getDepth(),
+                mVideoTexture->getNumSlices(),
+                mVideoTexture->getPixelFormat() );
 
     }
 
@@ -474,10 +492,10 @@ namespace Demo
     {
         const size_t bytesPerPixel = 4u;
         const size_t bytesPerRow =
-            mVrTexture->_getSysRamCopyBytesPerRow( 0 );
+            mVideoTexture->_getSysRamCopyBytesPerRow( 0 );
 
-//         LOG << mVrTexture->getWidth() << LOGEND;
-//         LOG << mVrTexture->getHeight() << LOGEND;
+//         LOG << mVideoTexture->getWidth() << LOGEND;
+//         LOG << mVideoTexture->getHeight() << LOGEND;
 //         LOG << width_resize << LOGEND;
 //         LOG << "height_resize1 " << height_resize << LOGEND;
 //         LOG << height_resize << LOGEND;
@@ -517,36 +535,36 @@ namespace Demo
         if (mDrawHelpers)
         {
             //redline for eye pupilar middle
-            for (size_t i = 0; i < mVrTexture->getHeight(); i++)
+            for (size_t i = 0; i < mVideoTexture->getHeight(); i++)
             {
                 mImageData[(bytesPerRow*i) + (mCVr[LEFT][0] * bytesPerPixel)] = 255;
                 mImageData[(bytesPerRow*i) + (bytesPerRow/2) + (mCVr[RIGHT][0] * bytesPerPixel)+4] = 255;
             }
 
             //green line for middle
-            for (size_t i = 0; i < mVrTexture->getHeight()*4; i++)
+            for (size_t i = 0; i < mVideoTexture->getHeight()*4; i++)
             {
                 mImageData[(bytesPerRow/4*i)+1] = 255;
             }
         }
-//         mVrTexture->_transitionTo( GpuResidency::Resident, imageData );
-        mVrTexture->_setNextResidencyStatus( Ogre::GpuResidency::Resident );
+//         mVideoTexture->_transitionTo( GpuResidency::Resident, imageData );
+        mVideoTexture->_setNextResidencyStatus( Ogre::GpuResidency::Resident );
 
         mStagingTexture->startMapRegion();
         Ogre::TextureBox texBox = mStagingTexture->mapRegion(
-            mVrTexture->getWidth(),
-            mVrTexture->getHeight(),
-            mVrTexture->getDepth(),
-            mVrTexture->getNumSlices(),
-            mVrTexture->getPixelFormat() );
+            mVideoTexture->getWidth(),
+            mVideoTexture->getHeight(),
+            mVideoTexture->getDepth(),
+            mVideoTexture->getNumSlices(),
+            mVideoTexture->getPixelFormat() );
         texBox.copyFrom( mImageData,
-                         mVrTexture->getWidth(),
-                         mVrTexture->getHeight(),
+                         mVideoTexture->getWidth(),
+                         mVideoTexture->getHeight(),
                          bytesPerRow );
         mStagingTexture->stopMapRegion();
-        mStagingTexture->upload( texBox, mVrTexture, 0, 0, 0, false );
+        mStagingTexture->upload( texBox, mVideoTexture, 0, 0, 0, false );
 
-        mVrTexture->notifyDataIsReady();
+        mVideoTexture->notifyDataIsReady();
         return true;
     }
 
@@ -555,7 +573,7 @@ namespace Demo
             WorkspaceType wsType,
             HmdConfig hmdConfig,
             Ogre::Real camNear, Ogre::Real camFar ) :
-        GraphicsSystem( gameState, "../Data/" ),
+        GraphicsSystem( gameState ),
         mWorkSpaceType( wsType ),
         mCamerasNode( nullptr ),
         mEyeCameras{ nullptr, nullptr },
@@ -565,6 +583,7 @@ namespace Demo
         mMirrorWorkspace( nullptr ),
         mVrCullCamera( nullptr ),
         mVrTexture( nullptr ),
+        mVideoTexture( nullptr ),
         mHmdConfig( hmdConfig ),
         mOvrCompositorListener( nullptr ),
         mHMD( nullptr ),

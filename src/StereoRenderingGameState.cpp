@@ -5,6 +5,9 @@
 
 #include "OgreSceneManager.h"
 #include "OgreItem.h"
+#include "OgreHlmsManager.h"
+#include "OgreHlmsUnlit.h"
+#include "OgreHlmsUnlitDatablock.h"
 #include "OgreManualObject2.h"
 
 #include "OgreCamera.h"
@@ -44,15 +47,34 @@ namespace Demo
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
 
         createCube();
+
+        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->getRoot()->getHlmsManager();
+        Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>( hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
+
+        Ogre::String datablockName = "Video";
+        Ogre::HlmsUnlitDatablock *datablock = static_cast<Ogre::HlmsUnlitDatablock*>(
+            hlmsUnlit->createDatablock(
+                datablockName,
+                datablockName,
+                Ogre::HlmsMacroblock(),
+                Ogre::HlmsBlendblock(),
+                Ogre::HlmsParamVec() ) );
+
+        datablock->setTexture( 0, "VideoTexture" );
+
         Ogre::ManualObject * manualObject = sceneManager->createManualObject();
 
-        manualObject->begin("BaseWhite", Ogre::OT_TRIANGLE_LIST);
+        manualObject->begin(datablockName, Ogre::OT_TRIANGLE_LIST);
 
         // Back
         manualObject->position(-0.3f, -0.3f, -1.0f);
+        manualObject->textureCoord(0 , 0);
         manualObject->position(-0.3f, 0.3f, -1.0f);
+        manualObject->textureCoord(0 , 1);
         manualObject->position(0.3f, 0.3f, -1.0f);
+        manualObject->textureCoord(1 , 1);
         manualObject->position(0.3f, -0.3f, -1.0f);
+        manualObject->textureCoord(1 , 0);
         manualObject->quad(0, 1, 2, 3);
         manualObject->quad(3, 2, 1, 0);
 
