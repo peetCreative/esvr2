@@ -3,6 +3,7 @@
 
 #include "OgreMatrix4.h"
 #include "openvr.h"
+#include "opencv2/opencv.hpp"
 
 #define LEFT 0
 #define RIGHT 1
@@ -10,6 +11,18 @@
 #define LOGEND std::endl
 
 namespace Demo {
+    typedef enum {
+        NONE,
+        ROS,
+        VIDEO
+    } InputType;
+    typedef struct {
+        std::string path;
+        cv::VideoCapture capture;
+        int captureFrameWidth = 0;
+        int captureFrameHeight = 0;
+        int captureFramePixelFormat = 0;
+    } VideoInput;
     typedef enum {
         WS_TWO_CAMERAS_STEREO,
         WS_INSTANCED_STEREO

@@ -3,8 +3,7 @@
 #define _Demo_StereoRenderingLogicSystem_H_
 
 #include "StereoRendering.h"
-// 
-
+#include "GameState.h"
 namespace Demo {
     class LogicSystem;
     struct GameEntity;
@@ -15,12 +14,13 @@ namespace Demo {
         float               mDisplacement;
         GameEntity              *mCubeEntity;
         MovableObjectDefinition *mCubeMoDef;
+        VideoInput         mVideoInput;
 
         LogicSystem         *mLogicSystem;
 
     public:
-        LogicGameState();
-        ~LogicGameState();
+        VideoLoader( VideoInput vInput );
+        ~VideoLoader();
 
         void _notifyLogicSystem( LogicSystem *logicSystem )     { mLogicSystem = logicSystem; }
 
