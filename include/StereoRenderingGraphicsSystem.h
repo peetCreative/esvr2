@@ -3,6 +3,7 @@
 #define _Demo_StereoRenderingGraphicsSystem_H_
 
 #include "StereoRendering.h"
+#include "StereoRenderingVideoLoader.h"
 
 #include "GraphicsSystem.h"
 #include "OgreSceneNode.h"
@@ -24,6 +25,8 @@
 namespace Demo
 {
     class OpenVRCompositorListener;
+
+    class VideoLoader;
 
     class StereoGraphicsSystem : public GraphicsSystem
     {
@@ -55,6 +58,7 @@ namespace Demo
         std::string mDeviceModelNumber;
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
 
+        VideoLoader *mVideoSource;
         //left_left, left_right right_left right_right
         //left_top left_bottom  right_top right_bottom
         struct ImageRenderConfig {
@@ -78,8 +82,8 @@ namespace Demo
         //------------------------------------
         // function
         //------------------------------------
-        virtual void createCamera(void);
-        virtual Ogre::CompositorWorkspace* setupCompositor(void);
+        void createCamera(void);
+        Ogre::CompositorWorkspace* setupCompositor(void);
 
         std::string GetTrackedDeviceString(
             vr::TrackedDeviceIndex_t unDevice,
@@ -100,11 +104,18 @@ namespace Demo
             GameState *gameState,
             WorkspaceType wsType,
             HmdConfig hmdConfig,
+            bool showOgreDialog = false,
             Ogre::Real camNear = 0.1f, Ogre::Real camFar = 200.0f);
         virtual void deinitialize(void);
 
         void setImgPtr(const cv::Mat *left, const cv::Mat *right);
         bool calcAlign(CameraConfig &mCameraConfig);
+
+        void _notifyVideoSource( VideoLoader *videoSource )
+        {
+            mVideoSource = videoSource;
+        };
+
     };
 }
 

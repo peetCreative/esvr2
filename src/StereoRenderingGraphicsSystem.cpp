@@ -572,6 +572,7 @@ namespace Demo
             GameState* gameState,
             WorkspaceType wsType,
             HmdConfig hmdConfig,
+            bool showOgreConfigDialog,
             Ogre::Real camNear, Ogre::Real camFar ) :
         GraphicsSystem( gameState ),
         mWorkSpaceType( wsType ),
@@ -591,6 +592,7 @@ namespace Demo
         mStrDriver( "" ),
         mStrDisplay( "" ),
         mDeviceModelNumber( "" ),
+        mVideoSource(nullptr),
         mImageRenderConfig( nullptr )
     {
         memset( mTrackedDevicePose, 0, sizeof (mTrackedDevicePose) );

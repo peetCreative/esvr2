@@ -1,33 +1,37 @@
 
-#ifndef _Demo_StereoRenderingLogicSystem_H_
-#define _Demo_StereoRenderingLogicSystem_H_
+#ifndef _Demo_StereoRenderingVideoLoader_H_
+#define _Demo_StereoRenderingVideoLoader_H_
 
 #include "StereoRendering.h"
+#include "StereoRenderingGraphicsSystem.h"
+
 #include "GameState.h"
+#include "Threading/MessageQueueSystem.h"
+
+
 namespace Demo {
-    class LogicSystem;
-    struct GameEntity;
-    struct MovableObjectDefinition;
-
-    class VideoLoader : public GameState
+    class VideoLoader : public Mq::MessageQueueSystem
     {
-        float               mDisplacement;
-        GameEntity              *mCubeEntity;
-        MovableObjectDefinition *mCubeMoDef;
-        VideoInput         mVideoInput;
+        VideoInput         *mVideoInput;
 
-        LogicSystem         *mLogicSystem;
+        //TODO: cannot be included for some reason..
+//         StereoGraphicsSystem     *mGraphicsSystem;
 
     public:
-        VideoLoader( VideoInput vInput );
+        VideoLoader(
+//             StereoGraphicsSystem *graphicsSystem,
+            VideoInput vInput );
         ~VideoLoader();
 
-        void _notifyLogicSystem( LogicSystem *logicSystem )     { mLogicSystem = logicSystem; }
+        void initialize(void);
+        void deinitialize(void);
+        void update( float timeSinceLast );
 
-        virtual void initialize(void);
-        virtual void deinitialize(void);
-        virtual void createScene01(void);
-        virtual void update( float timeSinceLast );
+        void beginFrameParallel(void);
+        void finishFrameParallel(void);
+        void finishFrame(void);
+
+        void processIncomingMessage( Mq::MessageId messageId, const void *data );
     };
 }
 

@@ -22,6 +22,7 @@ namespace Demo {
         int captureFrameWidth = 0;
         int captureFrameHeight = 0;
         int captureFramePixelFormat = 0;
+        bool isStereo = false;
     } VideoInput;
     typedef enum {
         WS_TWO_CAMERAS_STEREO,
