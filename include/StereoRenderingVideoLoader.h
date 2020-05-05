@@ -12,8 +12,11 @@
 namespace Demo {
     class VideoLoader : public Mq::MessageQueueSystem
     {
-        VideoInput         *mVideoInput;
-
+        VideoInput mVideoInput;
+        cv::VideoCapture mCapture;
+        int captureFrameWidth;
+        int captureFrameHeight;
+        int captureFramePixelFormat;
         //TODO: cannot be included for some reason..
 //         StereoGraphicsSystem     *mGraphicsSystem;
 

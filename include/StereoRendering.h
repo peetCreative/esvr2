@@ -16,13 +16,16 @@ namespace Demo {
         ROS,
         VIDEO
     } InputType;
+    typedef enum {
+        VIDEO_NONE,
+        VIDEO_MONO,
+        VIDEO_STEREO_SLICED,
+        VIDEO_STEREO_VERTICAL_SPLIT,
+        VIDEO_STEREO_HORIZONTAL_SPLIT
+    } VideoInputType;
     typedef struct {
         std::string path;
-        cv::VideoCapture capture;
-        int captureFrameWidth = 0;
-        int captureFrameHeight = 0;
-        int captureFramePixelFormat = 0;
-        bool isStereo = false;
+        VideoInputType videoInputType;
     } VideoInput;
     typedef enum {
         WS_TWO_CAMERAS_STEREO,

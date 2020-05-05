@@ -8,28 +8,32 @@
 
 namespace Demo
 {
-    VideoLoader::VideoLoader(VideoInput vInput)
+    VideoLoader::VideoLoader(VideoInput vInput):
+        mVideoInput(vInput),
+        mCapture(),
+        captureFrameWidth(0),
+        captureFrameHeight(0),
+        captureFramePixelFormat(0)
+
     {
-        mVideoInput = new VideoInput();
-        mVideoInput->path = vInput.path;
+        mVideoInput = vInput;
     }
 
     VideoLoader::~VideoLoader()
     {
-        delete mVideoInput;
     }
 
     void VideoLoader::initialize(void)
     {
-        std::cout << mVideoInput->path << std::endl;
-        if (mVideoInput->path == "")
+        std::cout << mVideoInput.path << std::endl;
+        if (mVideoInput.path == "")
         {
             LOG << "Video could not be opened" <<LOGEND;
             return;
         }
-        mVideoInput->capture = cv::VideoCapture(mVideoInput->path);
+        mCapture = cv::VideoCapture(mVideoInput.path);
 //         mVideoInput->capture.set(CV_CAP_PROP_MODE,  CV_CAP_MODE_RGB );
-        if (!mVideoInput->capture.isOpened()) {
+        if (!mCapture.isOpened()) {
             LOG << "Video could not be opened" <<LOGEND;
             return;
         }
@@ -57,13 +61,13 @@ namespace Demo
         cv::Mat mMat;
 
         // Capture frame-by-frame
-        mVideoInput->capture >> mMat; //1920/1080
+        mCapture >> mMat; //1920/1080
         if(mMat.empty())
         {
 //             Ogre::LogManager::getSingleton().logMessage("mMat empty");
             return;
         }
-        if (mVideoInput->isStereo)
+        if (mVideoInput.videoInputType == VIDEO_STEREO_VERTICAL_SPLIT)
         {
             cv::Rect lrect(0,540, 1920, 540);
             cv::Mat imageOrigLeft = mMat(lrect);

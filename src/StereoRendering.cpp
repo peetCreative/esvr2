@@ -21,13 +21,12 @@
 #include "Threading/OgreThreads.h"
 #include "Threading/OgreBarrier.h"
 
-//Declares WinMain / main
-// #include "MainEntryPointHelper.h"
-// #include "System/MainEntryPoints.h"
+#include <libconfig.h++>
 
 extern const double cFrametime;
 const double cFrametime = 1.0 / 25.0;
 
+using namespace libconfig;
 using namespace Demo;
 
 struct ThreadData
@@ -47,6 +46,20 @@ THREAD_DECLARE( renderThread1 );
 THREAD_DECLARE( logicThread1 );
 
 
+VideoInputType getVideoInputType(std::string input_str)
+{
+    VideoInputType input = VIDEO_NONE;
+    if (input_str.compare("MONO") == 0)
+        input = VIDEO_MONO;
+    if (input_str.compare("STEREO_SLICED") == 0)
+        input = VIDEO_STEREO_SLICED;
+    if (input_str.compare("STEREO_VERTICAL_SPLIT") == 0)
+        input = VIDEO_STEREO_VERTICAL_SPLIT;
+    if (input_str.compare("STEREO_HORIZONTAL_SPLIT") == 0)
+        input = VIDEO_STEREO_HORIZONTAL_SPLIT;
+    return input;
+}
+
 InputType getInputType(std::string input_str)
 {
     InputType input = NONE;
@@ -63,6 +76,12 @@ int main( int argc, const char *argv[] )
     InputType input = NONE;
     const char *config_file = nullptr;
     CameraConfig *cameraConfig = nullptr;
+//     std::cout << config_file << std::endl;
+    HmdConfig hmdConfig{
+        { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+        { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+        { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45} }
+    };
     VideoInput videoInput;
     videoInput.path = "";
     for (int i = 1; i < argc; i++)
@@ -84,17 +103,160 @@ int main( int argc, const char *argv[] )
             show_ogre_dialog = true;
     }
 
+    //from config file
+    if(config_file)
+    {
+        Config cfg;
+        try
+        {
+            LOG << "read from config file" << LOGEND;
+            cfg.readFile(config_file);
+            if (cfg.exists("show_ogre_dialog"))
+                cfg.lookupValue ("show_ogre_dialog", show_ogre_dialog);
+            //only set input if we didn't set it by cmdline
+            if (cfg.exists("input_type") && input == NONE)
+            {
+                std::string input_str;
+                cfg.lookupValue("input_type", input_str);
+                input = getInputType(input_str);
+            }
+            //VIDEO
+            if (input == VIDEO && cfg.exists("video"))
+            {
+                Setting& vs = cfg.lookup("video");
+                if (vs.exists("path"))
+                    videoInput.path = vs["path"].c_str();
+                if (vs.exists("video_type"))
+                {
+                    std::string video_input_str;
+                    video_input_str = vs["video_type"].c_str();
+                    videoInput.videoInputType = getVideoInputType(video_input_str);
+                }
+            }
+
+            std::string categories[2] = {"left", "right"};
+            //CAMERA_CONFIG
+            if (cfg.exists("camera_info.left") &&
+                cfg.exists("camera_info.right"))
+            {
+                cameraConfig = new CameraConfig();
+                const Setting& cis = cfg.lookup("camera_info");
+                for (int leftOrRight = 0; leftOrRight < 2; leftOrRight++)
+                {
+                    Setting& s = cis.lookup(categories[leftOrRight]);
+                    if (s.exists("width") && s.exists("height"))
+                    {
+                        //I'm not sure I have seen such a shit lib like libconfig++
+                        //lookupValue gives me back 0 because it is parse point sth to 0 SHIT!!!!!
+                        cameraConfig->width[leftOrRight] =
+                            s["width"];
+                        cameraConfig->height[leftOrRight] =
+                            s["width"];
+                    }
+                    else
+                        LOG << "camera_config is invalid" << LOGEND;
+                    if (s.exists("f_x") && s.exists("f_y") &&
+                        s.exists("c_x") && s.exists("c_y"))
+                    {
+                        cameraConfig->f_x[leftOrRight] = s["f_x"];
+                        cameraConfig->f_y[leftOrRight] = s["f_y"];
+                        cameraConfig->c_x[leftOrRight] = s["c_x"];
+                        cameraConfig->c_y[leftOrRight] = s["c_y"];
+                    }
+                    if (s.exists("K") && s["K"].getLength() == 9)
+                    {
+                        cameraConfig->f_x[leftOrRight] = s["K"][0];
+                        cameraConfig->f_y[leftOrRight] = s["K"][4];
+                        cameraConfig->c_x[leftOrRight] = s["K"][2];
+                        cameraConfig->c_y[leftOrRight] = s["K"][5];
+                    }
+                }
+            }
+            if (cfg.exists("hmd_info.left") &&
+                cfg.exists("hmd_info.right"))
+            {
+                const Setting& cis = cfg.lookup("hmd_info");
+                for (int leftOrRight = 0; leftOrRight < 2; leftOrRight++)
+                {
+                    Setting& s = cis.lookup(categories[leftOrRight]);
+                    if (s.exists("eye_to_head") &&
+                        s["eye_to_head"].getLength() == 16 &&
+                        s.exists("projection_matrix") &&
+                        s["projection_matrix"].getLength() == 16 &&
+                        s.exists("tan") &&
+                        s["tan"].getLength() == 4)
+                    {
+                        Setting& st = s["tan"];
+                        hmdConfig.tan[leftOrRight] =
+                            Ogre::Vector4(st[0], st[1], st[2], st[3]);
+                        Setting& se2h = s["eye_to_head"];
+                        Setting& spm = s["projection_matrix"];
+                        float e2h[16];
+                        memset(&e2h, 0, sizeof(float[16]));
+                        float pm[16];
+                        memset(&pm, 0, sizeof(float[16]));
+                        for (int i = 0; i < 16; i++)
+                        {
+                            //This is a horrible bug or feature of this library
+                            //An array is not auto casting to float,
+                            //an List can contain different types arrrrrg
+                            // so we use lists... and casting
+                            if (se2h[i].getType() == 1)
+                            {
+                                int a = se2h[i];
+                                e2h[i] = static_cast<float>(a);
+                            }
+                            else
+                            {
+                                e2h[i] = se2h[i];
+                            }
+                            if (spm[i].getType() == 1)
+                            {
+                                int a = spm[i];
+                                pm[i] = static_cast<float>(a);
+                            }
+                            else
+                            {
+                                pm[i] = spm[i];
+                            }
+                        }
+                        hmdConfig.eyeToHead[leftOrRight] = Ogre::Matrix4(
+                            e2h[ 0], e2h[ 1], e2h[ 2], e2h[ 3],
+                            e2h[ 4], e2h[ 5], e2h[ 6], e2h[ 7],
+                            e2h[ 8], e2h[ 9], e2h[10], e2h[11],
+                            e2h[12], e2h[13], e2h[14], e2h[15]
+                            );
+                        hmdConfig.projectionMatrix[leftOrRight] = Ogre::Matrix4(
+                            pm[ 0], pm[ 1], pm[ 2], pm[ 3],
+                            pm[ 4], pm[ 5], pm[ 6], pm[ 7],
+                            pm[ 8], pm[ 9], pm[10], pm[11],
+                            pm[12], pm[13], pm[14], pm[15]
+                        );
+                    }
+                    else
+                    {
+                        LOG << "There is some typo in your hmd config" << LOGEND;
+                    }
+                }
+            }
+        }
+        catch(const FileIOException &fioex)
+        {
+            std::cerr << "I/O error while reading file." << std::endl;
+            return(EXIT_FAILURE);
+        }
+        catch(const ParseException &pex)
+        {
+            std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+                    << " - " << pex.getError() << std::endl;
+            return(EXIT_FAILURE);
+        }
+    }
+
     Ogre::Barrier *barrier = new Ogre::Barrier( 2 );
 
     StereoRenderingGameState *graphicsGameState =
         new StereoRenderingGameState("Description of what we are doing");
-
-//     std::cout << config_file << std::endl;
-    HmdConfig hmdConfig{
-        { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-        { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-        { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45} }
-    };
 
     StereoGraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
             graphicsGameState, WS_TWO_CAMERAS_STEREO, hmdConfig, show_ogre_dialog );
