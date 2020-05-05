@@ -80,9 +80,18 @@ namespace Demo
 
         manualObject->end();
 
-        Ogre::SceneNode *sceneNodeLines = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
+        Ogre::SceneNode *scn = nullptr;
+        Ogre::SceneManager::SceneNodeList scnlist = sceneManager->findSceneNodes("Cameras Node");
+        if( !scnlist.empty() )
+        {
+            scn = scnlist.at(0);
+        }
+        else
+        {
+            scn = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
                                      createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        sceneNodeLines->attachObject(manualObject);
+        }
+        scn->attachObject(manualObject);
 
         Ogre::Light *light = sceneManager->createLight();
         Ogre::SceneNode *lightNode = sceneManager->getRootSceneNode()->createChildSceneNode();
