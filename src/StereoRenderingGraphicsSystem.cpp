@@ -574,7 +574,7 @@ namespace Demo
             HmdConfig hmdConfig,
             bool showOgreConfigDialog,
             Ogre::Real camNear, Ogre::Real camFar ) :
-        GraphicsSystem( gameState ),
+        GraphicsSystem( gameState, "./" ),
         mWorkSpaceType( wsType ),
         mCamerasNode( nullptr ),
         mEyeCameras{ nullptr, nullptr },

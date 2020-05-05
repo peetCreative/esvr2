@@ -73,6 +73,7 @@ InputType getInputType(std::string input_str)
 int main( int argc, const char *argv[] )
 {
     bool show_ogre_dialog = false;
+    bool multiThreading = false;
     InputType input = NONE;
     const char *config_file = nullptr;
     CameraConfig *cameraConfig = nullptr;
@@ -86,21 +87,23 @@ int main( int argc, const char *argv[] )
     videoInput.path = "";
     for (int i = 1; i < argc; i++)
     {
-        if (std::strcmp(argv[i], "--config") == 0 && i+1 < argc)
+        if ( std::strcmp(argv[i], "--config") == 0 && i+1 < argc )
         {
             config_file = argv[i+1];
         }
-        if (std::strcmp(argv[i], "--input-type") == 0 && i+1 < argc)
+        if ( std::strcmp(argv[i], "--input-type") == 0 && i+1 < argc )
         {
             input = getInputType(argv[i+1]);
         }
-        if (std::strcmp(argv[i], "--video-path") == 0 && i+1 < argc)
+        if ( std::strcmp(argv[i], "--video-path") == 0 && i+1 < argc )
         {
             videoInput.path = std::string(argv[i+1]);
             input = VIDEO;
         }
-        if(std::strcmp(argv[i], "--show-ogre-dialog") == 0)
+        if ( std::strcmp(argv[i], "--show-ogre-dialog") == 0 )
             show_ogre_dialog = true;
+        if ( std::strcmp(argv[i], "--multithreading") == 0 )
+            multiThreading = true;
     }
 
     //from config file
@@ -113,6 +116,8 @@ int main( int argc, const char *argv[] )
             cfg.readFile(config_file);
             if (cfg.exists("show_ogre_dialog"))
                 cfg.lookupValue ("show_ogre_dialog", show_ogre_dialog);
+            if (cfg.exists("multithreading"))
+                cfg.lookupValue ("multithreading", multiThreading);
             //only set input if we didn't set it by cmdline
             if (cfg.exists("input_type") && input == NONE)
             {
@@ -273,22 +278,72 @@ int main( int argc, const char *argv[] )
         graphicsSystem->_notifyVideoSource( videoLoader );
     }
 
-    ThreadData *threadData = new ThreadData();
-    threadData->graphicsSystem   = graphicsSystem;
-    threadData->videoSource      = videoLoader;
-    threadData->inputType        = input;
-    threadData->barrier          = barrier;
+    if ( multiThreading )
+    {
+        ThreadData *threadData = new ThreadData();
+        threadData->graphicsSystem   = graphicsSystem;
+        threadData->videoSource      = videoLoader;
+        threadData->inputType        = input;
+        threadData->barrier          = barrier;
 
-    Ogre::ThreadHandlePtr threadHandles[2];
-    threadHandles[0] = Ogre::Threads::CreateThread( THREAD_GET( renderThread1 ), 0, threadData );
-    threadHandles[1] = Ogre::Threads::CreateThread( THREAD_GET( logicThread1 ), 1, threadData );
+        Ogre::ThreadHandlePtr threadHandles[2];
+        threadHandles[0] = Ogre::Threads::CreateThread( THREAD_GET( renderThread1 ), 0, threadData );
+        threadHandles[1] = Ogre::Threads::CreateThread( THREAD_GET( logicThread1 ), 1, threadData );
 
-    LOG << "Render Tread " << threadHandles[0]->getThreadIdx() << LOGEND;
-    LOG << "Video Source Tread " << threadHandles[1]->getThreadIdx() << LOGEND;
+        LOG << "Render Tread " << threadHandles[0]->getThreadIdx() << LOGEND;
+        LOG << "Video Source Tread " << threadHandles[1]->getThreadIdx() << LOGEND;
 
-    Ogre::Threads::WaitForThreads( 2, threadHandles );
+        Ogre::Threads::WaitForThreads( 2, threadHandles );
+        delete threadData;
+    }
+    else
+    {
+        graphicsSystem->initialize( "esvr2" );
+        videoLoader->initialize();
+//         barrier->sync();
 
-    delete threadData;
+        if( !graphicsSystem->getQuit() )
+        {
+            graphicsSystem->createScene01();
+
+            Ogre::Window *renderWindow = graphicsSystem->getRenderWindow();
+
+            Ogre::Timer timer;
+
+            Ogre::uint64 startTime = timer.getMicroseconds();
+
+            double timeSinceLast = 1.0 / 60.0;
+
+            while( !graphicsSystem->getQuit() )
+            {
+                videoLoader->beginFrameParallel();
+                graphicsSystem->beginFrameParallel();
+                videoLoader->update( timeSinceLast );
+                graphicsSystem->update( timeSinceLast );
+                graphicsSystem->finishFrameParallel();
+                videoLoader->finishFrameParallel();
+
+                if( !renderWindow->isVisible() )
+                {
+                    //Don't burn CPU cycles unnecessary when we're minimized.
+                    Ogre::Threads::Sleep( 500 );
+                }
+
+                Ogre::uint64 endTime = timer.getMicroseconds();
+                timeSinceLast = (endTime - startTime) / 1000000.0;
+                timeSinceLast = std::min( 1.0, timeSinceLast ); //Prevent from going haywire.
+                startTime = endTime;
+
+            }
+            LOG << "END GRAPHICS" << LOGEND;
+        //     barrier->sync();
+
+            graphicsSystem->destroyScene();
+        }
+        graphicsSystem->deinitialize();
+        videoLoader->deinitialize();
+    }
+
     delete graphicsGameState;
     delete graphicsSystem;
     delete videoLoader;
