@@ -271,11 +271,25 @@ int main( int argc, const char *argv[] )
     graphicsGameState->_notifyGraphicsSystem( graphicsSystem );
 
     VideoLoader *videoLoader = nullptr;
-    if ( input == VIDEO )
+    switch(input)
     {
+        case NONE:
+        case ROS:
+            delete graphicsGameState;
+            delete graphicsSystem;
+            delete videoLoader;
+            LOG << "no input: shutdown" << LOGEND;
+            return 1;
+        case VIDEO:
         //TODO: GraphicsSystem
-        videoLoader = new VideoLoader( /*graphicsSystem,*/ videoInput );
-        graphicsSystem->_notifyVideoSource( videoLoader );
+            videoLoader = new VideoLoader( /*graphicsSystem,*/ videoInput );
+            graphicsSystem->_notifyVideoSource( videoLoader );
+            break;
+//         case ROS:
+//         //TODO: GraphicsSystem
+//             videoLoader = new VideoLoader( /*graphicsSystem,*/ videoInput );
+//             graphicsSystem->_notifyVideoSource( videoLoader );
+//             break;
     }
 
     if ( multiThreading )
