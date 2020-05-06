@@ -391,6 +391,8 @@ namespace Demo
         mVrTexture->scheduleTransitionTo(
             Ogre::GpuResidency::Resident );
 
+//         mVrTexture->_setNextResidencyStatus( Ogre::GpuResidency::Resident );
+
         Ogre::CompositorManager2 *compositorManager =
             mRoot->getCompositorManager2();
 
@@ -551,23 +553,7 @@ namespace Demo
             }
         }
 //         mVrTexture->_transitionTo( GpuResidency::Resident, imageData );
-        mVrTexture->_setNextResidencyStatus( Ogre::GpuResidency::Resident );
 
-        mStagingTexture->startMapRegion();
-        Ogre::TextureBox texBox = mStagingTexture->mapRegion(
-            mVrTexture->getWidth(),
-            mVrTexture->getHeight(),
-            mVrTexture->getDepth(),
-            mVrTexture->getNumSlices(),
-            mVrTexture->getPixelFormat() );
-        texBox.copyFrom( mImageData,
-                         mVrTexture->getWidth(),
-                         mVrTexture->getHeight(),
-                         bytesPerRow );
-        mStagingTexture->stopMapRegion();
-        mStagingTexture->upload( texBox, mVrTexture, 0, 0, 0, false );
-
-        mVrTexture->notifyDataIsReady();
         return true;
     }
 
@@ -609,11 +595,14 @@ namespace Demo
         memset( mTrackedDevicePose, 0, sizeof (mTrackedDevicePose) );
         memset( &mVrData, 0, sizeof( mVrData ) );
 
-//         int frames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
+        // for some reason we can only update every n frames.
+        //which is limited by this function
+        mUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
     }
 
     void StereoGraphicsSystem::deinitialize(void)
     {
+
         delete mOvrCompositorListener;
         mOvrCompositorListener = 0;
 
@@ -669,23 +658,12 @@ namespace Demo
     {
         //we have to wait some frames after we can send new texture
         // maybe we have to look this also applies to Hlms
-        if ( mOvrCompositorListener->getFrameCnt() < mLastFrameUpdate + 3 )
-        {
-            LOG << "wait" << LOGEND;
-            return;
-        }
-        else
-        {
-            LOG << "send" << LOGEND;
-        }
-        mLastFrameUpdate = mOvrCompositorListener->getFrameCnt();
         if ( !right )
             right = left;
         VideoRenderTarget target = BACKGROUND;
         if ( target == BACKGROUND  && mImageRenderConfig )
         {
             //why don't we just fire images to the lens as we have them
-            mMtxImageResize.lock();
             resize(*left, mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
             resize(*right, mImageResize[RIGHT], mImageRenderConfig->size[RIGHT]);
 
@@ -698,8 +676,9 @@ namespace Demo
                     cv::Point(mImgMiddleResize[RIGHT][0],mImgMiddleResize[RIGHT][1]),
                     5, cv::Scalar( 0, 0, 255 ), -1);
             }
-            mMtxImageResize.unlock();
+            mMtxImageResize.lock();
             fillTexture();
+            mMtxImageResize.unlock();
         }
     }
 
@@ -735,5 +714,41 @@ namespace Demo
 
         mVrTexture->notifyDataIsReady();
         return true;
+    }
+
+    void StereoGraphicsSystem::beginFrameParallel(void)
+    {
+        BaseSystem::beginFrameParallel();
+        if ( mOvrCompositorListener->getFrameCnt() > mLastFrameUpdate + 2 )
+        {
+            mLastFrameUpdate = mOvrCompositorListener->getFrameCnt();
+            LOG << "update" << LOGEND;
+            mMtxImageResize.lock();
+
+            const size_t bytesPerRow =
+            mVrTexture->_getSysRamCopyBytesPerRow( 0 );
+
+            mStagingTexture->startMapRegion();
+            Ogre::TextureBox texBox = mStagingTexture->mapRegion(
+                mVrTexture->getWidth(),
+                mVrTexture->getHeight(),
+                mVrTexture->getDepth(),
+                mVrTexture->getNumSlices(),
+                mVrTexture->getPixelFormat() );
+            texBox.copyFrom( mImageData,
+                            mVrTexture->getWidth(),
+                            mVrTexture->getHeight(),
+                            bytesPerRow );
+            mStagingTexture->stopMapRegion();
+            mStagingTexture->upload( texBox, mVrTexture, 0, 0, 0, false );
+
+            mVrTexture->notifyDataIsReady();
+            mMtxImageResize.unlock();
+        }
+        else
+        {
+            LOG << "wait" << LOGEND;
+        }
+
     }
 }

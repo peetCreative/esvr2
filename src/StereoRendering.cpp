@@ -302,11 +302,13 @@ int main( int argc, const char *argv[] )
 
     if ( multiThreading )
     {
+        LOG << "multiThreading" << LOGEND;
         Ogre::Barrier *barrier = new Ogre::Barrier( 2 );
         ThreadData *threadData = new ThreadData();
         threadData->graphicsSystem   = graphicsSystem;
         threadData->videoSource      = videoLoader;
         threadData->inputType        = input;
+        threadData->cameraConfig     = cameraConfig;
         threadData->barrier          = barrier;
 
         Ogre::ThreadHandlePtr threadHandles[2];
@@ -322,13 +324,13 @@ int main( int argc, const char *argv[] )
     //SINGLETHREADED
     else
     {
+        LOG << "singleThreading" << LOGEND;
         graphicsSystem->initialize( "esvr2" );
         videoLoader->initialize();
         if ( cameraConfig )
         {
             graphicsSystem->calcAlign( *cameraConfig );
         }
-//         barrier->sync();
 
         if( !graphicsSystem->getQuit() )
         {
@@ -364,7 +366,6 @@ int main( int argc, const char *argv[] )
 
             }
             LOG << "END GRAPHICS" << LOGEND;
-        //     barrier->sync();
 
             graphicsSystem->destroyScene();
         }

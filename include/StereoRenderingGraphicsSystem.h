@@ -117,11 +117,12 @@ namespace Demo
         void setImgPtr(const cv::Mat *left, const cv::Mat *right);
         bool calcAlign(CameraConfig &mCameraConfig);
 
+        virtual void beginFrameParallel(void);
+
         void _notifyVideoSource( VideoLoader *videoSource )
         {
             mVideoSource = videoSource;
         };
-
     };
 }
 
