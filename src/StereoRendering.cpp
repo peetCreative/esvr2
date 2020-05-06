@@ -31,9 +31,10 @@ using namespace Demo;
 
 struct ThreadData
 {
-    GraphicsSystem  *graphicsSystem;
+    StereoGraphicsSystem  *graphicsSystem;
     VideoLoader     *videoSource;
     InputType       inputType;
+    CameraConfig    *cameraConfig;
     Ogre::Barrier   *barrier;
 };
 
@@ -81,8 +82,8 @@ int main( int argc, const char *argv[] )
     HmdConfig hmdConfig{
         { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
         { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-        { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45} }
-    };
+        { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45}},
+        1920, 1080 };
     VideoInput videoInput;
     videoInput.path = "";
     for (int i = 1; i < argc; i++)
@@ -156,7 +157,7 @@ int main( int argc, const char *argv[] )
                         cameraConfig->width[leftOrRight] =
                             s["width"];
                         cameraConfig->height[leftOrRight] =
-                            s["width"];
+                            s["height"];
                     }
                     else
                         LOG << "camera_config is invalid" << LOGEND;
@@ -181,6 +182,14 @@ int main( int argc, const char *argv[] )
                 cfg.exists("hmd_info.right"))
             {
                 const Setting& cis = cfg.lookup("hmd_info");
+                if (cis.exists("width"))
+                {
+                    hmdConfig.width = cis["width"];
+                }
+                if (cis.exists("height"))
+                {
+                    hmdConfig.height = cis["height"];
+                }
                 for (int leftOrRight = 0; leftOrRight < 2; leftOrRight++)
                 {
                     Setting& s = cis.lookup(categories[leftOrRight]);
@@ -258,13 +267,12 @@ int main( int argc, const char *argv[] )
         }
     }
 
-    Ogre::Barrier *barrier = new Ogre::Barrier( 2 );
-
     StereoRenderingGameState *graphicsGameState =
         new StereoRenderingGameState("Description of what we are doing");
 
     StereoGraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
-            graphicsGameState, WS_TWO_CAMERAS_STEREO, hmdConfig, show_ogre_dialog );
+            graphicsGameState, WS_TWO_CAMERAS_STEREO,
+            hmdConfig, show_ogre_dialog );
 //     GraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
 //         graphicsGameState, WS_INSTANCED_STEREO, hmdConfig );
 
@@ -282,7 +290,7 @@ int main( int argc, const char *argv[] )
             return 1;
         case VIDEO:
         //TODO: GraphicsSystem
-            videoLoader = new VideoLoader( /*graphicsSystem,*/ videoInput );
+            videoLoader = new VideoLoader( graphicsSystem, videoInput );
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
 //         case ROS:
@@ -294,6 +302,7 @@ int main( int argc, const char *argv[] )
 
     if ( multiThreading )
     {
+        Ogre::Barrier *barrier = new Ogre::Barrier( 2 );
         ThreadData *threadData = new ThreadData();
         threadData->graphicsSystem   = graphicsSystem;
         threadData->videoSource      = videoLoader;
@@ -310,10 +319,15 @@ int main( int argc, const char *argv[] )
         Ogre::Threads::WaitForThreads( 2, threadHandles );
         delete threadData;
     }
+    //SINGLETHREADED
     else
     {
         graphicsSystem->initialize( "esvr2" );
         videoLoader->initialize();
+        if ( cameraConfig )
+        {
+            graphicsSystem->calcAlign( *cameraConfig );
+        }
 //         barrier->sync();
 
         if( !graphicsSystem->getQuit() )
@@ -369,10 +383,13 @@ int main( int argc, const char *argv[] )
 unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
 {
     ThreadData *threadData = reinterpret_cast<ThreadData*>( threadHandle->getUserParam() );
-    GraphicsSystem *graphicsSystem  = threadData->graphicsSystem;
+    StereoGraphicsSystem *graphicsSystem  = threadData->graphicsSystem;
     Ogre::Barrier *barrier          = threadData->barrier;
+    CameraConfig *cameraConfig      = threadData->cameraConfig;
 
     graphicsSystem->initialize( "esvr2" );
+    if( cameraConfig )
+        graphicsSystem->calcAlign( *cameraConfig );
     barrier->sync();
 
     if( graphicsSystem->getQuit() )

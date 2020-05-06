@@ -24,6 +24,11 @@
 
 namespace Demo
 {
+    typedef enum {
+        BACKGROUND,
+        SQUARE
+    } VideoRenderTarget;
+
     class OpenVRCompositorListener;
 
     class VideoLoader;
@@ -76,8 +81,9 @@ namespace Demo
         int mCVr[2][2];
         int mImgMiddleResize[2][2];
 
-
         bool mShowMovie;
+
+        int mLastFrameUpdate;
 
         //------------------------------------
         // function

@@ -35,6 +35,8 @@ namespace Demo {
         Ogre::Matrix4 eyeToHead[2];
         Ogre::Matrix4 projectionMatrix[2];
         Ogre::Vector4 tan[2];
+        Ogre::uint32 width;
+        Ogre::uint32 height;
     } HmdConfig;
     typedef struct {
         int width[2] = {0,0};

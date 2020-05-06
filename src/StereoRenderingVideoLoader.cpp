@@ -8,13 +8,15 @@
 
 namespace Demo
 {
-    VideoLoader::VideoLoader(VideoInput vInput):
-        mVideoInput(vInput),
+    VideoLoader::VideoLoader(
+            StereoGraphicsSystem *graphicsSystem,
+            VideoInput vInput):
+        mGraphicsSystem( graphicsSystem ),
+        mVideoInput( vInput ),
         mCapture(),
-        captureFrameWidth(0),
-        captureFrameHeight(0),
-        captureFramePixelFormat(0)
-
+        mCaptureFrameWidth( 0 ),
+        mCaptureFrameHeight( 0 ),
+        mCaptureFramePixelFormat( 0 )
     {
         mVideoInput = vInput;
     }
@@ -38,12 +40,12 @@ namespace Demo
             return;
         }
         // Default resolution of the frame is obtained.The default resolution is system dependent.
-// //         mVideoInput->captureFrameWidth =
-// //             mVideoInput->capture.get(CV_CAP_PROP_FRAME_WIDTH);
-// //         mVideoInput->captureFrameHeight =
-// //             mVideoInput->capture.get(CV_CAP_PROP_FRAME_HEIGHT);
-// //         mVideoInput->captureFramePixelFormat =
-// //             mVideoInput->capture.get(CV_CAP_PROP_FORMAT);
+        mCaptureFrameWidth =
+            mCapture.get(cv::CAP_PROP_FRAME_WIDTH);
+        mCaptureFrameHeight =
+            mCapture.get(cv::CAP_PROP_FRAME_HEIGHT);
+//         mVideoInput->captureFramePixelFormat =
+//             mVideoInput->capture.get(CV_CAP_PROP_FORMAT);
     }
 
     void VideoLoader::deinitialize(void)
@@ -67,24 +69,51 @@ namespace Demo
 //             Ogre::LogManager::getSingleton().logMessage("mMat empty");
             return;
         }
-        if (mVideoInput.videoInputType == VIDEO_STEREO_VERTICAL_SPLIT)
+        cv::Rect lrect, rrect;
+        cv::Mat imageOrigLeft, imageOrigRight;
+        cv::Mat *imageOrigLeftPtr = nullptr;
+        cv::Mat *imageOrigRightPtr  = nullptr;
+        switch ( mVideoInput.videoInputType )
         {
-            cv::Rect lrect(0,540, 1920, 540);
-            cv::Mat imageOrigLeft = mMat(lrect);
-            cv::Rect rrect(0,0, 1920, 540);
-            cv::Mat imageOrigRight = mMat(rrect);
-
-            if( imageOrigLeft.empty() || imageOrigRight.empty() )
-            {
-                return;
-            }
-//             mGraphicsSystem->setImgPtr( &imageOrigLeft, &imageOrigRight );
+        case VIDEO_MONO:
+            imageOrigLeftPtr = &mMat;
+            break;
+        case VIDEO_STEREO_SLICED:
+//             TODO:implement manage sliced images
+            break;
+        case VIDEO_STEREO_VERTICAL_SPLIT:
+            //left is below
+            lrect = cv::Rect(0, mCaptureFrameHeight/2,
+                           mCaptureFrameWidth, mCaptureFrameHeight/2);
+            imageOrigLeft = mMat(lrect);
+            imageOrigLeftPtr = &imageOrigLeft;
+            //right is above
+            rrect = cv::Rect(0, 0,
+                           mCaptureFrameWidth, mCaptureFrameHeight/2);
+            imageOrigRight = mMat(rrect);
+            imageOrigRightPtr = &imageOrigRight;
+            break;
+        case VIDEO_STEREO_HORIZONTAL_SPLIT:
+            lrect = cv::Rect(0, 0,
+                           mCaptureFrameWidth/2, mCaptureFrameHeight);
+            imageOrigLeft = mMat(lrect);
+            imageOrigLeftPtr = &imageOrigLeft;
+            lrect = cv::Rect(mCaptureFrameWidth/2, 0,
+                           mCaptureFrameWidth/2, mCaptureFrameHeight);
+            imageOrigRight = mMat(rrect);
+            imageOrigRightPtr = &imageOrigRight;
+            break;
+        default:
+            break;
         }
-        else
-        {
-//             mGraphicsSystem->setImgPtr( &imageOrigLeft, &imageOrigRight );
-        }
+        //check left Ptr is valid at least.
+        //if right is nullptr graphics will project left to both eyes
+        if( !imageOrigLeftPtr || imageOrigLeftPtr->empty() ||
+            (imageOrigRightPtr && imageOrigRightPtr->empty()))
+            return;
+        mGraphicsSystem->setImgPtr( imageOrigLeftPtr, imageOrigRightPtr );
     }
+
 
     //-----------------------------------------------------------------------------------
     void VideoLoader::finishFrameParallel(void)

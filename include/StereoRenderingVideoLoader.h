@@ -3,26 +3,25 @@
 #define _Demo_StereoRenderingVideoLoader_H_
 
 #include "StereoRendering.h"
-#include "StereoRenderingGraphicsSystem.h"
 
-#include "GameState.h"
 #include "Threading/MessageQueueSystem.h"
 
 
 namespace Demo {
+    class StereoGraphicsSystem;
+
     class VideoLoader : public Mq::MessageQueueSystem
     {
+        StereoGraphicsSystem *mGraphicsSystem;
         VideoInput mVideoInput;
         cv::VideoCapture mCapture;
-        int captureFrameWidth;
-        int captureFrameHeight;
-        int captureFramePixelFormat;
-        //TODO: cannot be included for some reason..
-//         StereoGraphicsSystem     *mGraphicsSystem;
+        int mCaptureFrameWidth;
+        int mCaptureFrameHeight;
+        int mCaptureFramePixelFormat;
 
     public:
         VideoLoader(
-//             StereoGraphicsSystem *graphicsSystem,
+            StereoGraphicsSystem *graphicsSystem,
             VideoInput vInput );
         ~VideoLoader();
 
