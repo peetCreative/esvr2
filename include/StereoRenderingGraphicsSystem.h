@@ -81,10 +81,10 @@ namespace Demo
         int mCVr[2][2];
         int mImgMiddleResize[2][2];
 
-        bool mShowMovie;
+        bool mShowVideo;
 
         int mLastFrameUpdate;
-
+        int mUpdateFrames;
         //------------------------------------
         // function
         //------------------------------------
@@ -111,6 +111,7 @@ namespace Demo
             WorkspaceType wsType,
             HmdConfig hmdConfig,
             bool showOgreDialog = false,
+            bool showVideo = true,
             Ogre::Real camNear = 0.1f, Ogre::Real camFar = 200.0f);
         virtual void deinitialize(void);
 

@@ -189,6 +189,11 @@ namespace Demo
 
     bool StereoGraphicsSystem::calcAlign(CameraConfig &cameraConfig)
     {
+        Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
+        // for some reason we can only update every n frames.
+        //which is limited by this function
+        mUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
+
 //         if(!mHmdConfig || !mHMD)
 //             return false;
         //now we have to know
@@ -562,6 +567,7 @@ namespace Demo
             WorkspaceType wsType,
             HmdConfig hmdConfig,
             bool showOgreConfigDialog,
+            bool showVideo,
             Ogre::Real camNear, Ogre::Real camFar ) :
         GraphicsSystem( gameState, "./" ),
         mWorkSpaceType( wsType ),
@@ -589,15 +595,12 @@ namespace Demo
         mDrawHelpers(true),
         mCVr{{ 0, 0 }, { 0, 0 }},
         mImgMiddleResize{{ 0, 0 }, { 0, 0 }},
-        mShowMovie(true),
-        mLastFrameUpdate(0)
+        mShowVideo(showVideo),
+        mLastFrameUpdate(0),
+        mUpdateFrames(2)
     {
         memset( mTrackedDevicePose, 0, sizeof (mTrackedDevicePose) );
         memset( &mVrData, 0, sizeof( mVrData ) );
-
-        // for some reason we can only update every n frames.
-        //which is limited by this function
-        mUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
     }
 
     void StereoGraphicsSystem::deinitialize(void)
@@ -656,6 +659,8 @@ namespace Demo
 
     void StereoGraphicsSystem::setImgPtr(const cv::Mat *left, const cv::Mat *right)
     {
+        if( !mShowVideo )
+            return;
         //we have to wait some frames after we can send new texture
         // maybe we have to look this also applies to Hlms
         if ( !right )
@@ -719,7 +724,7 @@ namespace Demo
     void StereoGraphicsSystem::beginFrameParallel(void)
     {
         BaseSystem::beginFrameParallel();
-        if ( mOvrCompositorListener->getFrameCnt() > mLastFrameUpdate + 2 )
+        if ( mOvrCompositorListener->getFrameCnt() >= mLastFrameUpdate + mUpdateFrames )
         {
             mLastFrameUpdate = mOvrCompositorListener->getFrameCnt();
             LOG << "update" << LOGEND;

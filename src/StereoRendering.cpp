@@ -74,6 +74,7 @@ InputType getInputType(std::string input_str)
 int main( int argc, const char *argv[] )
 {
     bool show_ogre_dialog = false;
+    bool show_video = true;
     bool multiThreading = false;
     InputType input = NONE;
     const char *config_file = nullptr;
@@ -115,6 +116,8 @@ int main( int argc, const char *argv[] )
         {
             LOG << "read from config file" << LOGEND;
             cfg.readFile(config_file);
+            if (cfg.exists("show_video"))
+                cfg.lookupValue ("show_video", show_video);
             if (cfg.exists("show_ogre_dialog"))
                 cfg.lookupValue ("show_ogre_dialog", show_ogre_dialog);
             if (cfg.exists("multithreading"))
@@ -272,7 +275,7 @@ int main( int argc, const char *argv[] )
 
     StereoGraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
             graphicsGameState, WS_TWO_CAMERAS_STEREO,
-            hmdConfig, show_ogre_dialog );
+            hmdConfig, show_ogre_dialog, show_video );
 //     GraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
 //         graphicsGameState, WS_INSTANCED_STEREO, hmdConfig );
 
