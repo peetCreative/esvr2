@@ -21,6 +21,8 @@
 #include "Threading/OgreThreads.h"
 #include "Threading/OgreBarrier.h"
 
+#include "System/MainEntryPoints.h"
+
 #include <libconfig.h++>
 
 extern const double cFrametime;
@@ -71,12 +73,23 @@ InputType getInputType(std::string input_str)
     return input;
 }
 
+VideoRenderTarget getRenderVideoTarget(std::string input_str)
+{
+    VideoRenderTarget input = TO_SQUARE;
+    if (input_str.compare("TO_SQUARE") == 0)
+        input = TO_SQUARE;
+    if (input_str.compare("TO_BACKGROUND") == 0)
+        input = TO_BACKGROUND;
+    return input;
+}
+
 int main( int argc, const char *argv[] )
 {
     bool show_ogre_dialog = false;
     bool show_video = true;
     bool multiThreading = false;
     InputType input = NONE;
+    VideoRenderTarget renderVideoTarget = TO_SQUARE;
     const char *config_file = nullptr;
     CameraConfig *cameraConfig = nullptr;
 //     std::cout << config_file << std::endl;
@@ -122,6 +135,12 @@ int main( int argc, const char *argv[] )
                 cfg.lookupValue ("show_ogre_dialog", show_ogre_dialog);
             if (cfg.exists("multithreading"))
                 cfg.lookupValue ("multithreading", multiThreading);
+            if (cfg.exists("render_video_target"))
+            {
+                std::string input_str;
+                cfg.lookupValue("render_video_target", input_str);
+                renderVideoTarget = getRenderVideoTarget(input_str);
+            }
             //only set input if we didn't set it by cmdline
             if (cfg.exists("input_type") && input == NONE)
             {
@@ -275,7 +294,7 @@ int main( int argc, const char *argv[] )
 
     StereoGraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
             graphicsGameState, WS_TWO_CAMERAS_STEREO,
-            hmdConfig, show_ogre_dialog, show_video );
+            hmdConfig, show_ogre_dialog, show_video, renderVideoTarget );
 //     GraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
 //         graphicsGameState, WS_INSTANCED_STEREO, hmdConfig );
 
@@ -522,50 +541,6 @@ unsigned long logicThread1( Ogre::ThreadHandle *threadHandle )
 
 
 namespace Demo {
-
-
-//         StereoRenderingGameState *graphicsGameState = new StereoRenderingGameState(
-//             );
-//
-//         std::cout << global_config_str_ << std::endl;
-//         HmdConfig hmdConfig{
-//             { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-//             { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-//             { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45} }
-//         };
-//
-//         GraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
-//             graphicsGameState, WS_TWO_CAMERAS_STEREO, hmdConfig );
-// //         GraphicsSystem *graphicsSystem = new StereoGraphicsSystem( graphicsGameState, WS_INSTANCED_STEREO, hmdConfig );
-//         *outGraphicsGameState = graphicsGameState;
-//         *outGraphicsSystem = graphicsSystem;
-// 
-//         graphicsGameState->_notifyGraphicsSystem( graphicsSystem );
-//
-//         LogicSystem *logicSystem;
-//
-//         if ( global_input_ == Demo::VIDEO )
-//         {
-//             VideoInput vInput;
-//             vInput.path = global_video_file_str_;
-//             VideoLoader *logicGameState = new VideoLoader( vInput );
-//             logicSystem = new LogicSystem( logicGameState );
-//             logicGameState->_notifyLogicSystem( logicSystem );
-//             *outLogicGameState = logicGameState;
-//             *outLogicSystem = logicSystem;
-//         }
-// //         if ( global_input_ == Demo::ROS )
-// //         {
-// //             logicGameState = new ROSNode( ROSCOnfigoder so );
-// //         }
-// 
-//         if ( logicSystem )
-//         {
-//             graphicsSystem->_notifyLogicSystem( logicSystem );
-//             logicSystem->_notifyGraphicsSystem( graphicsSystem );
-//         }
-//     }
-
     //-------------------------------------------------------------------------
     Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose )
     {
@@ -587,5 +562,12 @@ namespace Demo {
                     matPose.m[3][0], matPose.m[3][1], matPose.m[3][2], matPose.m[3][3] );
         return matrixObj;
     }
+
+    // Ihave to declare this so it compiles with std ogre
+    void MainEntryPoints::createSystems( GameState **outGraphicsGameState, GraphicsSystem **outGraphicsSystem,
+                                GameState **outLogicGameState, LogicSystem **outLogicSystem ) {}
+    void MainEntryPoints::destroySystems( GameState *graphicsGameState, GraphicsSystem *graphicsSystem,
+                                GameState *logicGameState, LogicSystem *logicSystem ) {}
+    const char* MainEntryPoints::getWindowTitle(void) { return nullptr; }
 
 }

@@ -75,7 +75,6 @@ namespace Demo
         manualObject->textureCoord(1 , 1);
         manualObject->position(0.3f, -0.3f, -1.0f);
         manualObject->textureCoord(1 , 0);
-        manualObject->quad(0, 1, 2, 3);
         manualObject->quad(3, 2, 1, 0);
 
         manualObject->end();

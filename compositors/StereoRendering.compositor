@@ -5,9 +5,8 @@ abstract target main_stereo_render
 	{
 		load
 		{
-// TODO: only disable clear if render video to background
-//			all				clear
-//			clear_colour	0.2 0.4 0.6 1
+            all				clear
+			clear_colour	0.2 0.4 0.6 1
 		}
 		store
 		{
@@ -86,15 +85,15 @@ compositor_node TwoCamerasNode
 	target rt_renderwindow
 	{
 // TODO: only disable clear if render video to background
-//		pass clear
-//		{
-//			//Get executed on the first eye
-//			execution_mask			0x01
-//			//Don't be affected by the modifier, apply to the whole screen
-//			viewport_modifier_mask	0x00
+		pass clear
+		{
+			//Get executed on the first eye
+			execution_mask			0x01
+			//Don't be affected by the modifier, apply to the whole screen
+			viewport_modifier_mask	0x00
 
-//			colour_value			0.2 0.4 0.6 1
-//		}
+			colour_value			0.2 0.4 0.6 1
+		}
 
 		//Eye render
 		pass render_scene

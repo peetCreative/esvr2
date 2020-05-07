@@ -16,6 +16,7 @@
 #include "OgreMemoryAllocatorConfig.h"
 #include "OgreGpuResource.h"
 #include "OgreStagingTexture.h"
+#include "Vao/OgreVaoManager.h"
 
 #include "opencv2/opencv.hpp"
 #include <sstream>
@@ -179,7 +180,8 @@ namespace Demo
 
             const float ipd = mVrData.mLeftToRight.x;
             Ogre::Vector3 cullCameraOffset = Ogre::Vector3::ZERO;
-            cullCameraOffset.z = (ipd / 2.0f) / Ogre::Math::Abs( cameraCullFrustumExtents.x );
+            cullCameraOffset.z = (ipd / 2.0f) /
+                Ogre::Math::Abs( cameraCullFrustumExtents.x );
 
             const Ogre::Real offset = cullCameraOffset.length();
             mVrCullCamera->setNearClipDistance( camNear + offset );
@@ -190,12 +192,49 @@ namespace Demo
     bool StereoGraphicsSystem::calcAlign(CameraConfig &cameraConfig)
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
+        Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
+
         // for some reason we can only update every n frames.
         //which is limited by this function
         mUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
 
-//         if(!mHmdConfig || !mHMD)
-//             return false;
+        mCameraWidth = cameraConfig.width[0];
+        mCameraHeight = cameraConfig.height[0];
+
+        if ( mVideoTarget == TO_SQUARE )
+        {
+            mVideoTexture->setResolution( mCameraWidth, mCameraHeight );
+            mVideoTexture->setPixelFormat( Ogre::PFG_RGBA8_UNORM );
+        }
+
+        const Ogre::uint32 rowAlignment = 4u;
+        mImageDataSize =
+            Ogre::PixelFormatGpuUtils::getSizeBytes(
+                mVideoTexture->getWidth(),
+                mVideoTexture->getHeight(),
+                mVideoTexture->getDepth(),
+                mVideoTexture->getNumSlices(),
+                mVideoTexture->getPixelFormat(),
+                rowAlignment );
+
+        mImageData = reinterpret_cast<Ogre::uint8*>(
+            OGRE_MALLOC_SIMD( mImageDataSize,
+            Ogre::MEMCATEGORY_RESOURCE ) );
+        memset(mImageData, 0, mImageDataSize);
+
+        if ( mVideoTarget == TO_SQUARE )
+        {
+            mVideoTexture->scheduleTransitionTo( Ogre::GpuResidency::Resident );
+        }
+
+        mStagingTexture =
+            textureManager->getStagingTexture(
+                mVideoTexture->getWidth(),
+                mVideoTexture->getHeight(),
+                mVideoTexture->getDepth(),
+                mVideoTexture->getNumSlices(),
+                mVideoTexture->getPixelFormat() );
+
         //now we have to know
         if (!mImageRenderConfig)
         {
@@ -396,8 +435,6 @@ namespace Demo
         mVrTexture->scheduleTransitionTo(
             Ogre::GpuResidency::Resident );
 
-//         mVrTexture->_setNextResidencyStatus( Ogre::GpuResidency::Resident );
-
         Ogre::CompositorManager2 *compositorManager =
             mRoot->getCompositorManager2();
 
@@ -456,46 +493,20 @@ namespace Demo
         Ogre::TextureGpuManager *textureManager =
             mRoot->getRenderSystem()->getTextureGpuManager();
 
-//         mVideoTexture = textureManager->createOrRetrieveTexture(
-//             "VideoTexture",
-//             Ogre::GpuPageOutStrategy::Discard,
-//             Ogre::TextureFlags::Uav|
-//             Ogre::TextureFlags::Reinterpretable,
-//             Ogre::TextureTypes::Type2D );
-//         mVideoTexture->setResolution( 100, 100);
-//         mVideoTexture->setPixelFormat( Ogre::PFG_RGBA8_UNORM );
-//         mVideoTexture->scheduleTransitionTo( Ogre::GpuResidency::Resident );
-
-        const Ogre::uint32 rowAlignment = 4u;
-        const size_t dataSize =
-            Ogre::PixelFormatGpuUtils::getSizeBytes(
-                mVrTexture->getWidth(),
-                mVrTexture->getHeight(),
-                mVrTexture->getDepth(),
-                mVrTexture->getNumSlices(),
-                mVrTexture->getPixelFormat(),
-                rowAlignment );
-
-        mImageData = reinterpret_cast<Ogre::uint8*>(
-            OGRE_MALLOC_SIMD( dataSize,
-            Ogre::MEMCATEGORY_RESOURCE ) );
-        memset(mImageData, 30, dataSize);
-
-//         Ogre::Image2 image;
-//         image.loadDynamicImage( mImageData, mVideoTexture->getWidth(), mVideoTexture->getHeight(), 1u,
-//                                            Ogre::TextureTypes::Type2DArray, mVideoTexture->getPixelFormat(),
-//                                            true, 1u );
-//         image.uploadTo( mVideoTexture, 0, mVideoTexture->getNumMipmaps() - 1u );
-        //We have to upload the data via a StagingTexture, which acts as an intermediate stash
-        //memory that is both visible to CPU and GPU.
-        mStagingTexture =
-            textureManager->getStagingTexture(
-                mVrTexture->getWidth(),
-                mVrTexture->getHeight(),
-                mVrTexture->getDepth(),
-                mVrTexture->getNumSlices(),
-                mVrTexture->getPixelFormat() );
-
+        if ( mVideoTarget == TO_BACKGROUND )
+        {
+            mVideoTexture = mVrTexture;
+        }
+        else if ( mVideoTarget == TO_SQUARE )
+        {
+            mVideoTexture = textureManager->createTexture(
+                "VideoTexture",
+                Ogre::GpuPageOutStrategy::Discard,
+                Ogre::TextureFlags::AutomaticBatching |
+                Ogre::TextureFlags::ManualTexture |
+                Ogre::TextureFlags::Reinterpretable,
+                Ogre::TextureTypes::Type2D );
+        }
     }
 
     bool StereoGraphicsSystem::fillTexture(void)
@@ -557,8 +568,6 @@ namespace Demo
                 mImageData[(bytesPerRow/4*i)+1] = 255;
             }
         }
-//         mVrTexture->_transitionTo( GpuResidency::Resident, imageData );
-
         return true;
     }
 
@@ -568,8 +577,9 @@ namespace Demo
             HmdConfig hmdConfig,
             bool showOgreConfigDialog,
             bool showVideo,
+            Demo::VideoRenderTarget renderVideoTarget,
             Ogre::Real camNear, Ogre::Real camFar ) :
-        GraphicsSystem( gameState, "./" ),
+        GraphicsSystem( gameState, "../Data/" ),
         mWorkSpaceType( wsType ),
         mCamerasNode( nullptr ),
         mEyeCameras{ nullptr, nullptr },
@@ -587,10 +597,14 @@ namespace Demo
         mStrDriver( "" ),
         mStrDisplay( "" ),
         mDeviceModelNumber( "" ),
-        mVideoSource(nullptr),
+        mVideoSource( nullptr ),
+        mVideoTarget( renderVideoTarget ),
+        mCameraWidth(0),
+        mCameraHeight(0),
         mImageRenderConfig( nullptr ),
         mMtxImageResize(),
-        mImageData(nullptr),
+        mImageData( nullptr ),
+        mImageDataSize( 0 ),
         mStagingTexture(nullptr),
         mDrawHelpers(true),
         mCVr{{ 0, 0 }, { 0, 0 }},
@@ -665,8 +679,7 @@ namespace Demo
         // maybe we have to look this also applies to Hlms
         if ( !right )
             right = left;
-        VideoRenderTarget target = BACKGROUND;
-        if ( target == BACKGROUND  && mImageRenderConfig )
+        if ( mVideoTarget == TO_BACKGROUND  && mImageRenderConfig )
         {
             //why don't we just fire images to the lens as we have them
             resize(*left, mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
@@ -685,24 +698,37 @@ namespace Demo
             fillTexture();
             mMtxImageResize.unlock();
         }
+        else if ( mVideoTarget == TO_SQUARE )
+        {
+//             mOvrCompositorListener->getFrameCnt() % 256;
+            const size_t bytesPerRow =
+                mVideoTexture->_getSysRamCopyBytesPerRow( 0 );
+
+            mMtxImageResize.lock();
+            size_t row_cnt = 0;
+            for (size_t y = 0; y < mCameraHeight; y++) {
+                size_t cnt = row_cnt;
+                const uint8_t* img_row_ptr = left->ptr<const uint8_t>(y);
+                for (size_t x = 0; x < mCameraWidth; x++) {
+                    mImageData[cnt++] = *(img_row_ptr+2);
+                    mImageData[cnt++] = *(img_row_ptr+1);
+                    mImageData[cnt++] = *img_row_ptr;
+                    img_row_ptr += 3;
+                    mImageData[cnt++] = 0;
+                }
+                row_cnt += bytesPerRow;
+            }
+            mMtxImageResize.unlock();
+        }
     }
 
     //-------------------------------------------------------------------------
     bool StereoGraphicsSystem::clearTexture(void)
     {
         const size_t bytesPerRow =
-            mVrTexture->_getSysRamCopyBytesPerRow( 0 );
+            mVideoTexture->_getSysRamCopyBytesPerRow( 0 );
 
-        const Ogre::uint32 rowAlignment = 4u;
-        const size_t dataSize =
-            Ogre::PixelFormatGpuUtils::getSizeBytes(
-                mVrTexture->getWidth(),
-                mVrTexture->getHeight(),
-                mVrTexture->getDepth(),
-                mVrTexture->getNumSlices(),
-                mVrTexture->getPixelFormat(),
-                rowAlignment );
-        memset(mImageData, 0, dataSize);
+        memset(mImageData, 0, mImageDataSize);
         mStagingTexture->startMapRegion();
         Ogre::TextureBox texBox = mStagingTexture->mapRegion(
             mVrTexture->getWidth(),
@@ -724,30 +750,31 @@ namespace Demo
     void StereoGraphicsSystem::beginFrameParallel(void)
     {
         BaseSystem::beginFrameParallel();
-        if ( mOvrCompositorListener->getFrameCnt() >= mLastFrameUpdate + mUpdateFrames )
+        if ( mOvrCompositorListener->getFrameCnt() >=
+                mLastFrameUpdate + mUpdateFrames &&
+            mVideoTexture )
         {
             mLastFrameUpdate = mOvrCompositorListener->getFrameCnt();
             LOG << "update" << LOGEND;
             mMtxImageResize.lock();
-
             const size_t bytesPerRow =
-            mVrTexture->_getSysRamCopyBytesPerRow( 0 );
+            mVideoTexture->_getSysRamCopyBytesPerRow( 0 );
 
             mStagingTexture->startMapRegion();
             Ogre::TextureBox texBox = mStagingTexture->mapRegion(
-                mVrTexture->getWidth(),
-                mVrTexture->getHeight(),
-                mVrTexture->getDepth(),
-                mVrTexture->getNumSlices(),
-                mVrTexture->getPixelFormat() );
+                mVideoTexture->getWidth(),
+                mVideoTexture->getHeight(),
+                mVideoTexture->getDepth(),
+                mVideoTexture->getNumSlices(),
+                mVideoTexture->getPixelFormat() );
             texBox.copyFrom( mImageData,
-                            mVrTexture->getWidth(),
-                            mVrTexture->getHeight(),
+                            mVideoTexture->getWidth(),
+                            mVideoTexture->getHeight(),
                             bytesPerRow );
             mStagingTexture->stopMapRegion();
-            mStagingTexture->upload( texBox, mVrTexture, 0, 0, 0, false );
+            mStagingTexture->upload( texBox, mVideoTexture, 0, 0, 0, false );
 
-            mVrTexture->notifyDataIsReady();
+            mVideoTexture->notifyDataIsReady();
             mMtxImageResize.unlock();
         }
         else

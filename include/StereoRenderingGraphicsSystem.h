@@ -24,11 +24,6 @@
 
 namespace Demo
 {
-    typedef enum {
-        BACKGROUND,
-        SQUARE
-    } VideoRenderTarget;
-
     class OpenVRCompositorListener;
 
     class VideoLoader;
@@ -64,6 +59,8 @@ namespace Demo
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
 
         VideoLoader *mVideoSource;
+        VideoRenderTarget mVideoTarget;
+        size_t mCameraWidth, mCameraHeight;
         //left_left, left_right right_left right_right
         //left_top left_bottom  right_top right_bottom
         struct ImageRenderConfig {
@@ -74,12 +71,14 @@ namespace Demo
         std::mutex mMtxImageResize;
         cv::Mat mImageResize[2];
         Ogre::uint8 *mImageData;
+        size_t mImageDataSize;
         Ogre::StagingTexture *mStagingTexture;
 
         //used for mDrawHelpers
         bool mDrawHelpers;
         int mCVr[2][2];
         int mImgMiddleResize[2][2];
+
 
         bool mShowVideo;
 
@@ -112,6 +111,7 @@ namespace Demo
             HmdConfig hmdConfig,
             bool showOgreDialog = false,
             bool showVideo = true,
+            Demo::VideoRenderTarget renderVideoTarget = TO_SQUARE,
             Ogre::Real camNear = 0.1f, Ogre::Real camFar = 200.0f);
         virtual void deinitialize(void);
 

@@ -17,6 +17,10 @@ namespace Demo {
         VIDEO
     } InputType;
     typedef enum {
+        TO_BACKGROUND,
+        TO_SQUARE
+    } VideoRenderTarget;
+    typedef enum {
         VIDEO_NONE,
         VIDEO_MONO,
         VIDEO_STEREO_SLICED,
