@@ -5,6 +5,7 @@
 #include "StereoRendering.h"
 #include "StereoRenderingGameState.h"
 #include "StereoRenderingGraphicsSystem.h"
+#include "StereoRenderingOpenCvVideoLoader.h"
 #include "StereoRenderingVideoLoader.h"
 
 #include "OgreSceneManager.h"
@@ -312,7 +313,7 @@ int main( int argc, const char *argv[] )
             return 1;
         case VIDEO:
         //TODO: GraphicsSystem
-            videoLoader = new VideoLoader( graphicsSystem, videoInput );
+            videoLoader = new OpenCvVideoLoader( graphicsSystem, videoInput );
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
 //         case ROS:

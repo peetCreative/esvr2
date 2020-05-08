@@ -12,28 +12,22 @@ namespace Demo {
 
     class VideoLoader : public Mq::MessageQueueSystem
     {
+    protected:
         StereoGraphicsSystem *mGraphicsSystem;
-        VideoInput mVideoInput;
-        cv::VideoCapture mCapture;
-        int mCaptureFrameWidth;
-        int mCaptureFrameHeight;
-        int mCaptureFramePixelFormat;
 
     public:
-        VideoLoader(
-            StereoGraphicsSystem *graphicsSystem,
-            VideoInput vInput );
+        VideoLoader( StereoGraphicsSystem *graphicsSystem );
         ~VideoLoader();
 
-        void initialize(void);
-        void deinitialize(void);
-        void update( float timeSinceLast );
+        virtual void initialize(void);
+        virtual void deinitialize(void);
+        virtual void update( float timeSinceLast );
 
         void beginFrameParallel(void);
         void finishFrameParallel(void);
         void finishFrame(void);
 
-        void processIncomingMessage( Mq::MessageId messageId, const void *data );
+        virtual void processIncomingMessage( Mq::MessageId messageId, const void *data );
     };
 }
 
