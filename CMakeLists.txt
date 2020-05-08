@@ -20,6 +20,7 @@ include( CMake/Dependencies/OGRE.cmake )
 
 setupOgre( OGRE_SOURCE, OGRE_BINARIES, OGRE_LIBRARIES, FALSE )
 
+include( CMake/FindPkgMacros.cmake )
 find_package( OpenCV REQUIRED )
 #TODO: make the
 # set(OpenVR_DIR /usr/local/include/openvr/)
