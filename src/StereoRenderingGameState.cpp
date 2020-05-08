@@ -67,14 +67,14 @@ namespace Demo
         manualObject->begin(datablockName, Ogre::OT_TRIANGLE_LIST);
 
         // Back
-        manualObject->position(-0.3f, -0.3f, -1.0f);
-        manualObject->textureCoord(0 , 0);
         manualObject->position(-0.3f, 0.3f, -1.0f);
-        manualObject->textureCoord(0 , 1);
+        manualObject->textureCoord(0 , 0);
         manualObject->position(0.3f, 0.3f, -1.0f);
-        manualObject->textureCoord(1 , 1);
-        manualObject->position(0.3f, -0.3f, -1.0f);
         manualObject->textureCoord(1 , 0);
+        manualObject->position(0.3f, -0.3f, -1.0f);
+        manualObject->textureCoord(1 , 1);
+        manualObject->position(-0.3f, -0.3f, -1.0f);
+        manualObject->textureCoord(0 , 1);
         manualObject->quad(3, 2, 1, 0);
 
         manualObject->end();

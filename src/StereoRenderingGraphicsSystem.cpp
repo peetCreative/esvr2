@@ -704,11 +704,30 @@ namespace Demo
             const size_t bytesPerRow =
                 mVideoTexture->_getSysRamCopyBytesPerRow( 0 );
 
+            const cv::Mat *left_ptr;
+            const cv::Mat *right_ptr;
+            if ( left->cols == mCameraWidth &&
+                left->rows == mCameraHeight &&
+                right->cols == mCameraWidth &&
+                right->rows == mCameraHeight )
+            {
+                left_ptr = left;
+                right_ptr = right;
+            }
+            else
+            {
+                //probably not the most efficient methode
+                resize(*left, mImageResize[LEFT], cv::Size(mCameraWidth, mCameraHeight));
+                resize(*right, mImageResize[RIGHT], cv::Size(mCameraWidth, mCameraHeight));
+                left_ptr = &mImageResize[LEFT];
+                right_ptr = &mImageResize[RIGHT];
+            }
+
             mMtxImageResize.lock();
             size_t row_cnt = 0;
             for (size_t y = 0; y < mCameraHeight; y++) {
                 size_t cnt = row_cnt;
-                const uint8_t* img_row_ptr = left->ptr<const uint8_t>(y);
+                const uint8_t* img_row_ptr = left_ptr->ptr<const uint8_t>(y);
                 for (size_t x = 0; x < mCameraWidth; x++) {
                     mImageData[cnt++] = *(img_row_ptr+2);
                     mImageData[cnt++] = *(img_row_ptr+1);

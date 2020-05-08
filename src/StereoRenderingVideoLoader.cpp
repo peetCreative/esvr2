@@ -82,24 +82,24 @@ namespace Demo
 //             TODO:implement manage sliced images
             break;
         case VIDEO_STEREO_VERTICAL_SPLIT:
-            //left is below
-            lrect = cv::Rect(0, mCaptureFrameHeight/2,
-                           mCaptureFrameWidth, mCaptureFrameHeight/2);
+            lrect = cv::Rect(0, 0,
+                           mCaptureFrameWidth/2, mCaptureFrameHeight);
+            rrect = cv::Rect( mCaptureFrameWidth/2, 0,
+                           mCaptureFrameWidth/2, mCaptureFrameHeight);
             imageOrigLeft = mMat(lrect);
             imageOrigLeftPtr = &imageOrigLeft;
-            //right is above
-            rrect = cv::Rect(0, 0,
-                           mCaptureFrameWidth, mCaptureFrameHeight/2);
             imageOrigRight = mMat(rrect);
             imageOrigRightPtr = &imageOrigRight;
             break;
         case VIDEO_STEREO_HORIZONTAL_SPLIT:
-            lrect = cv::Rect(0, 0,
-                           mCaptureFrameWidth/2, mCaptureFrameHeight);
+            // left is below
+            // right is above
+            lrect = cv::Rect(0, mCaptureFrameHeight/2,
+                           mCaptureFrameWidth, mCaptureFrameHeight/2);
+            rrect = cv::Rect(0, 0,
+                           mCaptureFrameWidth, mCaptureFrameHeight/2);
             imageOrigLeft = mMat(lrect);
             imageOrigLeftPtr = &imageOrigLeft;
-            lrect = cv::Rect(mCaptureFrameWidth/2, 0,
-                           mCaptureFrameWidth/2, mCaptureFrameHeight);
             imageOrigRight = mMat(rrect);
             imageOrigRightPtr = &imageOrigRight;
             break;
