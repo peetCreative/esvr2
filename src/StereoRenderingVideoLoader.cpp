@@ -12,6 +12,10 @@ namespace Demo
     {
     }
 
+    void VideoLoader::initialize(void) {}
+    void VideoLoader::deinitialize(void) {}
+    void VideoLoader::update( float timeSinceLast ) {}
+
     //-----------------------------------------------------------------------------------
     void VideoLoader::beginFrameParallel(void)
     {
@@ -26,4 +30,7 @@ namespace Demo
 
     //-----------------------------------------------------------------------------------
     void VideoLoader::finishFrame(void) {}
+
+    void VideoLoader::processIncomingMessage(
+        Mq::MessageId messageId, const void *data ) {}
 }
