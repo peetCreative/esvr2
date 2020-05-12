@@ -28,6 +28,8 @@ namespace Demo {
         void finishFrame(void);
 
         virtual void processIncomingMessage( Mq::MessageId messageId, const void *data );
+
+        virtual bool getQuit() {return false;};
     };
 }
 

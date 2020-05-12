@@ -716,7 +716,7 @@ namespace Demo
             }
             else
             {
-                //probably not the most efficient methode
+                //TODO:probably not the most efficient methode
                 resize(*left, mImageResize[LEFT], cv::Size(mCameraWidth, mCameraHeight));
                 resize(*right, mImageResize[RIGHT], cv::Size(mCameraWidth, mCameraHeight));
                 left_ptr = &mImageResize[LEFT];

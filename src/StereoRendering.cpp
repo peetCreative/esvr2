@@ -159,7 +159,8 @@ int main( int argc, const char *argv[] )
                 {
                     std::string video_input_str;
                     video_input_str = vs["video_type"].c_str();
-                    videoInput.videoInputType = getVideoInputType(video_input_str);
+                    videoInput.videoInputType =
+                        getVideoInputType(video_input_str);
                 }
             }
 
@@ -177,10 +178,8 @@ int main( int argc, const char *argv[] )
                     {
                         //I'm not sure I have seen such a shit lib like libconfig++
                         //lookupValue gives me back 0 because it is parse point sth to 0 SHIT!!!!!
-                        cameraConfig->width[leftOrRight] =
-                            s["width"];
-                        cameraConfig->height[leftOrRight] =
-                            s["height"];
+                        cameraConfig->width[leftOrRight] = s["width"];
+                        cameraConfig->height[leftOrRight] = s["height"];
                     }
                     else
                         LOG << "camera_config is invalid" << LOGEND;

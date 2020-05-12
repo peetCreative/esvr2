@@ -9,8 +9,7 @@ namespace Demo
     {}
 
     VideoLoader::~VideoLoader()
-    {
-    }
+    {}
 
     void VideoLoader::initialize(void) {}
     void VideoLoader::deinitialize(void) {}
