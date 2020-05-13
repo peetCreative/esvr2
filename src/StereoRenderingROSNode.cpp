@@ -22,28 +22,31 @@
 namespace Demo
 {
     VideoROSNode::VideoROSNode(
-            StereoGraphicsSystem *graphicsSystem ):
+            StereoGraphicsSystem *graphicsSystem,
+            int argc, char *argv[] ):
         VideoLoader(graphicsSystem),
         mIsCameraInfoInit{ false, false }
-    {}
+    {
+        ros::init(argc, argv, "esvr2");
+        mNh = new ros::NodeHandle();
+    }
 
     VideoROSNode::~VideoROSNode() {}
 
     void VideoROSNode::initialize(void)
     {
 //TODO
-//         ros::init(argc, argv, "svr_node");
 
         mSubImageLeft = new
             message_filters::Subscriber<sensor_msgs::Image> (
-                mNh, "/stereo/left/image_undist_rect", 20);
+                *mNh, "/stereo/left/image_undist_rect", 20);
         mSubImageRight = new
             message_filters::Subscriber<sensor_msgs::Image> (
-                mNh, "/stereo/right/image_undist_rect", 20);
-        mSubCamInfoLeft = mNh.subscribe(
+                *mNh, "/stereo/right/image_undist_rect", 20);
+        mSubCamInfoLeft = mNh->subscribe(
             "/stereo/left/camera_info", 1,
             &VideoROSNode::newROSCameraInfoCallbackLeft, this);
-        mSubCamInfoRight = mNh.subscribe(
+        mSubCamInfoRight = mNh->subscribe(
             "/stereo/right/camera_info", 1,
             &VideoROSNode::newROSCameraInfoCallbackRight, this);
         mApproximateSync.reset(
@@ -140,7 +143,9 @@ namespace Demo
     }
 
     void VideoROSNode::deinitialize(void)
-    {}
+    {
+        ros::shutdown();
+    }
 
     void VideoROSNode::update( float timeSinceLast )
     {
@@ -153,7 +158,7 @@ namespace Demo
 
     bool VideoROSNode::getQuit()
     {
-        return mNh.ok();
+        return mNh->ok();
     }
 }
 

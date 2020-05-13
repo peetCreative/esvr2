@@ -7,6 +7,7 @@
 #include "StereoRenderingGraphicsSystem.h"
 #include "StereoRenderingOpenCvVideoLoader.h"
 #include "StereoRenderingVideoLoader.h"
+#include "StereoRenderingROSNode.h"
 
 #include "OgreSceneManager.h"
 #include "OgreCamera.h"
@@ -84,7 +85,7 @@ VideoRenderTarget getRenderVideoTarget(std::string input_str)
     return input;
 }
 
-int main( int argc, const char *argv[] )
+int main( int argc, char *argv[] )
 {
     bool show_ogre_dialog = false;
     bool show_video = true;
@@ -103,6 +104,7 @@ int main( int argc, const char *argv[] )
     videoInput.path = "";
     for (int i = 1; i < argc; i++)
     {
+        //TODO check we are not using ros commands
         if ( std::strcmp(argv[i], "--config") == 0 && i+1 < argc )
         {
             config_file = argv[i+1];
@@ -304,7 +306,6 @@ int main( int argc, const char *argv[] )
     switch(input)
     {
         case NONE:
-        case ROS:
             delete graphicsGameState;
             delete graphicsSystem;
             delete videoLoader;
@@ -315,11 +316,11 @@ int main( int argc, const char *argv[] )
             videoLoader = new OpenCvVideoLoader( graphicsSystem, videoInput );
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
-//         case ROS:
-//         //TODO: GraphicsSystem
-//             videoLoader = new VideoLoader( /*graphicsSystem,*/ videoInput );
-//             graphicsSystem->_notifyVideoSource( videoLoader );
-//             break;
+        case ROS:
+        //TODO: GraphicsSystem
+            videoLoader = new VideoROSNode( graphicsSystem, argc, argv );
+            graphicsSystem->_notifyVideoSource( videoLoader );
+            break;
     }
 
     if ( multiThreading )

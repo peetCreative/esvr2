@@ -26,7 +26,7 @@ namespace Demo
     class VideoROSNode : public VideoLoader
     {
     private:
-        ros::NodeHandle mNh;
+        ros::NodeHandle *mNh;
         message_filters::Subscriber<sensor_msgs::Image>* mSubImageLeft;
         message_filters::Subscriber<sensor_msgs::Image>* mSubImageRight;
         ros::Subscriber mSubCamInfoLeft;
@@ -38,7 +38,8 @@ namespace Demo
         void newROSCameraInfoCallback();
     public:
         VideoROSNode(
-            StereoGraphicsSystem *graphicsSystem );
+            StereoGraphicsSystem *graphicsSystem,
+            int argc, char *argv[] );
         ~VideoROSNode();
 
         void newROSImageCallback (
