@@ -305,22 +305,24 @@ int main( int argc, char *argv[] )
     VideoLoader *videoLoader = nullptr;
     switch(input)
     {
-        case NONE:
-            delete graphicsGameState;
-            delete graphicsSystem;
-            delete videoLoader;
-            LOG << "no input: shutdown" << LOGEND;
-            return 1;
         case VIDEO:
         //TODO: GraphicsSystem
             videoLoader = new OpenCvVideoLoader( graphicsSystem, videoInput );
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
         case ROS:
+#ifdef USE_ROS
         //TODO: GraphicsSystem
             videoLoader = new VideoROSNode( graphicsSystem, argc, argv );
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
+#endif
+        case NONE:
+            delete graphicsGameState;
+            delete graphicsSystem;
+            delete videoLoader;
+            LOG << "no input: shutdown" << LOGEND;
+            return 1;
     }
 
     if ( multiThreading )
