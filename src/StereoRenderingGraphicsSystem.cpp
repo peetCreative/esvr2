@@ -40,27 +40,36 @@ namespace Demo
         mVrCullCamera->detachFromParent();
         mCamerasNode->attachObject( mVrCullCamera );
 
+        //setup mVrData und mVrCullCamera using the mHmdConfig
+        syncCameraProjection( true );
+
         if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
         {
-
             mEyeCameras[LEFT] = mSceneManager->createCamera( "Left Eye" );
             mEyeCameras[RIGHT] = mSceneManager->createCamera( "Right Eye" );
 
-            const Ogre::Real eyeDistance        = 0.06f;
-            const Ogre::Real eyeFocusDistance   = 0.06f;
+//             const Ogre::Real eyeDistance        = 0.06f;
+//             const Ogre::Real eyeFocusDistance   = 0.06f;
 
             for( int leftOrRight = 0; leftOrRight < 2; ++leftOrRight )
             {
-                const Ogre::Vector3 camPos( eyeDistance * (leftOrRight * 2 - 1), 0, 0 );
-                mEyeCameras[leftOrRight]->setPosition( camPos );
+//                 const Ogre::Vector3 camPos( eyeDistance * (leftOrRight * 2 - 1), 0, 0 );
 
-                Ogre::Vector3 lookAt( eyeFocusDistance * (leftOrRight * 2 - 1), 0, -1 );
+                Ogre::Vector4 camPos = mVrData.mHeadToEye[leftOrRight] *
+                    Ogre::Vector4( 0, 0, 0, -1.0 );
+                // Look back along -Z
+                Ogre::Vector4 camDir = mVrData.mHeadToEye[leftOrRight] *
+                    Ogre::Vector4( 0, 0, -1.0, 0 );
+
+                mEyeCameras[leftOrRight]->setPosition( camPos.xyz() );
+
+//                 Ogre::Vector3 lookAt( eyeFocusDistance * (leftOrRight * 2 - 1), 0, -1 );
                 //Ogre::Vector3 lookAt( 0, 0, 0 );
 
-                // Look back along -Z
-                mEyeCameras[leftOrRight]->lookAt( lookAt );
-                mEyeCameras[leftOrRight]->setNearClipDistance( 0.2f );
-                mEyeCameras[leftOrRight]->setFarClipDistance( 1000.0f );
+                mEyeCameras[leftOrRight]->setDirection( camDir.xyz() );
+                mEyeCameras[leftOrRight]->setNearClipDistance( mCamNear );
+                mEyeCameras[leftOrRight]->setFarClipDistance( mCamFar );
+                mEyeCameras[leftOrRight]->setCustomProjectionMatrix( true, mVrData.mProjectionMatrix[leftOrRight] );
                 mEyeCameras[leftOrRight]->setAutoAspectRatio( true );
 
                 //By default cameras are attached to the Root Scene Node.
@@ -78,8 +87,8 @@ namespace Demo
             mCamera->setPosition( Ogre::Vector3( 0.0, 0.0, 0.0 ) );
             // Look back along -Z
             mCamera->lookAt( Ogre::Vector3( 0, 0, -1.0 ) );
-            mCamera->setNearClipDistance( 0.2f );
-            mCamera->setFarClipDistance( 1000.0f );
+            mCamera->setNearClipDistance( mCamNear );
+            mCamera->setFarClipDistance( mCamFar );
             mCamera->setAutoAspectRatio( true );
             mCamera->detachFromParent();
             mCamera->setVrData( &mVrData );
@@ -112,10 +121,7 @@ namespace Demo
     //-------------------------------------------------------------------------
     void StereoGraphicsSystem::syncCameraProjection( bool bForceUpdate )
     {
-        const Ogre::Real camNear = mEyeCameras[0]->getNearClipDistance();
-        const Ogre::Real camFar  = mEyeCameras[0]->getFarClipDistance();
-
-        if( mCamNear != camNear || mCamFar != camFar || bForceUpdate )
+        if( bForceUpdate )
         {
             Ogre::Matrix4 eyeToHead[2];
             Ogre::Matrix4 projectionMatrix[2];
@@ -132,7 +138,7 @@ namespace Demo
                     projectionMatrix[i] =
                             convertSteamVRMatrixToMatrix(
                                 mHMD->GetProjectionMatrix( eyeIdx,
-                                camNear, camFar ) );
+                                mCamNear, mCamFar ) );
                     mHMD->GetProjectionRaw(
                         eyeIdx,
                         &eyeFrustumExtents[i].x, &eyeFrustumExtents[i].y,
@@ -156,10 +162,6 @@ namespace Demo
             }
 
             mVrData.set( eyeToHead, projectionMatrixRS );
-            mCamNear = camNear;
-            mCamFar = camFar;
-
-            LOG << "camNear: " << camNear << LOGEND;
 
             Ogre::Vector4 cameraCullFrustumExtents;
             cameraCullFrustumExtents.x = std::min(
@@ -184,8 +186,8 @@ namespace Demo
                 Ogre::Math::Abs( cameraCullFrustumExtents.x );
 
             const Ogre::Real offset = cullCameraOffset.length();
-            mVrCullCamera->setNearClipDistance( camNear + offset );
-            mVrCullCamera->setFarClipDistance( camFar + offset );
+            mVrCullCamera->setNearClipDistance( mCamNear + offset );
+            mVrCullCamera->setFarClipDistance( mCamFar + offset );
         }
     }
 

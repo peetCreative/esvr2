@@ -50,10 +50,10 @@ namespace Demo
     //-------------------------------------------------------------------------
     OpenVRCompositorListener::~OpenVRCompositorListener()
     {
-        if( mWorkspaces[LEFT]->getListener() == this )
-            mWorkspaces[LEFT]->setListener( 0 );
-        if( mWorkspaces[RIGHT] && mWorkspaces[RIGHT]->getListener() == this )
-            mWorkspaces[RIGHT]->setListener( 0 );
+//         if( mWorkspaces[LEFT]->getListener() == this )
+//             mWorkspaces[LEFT]->setListener( 0 );
+//         if( mWorkspaces[RIGHT] && mWorkspaces[RIGHT]->getListener() == this )
+//             mWorkspaces[RIGHT]->setListener( 0 );
         mRoot->removeFrameListener( this );
     }
 

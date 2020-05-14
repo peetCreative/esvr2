@@ -35,8 +35,6 @@ namespace Demo
 
     void VideoROSNode::initialize(void)
     {
-//TODO
-
         mSubImageLeft = new
             message_filters::Subscriber<sensor_msgs::Image> (
                 *mNh, "/stereo/left/image_undist_rect", 20);
