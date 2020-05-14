@@ -65,6 +65,18 @@ VideoInputType getVideoInputType(std::string input_str)
     return input;
 }
 
+RosInputType getRosInputType(std::string input_str)
+{
+    RosInputType input = ROS_NONE;
+    if (input_str.compare("MONO") == 0)
+        input = ROS_MONO;
+    if (input_str.compare("STEREO_SLICED") == 0)
+        input = ROS_STEREO_SLICED;
+    if (input_str.compare("STEREO_SPLIT") == 0)
+        input = ROS_STEREO_SPLIT;
+    return input;
+}
+
 InputType getInputType(std::string input_str)
 {
     InputType input = NONE;
@@ -102,6 +114,7 @@ int main( int argc, char *argv[] )
         1920, 1080 };
     VideoInput videoInput;
     videoInput.path = "";
+    RosInputType rosInputType;
     for (int i = 1; i < argc; i++)
     {
         //TODO check we are not using ros commands
@@ -157,12 +170,25 @@ int main( int argc, char *argv[] )
                 Setting& vs = cfg.lookup("video");
                 if (vs.exists("path"))
                     videoInput.path = vs["path"].c_str();
-                if (vs.exists("video_type"))
+                if (vs.exists("input_type"))
                 {
                     std::string video_input_str;
-                    video_input_str = vs["video_type"].c_str();
+                    video_input_str = vs["input_type"].c_str();
                     videoInput.videoInputType =
                         getVideoInputType(video_input_str);
+                }
+            }
+
+            //ROS
+            if (input == ROS && cfg.exists("ros"))
+            {
+                Setting& vs = cfg.lookup("ros");
+                if (vs.exists("input_type"))
+                {
+                    std::string ros_input_str;
+                    ros_input_str = vs["input_type"].c_str();
+                    rosInputType =
+                        getRosInputType(ros_input_str);
                 }
             }
 
@@ -313,7 +339,8 @@ int main( int argc, char *argv[] )
         case ROS:
 #ifdef USE_ROS
         //TODO: GraphicsSystem
-            videoLoader = new VideoROSNode( graphicsSystem, argc, argv );
+            videoLoader = new VideoROSNode(
+                graphicsSystem, argc, argv, rosInputType );
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
 #endif

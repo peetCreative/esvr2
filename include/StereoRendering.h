@@ -27,6 +27,12 @@ namespace Demo {
         VIDEO_STEREO_VERTICAL_SPLIT,
         VIDEO_STEREO_HORIZONTAL_SPLIT
     } VideoInputType;
+    typedef enum {
+        ROS_NONE,
+        ROS_MONO,
+        ROS_STEREO_SLICED,
+        ROS_STEREO_SPLIT
+    } RosInputType;
     typedef struct {
         std::string path;
         VideoInputType videoInputType;

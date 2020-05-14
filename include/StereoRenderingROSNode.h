@@ -3,6 +3,7 @@
 #define _Demo_StereoRenderingROSNode_H_
 
 #include "StereoRenderingVideoLoader.h"
+#include "StereoRendering.h"
 
 #include <cv_bridge/cv_bridge.h>
 #include <ros/ros.h>
@@ -27,21 +28,29 @@ namespace Demo
     {
     private:
         ros::NodeHandle *mNh;
+        ros::Subscriber mSubImage;
         message_filters::Subscriber<sensor_msgs::Image>* mSubImageLeft;
         message_filters::Subscriber<sensor_msgs::Image>* mSubImageRight;
         ros::Subscriber mSubCamInfoLeft;
         ros::Subscriber mSubCamInfoRight;
+        std::shared_ptr<ApproximateSync> mApproximateSync;
+        RosInputType mRosInputType;
         //Not the most beautifault solution
         sensor_msgs::CameraInfo cameraInfoCache[2];
         bool mIsCameraInfoInit[2];
-        std::shared_ptr<ApproximateSync> mApproximateSync;
+        bool mQuit;
+
         void newROSCameraInfoCallback();
+
     public:
         VideoROSNode(
             StereoGraphicsSystem *graphicsSystem,
-            int argc, char *argv[] );
+            int argc, char *argv[],
+            RosInputType rosInputType );
         ~VideoROSNode();
 
+        void newROSImageStereoSliced( const sensor_msgs::Image::ConstPtr& img );
+        void newROSImageMono( const sensor_msgs::Image::ConstPtr& img );
         void newROSImageCallback (
             const sensor_msgs::Image::ConstPtr& imgLeft,
             const sensor_msgs::Image::ConstPtr& imgRight );
