@@ -10,6 +10,13 @@
 #define LOG std::cout
 #define LOGEND std::endl
 
+#ifndef RESOURCE_FOLDER
+#define RESOURCE_FOLDER "../Data/"
+#endif
+#ifndef PLUGIN_FOLDER
+#define PLUGIN_FOLDER "./"
+#endif
+
 namespace Demo {
     typedef enum {
         NONE,

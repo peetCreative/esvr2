@@ -70,6 +70,41 @@ macro( setupPluginFileFromTemplate BUILD_TYPE OGRE_USE_SCENE_FORMAT )
 		endif()
 	endif()
 
+	# Copy
+	# "${OGRE_BINARIES}/bin/${BUILD_TYPE}/OgreMain.dll" to "${CMAKE_SOURCE_DIR}/bin/${BUILD_TYPE}
+	# and the other DLLs as well. On non-Windows machines, we can only the DLLs for the current build.
+	if( OGRE_BUILD_TYPE_MATCHES )
+		# Lists of DLLs to copy
+		set( OGRE_DLLS
+				OgreMain
+				OgreOverlay
+				OgreHlmsPbs
+				OgreHlmsUnlit
+			)
+
+		if( ${OGRE_USE_SCENE_FORMAT} )
+			set( OGRE_DLLS ${OGRE_DLLS} OgreSceneFormat )
+		endif()
+
+        set( DLL_OS_PREFIX "lib" )
+        if( ${BUILD_TYPE} STREQUAL "Debug" )
+            set( DLL_OS_SUFFIX "_d.so" )
+        else()
+            set( DLL_OS_SUFFIX ".so" )
+        endif()
+
+        set( OGRE_DLL_PATH "${OGRE_BINARIES}/lib/" )
+
+		# Do not copy anything if we don't find OgreMain.dll (likely Ogre was not build)
+		list( GET OGRE_DLLS 0 DLL_NAME )
+		if( EXISTS "${OGRE_DLL_PATH}/${DLL_OS_PREFIX}${DLL_NAME}${DLL_OS_SUFFIX}" )
+			foreach( DLL_NAME ${OGRE_DLLS} )
+				copyWithSymLink( "${OGRE_DLL_PATH}/${DLL_OS_PREFIX}${DLL_NAME}${DLL_OS_SUFFIX}"
+								 "${CMAKE_SOURCE_DIR}/bin/${BUILD_TYPE}" )
+			endforeach()
+		endif()
+	endif()
+
 	unset( OGRE_PLUGIN_RS_GL3PLUS )
 	unset( OGRE_BUILD_TYPE_MATCHES )
 endmacro()

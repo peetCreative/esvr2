@@ -581,7 +581,7 @@ namespace Demo
             bool showVideo,
             Demo::VideoRenderTarget renderVideoTarget,
             Ogre::Real camNear, Ogre::Real camFar ) :
-        GraphicsSystem( gameState, "../Data/" ),
+        GraphicsSystem( gameState, RESOURCE_FOLDER, PLUGIN_FOLDER ),
         mWorkSpaceType( wsType ),
         mCamerasNode( nullptr ),
         mEyeCameras{ nullptr, nullptr },

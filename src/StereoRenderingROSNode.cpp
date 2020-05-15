@@ -83,8 +83,50 @@ namespace Demo
     void VideoROSNode::newROSImageStereoSliced(
         const sensor_msgs::Image::ConstPtr& imgRaw)
     {
-    //TODO: implement
-//         cv_bridge::CvImageConstPtr cv_ptr;
+        cv_bridge::CvImageConstPtr cv_ptr;
+        try
+        {
+            cv_ptr = cv_bridge::toCvShare(
+                imgRaw, sensor_msgs::image_encodings::BGR8 );
+        }
+        catch (cv_bridge::Exception& e)
+        {
+            LOG << "cv_bridge exception:" << e.what() << LOGEND;
+            return;
+        }
+
+        size_t inputRows = (size_t) cv_ptr->image.rows;
+        size_t cols = (size_t) cv_ptr->image.cols;
+        size_t outputRows = inputRows/2;
+
+        if( inputRows % 2 != 0 ) {
+            LOG << "Height of input image must be divisible by 2 (but current height is " << inputRows  << ")!";
+            mQuit = true;
+            return;
+        }
+
+        cv::Mat leftImage( outputRows, cols, CV_8UC3 );
+        cv::Mat rightImage( outputRows, cols, CV_8UC3 );
+
+        // Split the input image into left and right, line by line. First line is right image:
+        for( size_t inputRow = 0; inputRow < inputRows; inputRow++ )
+        {
+            if( inputRow % 2 == 0 )
+            {
+                int outputRow = inputRow/2;
+                unsigned int srcPos = inputRow * cols * sizeof(unsigned char) *3;
+                unsigned int destPos = outputRow*cols*sizeof(unsigned char)*3;
+                memcpy( rightImage.data + destPos, cv_ptr->image.data + srcPos, sizeof(unsigned char)*3*cols );
+            }
+            else
+            {
+                int outputRow = (inputRow-1)/2;
+                unsigned int srcPos = inputRow*cols*sizeof(unsigned char)*3;
+                unsigned int destPos = outputRow*cols*sizeof(unsigned char)*3;
+                memcpy( leftImage.data + destPos, cv_ptr->image.data + srcPos, sizeof(unsigned char)*3*cols );
+            }
+        }
+        mGraphicsSystem->setImgPtr( &leftImage, &rightImage );
     }
 
     void VideoROSNode::newROSImageMono(
