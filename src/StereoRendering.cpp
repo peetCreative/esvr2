@@ -97,11 +97,24 @@ VideoRenderTarget getRenderVideoTarget(std::string input_str)
     return input;
 }
 
+WorkspaceType getWorkspaceType(std::string workspace_str)
+{
+    WorkspaceType workspace = WS_TWO_CAMERAS_STEREO;
+    if( workspace_str.compare( "WS_TWO_CAMERAS_STEREO" ) )
+        workspace = WS_TWO_CAMERAS_STEREO;
+    if( workspace_str.compare( "WS_TWO_CAMERAS_STEREO" ) )
+        workspace = WS_INSTANCED_STEREO;
+    return workspace;
+}
+
+
 int main( int argc, char *argv[] )
 {
     bool show_ogre_dialog = false;
     bool show_video = true;
     bool multiThreading = false;
+    bool isStereo = false;
+    WorkspaceType workspace = WS_TWO_CAMERAS_STEREO;
     InputType input = NONE;
     VideoRenderTarget renderVideoTarget = TO_SQUARE;
     const char *config_file = nullptr;
@@ -113,6 +126,7 @@ int main( int argc, char *argv[] )
         { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45}},
         1920, 1080 };
     VideoInput videoInput;
+    videoInput.videoInputType = VIDEO_NONE;
     videoInput.path = "";
     RosInputType rosInputType;
     for (int i = 1; i < argc; i++)
@@ -145,12 +159,19 @@ int main( int argc, char *argv[] )
         {
             LOG << "read from config file" << LOGEND;
             cfg.readFile(config_file);
+
             if (cfg.exists("show_video"))
                 cfg.lookupValue ("show_video", show_video);
             if (cfg.exists("show_ogre_dialog"))
                 cfg.lookupValue ("show_ogre_dialog", show_ogre_dialog);
             if (cfg.exists("multithreading"))
                 cfg.lookupValue ("multithreading", multiThreading);
+            if (cfg.exists("workspace_type"))
+            {
+                std::string workspace_str;
+                cfg.lookupValue("workspace_type", workspace_str);
+                workspace = getWorkspaceType(workspace_str);
+            }
             if (cfg.exists("render_video_target"))
             {
                 std::string input_str;
@@ -176,6 +197,7 @@ int main( int argc, char *argv[] )
                     video_input_str = vs["input_type"].c_str();
                     videoInput.videoInputType =
                         getVideoInputType(video_input_str);
+                    isStereo = videoInput.videoInputType > VIDEO_MONO;
                 }
             }
 
@@ -189,6 +211,7 @@ int main( int argc, char *argv[] )
                     ros_input_str = vs["input_type"].c_str();
                     rosInputType =
                         getRosInputType(ros_input_str);
+                    isStereo = rosInputType > ROS_MONO;
                 }
             }
 

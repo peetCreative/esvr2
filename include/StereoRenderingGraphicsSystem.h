@@ -44,7 +44,7 @@ namespace Demo
         Ogre::CompositorWorkspace   *mMirrorWorkspace;
         Ogre::Camera                *mVrCullCamera;
         Ogre::TextureGpu            *mVrTexture;
-        Ogre::TextureGpu            *mVideoTexture;
+        Ogre::TextureGpu            *mVideoTexture[2];
         Ogre::VrData                mVrData;
         HmdConfig                   mHmdConfig;
 
@@ -60,7 +60,7 @@ namespace Demo
 
         VideoLoader *mVideoSource;
         VideoRenderTarget mVideoTarget;
-        size_t mCameraWidth, mCameraHeight;
+        size_t mCameraWidth[2], mCameraHeight[2];
         //left_left, left_right right_left right_right
         //left_top left_bottom  right_top right_bottom
         struct ImageRenderConfig {
@@ -70,16 +70,17 @@ namespace Demo
         } *mImageRenderConfig;
         std::mutex mMtxImageResize;
         cv::Mat mImageResize[2];
-        Ogre::uint8 *mImageData;
-        size_t mImageDataSize;
-        Ogre::StagingTexture *mStagingTexture;
+        Ogre::uint8 *mImageData[2];
+        size_t mImageDataSize[2];
+        Ogre::StagingTexture *mStagingTexture[2];
 
         //used for mDrawHelpers
         bool mDrawHelpers;
         int mCVr[2][2];
         int mImgMiddleResize[2][2];
 
-
+        bool mIsStereo;
+        size_t mEyeNum;
         bool mShowVideo;
 
         int mLastFrameUpdate;
@@ -109,6 +110,7 @@ namespace Demo
             GameState *gameState,
             WorkspaceType wsType,
             HmdConfig hmdConfig,
+            bool mIsStereo,
             bool showOgreDialog = false,
             bool showVideo = true,
             Demo::VideoRenderTarget renderVideoTarget = TO_SQUARE,

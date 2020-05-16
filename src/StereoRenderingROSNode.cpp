@@ -49,12 +49,12 @@ namespace Demo
                 break;
             case ROS_MONO:
                 mSubImage = mNh->subscribe(
-                    "/image_raw", 1,
+                    "/stereo/camera_driver/image_raw", 1,
                     &VideoROSNode::newROSImageMono, this);
                 break;
             case ROS_STEREO_SLICED:
                 mSubImage = mNh->subscribe(
-                    "/stereo/image_raw", 1,
+                    "/stereo/camera_driver/image_raw", 1,
                     &VideoROSNode::newROSImageStereoSliced, this);
                 break;
             case ROS_STEREO_SPLIT:

@@ -95,14 +95,25 @@ compositor_node TwoCamerasNode
 			colour_value			0.2 0.4 0.6 1
 		}
 
-		//Eye render
+		//Left Eye render
 		pass render_scene
 		{
 			//Get executed in all eyes
-			execution_mask			0xff
+			execution_mask			0x01
 			//Be affected by the modifier, so we render just to a portion of the screen.
-			viewport_modifier_mask	0xff
+			viewport_modifier_mask	0x01
+            visibility_mask	0x01
+			overlays	off
+		}
 
+		//Right Eye render
+		pass render_scene
+		{
+			//Get executed in all eyes
+			execution_mask			0x02
+			//Be affected by the modifier, so we render just to a portion of the screen.
+			viewport_modifier_mask	0x02
+            visibility_mask	0x02
 			overlays	off
 		}
 

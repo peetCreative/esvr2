@@ -5,14 +5,24 @@
 #include "OgrePrerequisites.h"
 #include "TutorialGameState.h"
 
+#include "OgreHlmsUnlitDatablock.h"
+#include "OgreManualObject2.h"
+
 namespace Demo
 {
     class StereoRenderingGameState : public TutorialGameState
     {
-        Ogre::SceneNode     *mSceneNode[16];
+        Ogre::SceneNode          *mSceneNodeCube;
+        Ogre::HlmsUnlitDatablock *mVideoDatablock[2];
+        Ogre::ManualObject       *mProjectionRectangle[2];
+        Ogre::SceneNode          *mSceneNodeCamera;
+        Ogre::SceneNode          *mSceneNodeLight;
+        bool                     mIsStereo;
 
     public:
-        StereoRenderingGameState( const Ogre::String &helpDescription );
+        StereoRenderingGameState(
+            const Ogre::String &helpDescription,
+            bool isStereo );
         void createCube();
         virtual void createScene01(void);
 
