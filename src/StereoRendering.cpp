@@ -341,13 +341,13 @@ int main( int argc, char *argv[] )
     }
 
     StereoRenderingGameState *graphicsGameState =
-        new StereoRenderingGameState("Description of what we are doing");
+        new StereoRenderingGameState(
+            "Description of what we are doing", isStereo );
 
     StereoGraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
-            graphicsGameState, WS_TWO_CAMERAS_STEREO,
-            hmdConfig, show_ogre_dialog, show_video, renderVideoTarget );
-//     GraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
-//         graphicsGameState, WS_INSTANCED_STEREO, hmdConfig );
+            graphicsGameState, workspace,
+            hmdConfig, isStereo, show_ogre_dialog,
+            show_video, renderVideoTarget );
 
     graphicsGameState->_notifyGraphicsSystem( graphicsSystem );
 

@@ -199,49 +199,50 @@ namespace Demo
     void VideoROSNode::newROSCameraInfoCallbackLeft(
         const sensor_msgs::CameraInfo::ConstPtr& camInfo )
     {
-        std::cout << "camera_info_left" << std::endl;
-        if (!mIsCameraInfoInit[LEFT])
+        LOG << "camera_info_left" << LOGEND;
+        if ( !mIsCameraInfoInit[LEFT] )
         {
-            std::cout << "camera_info_left" << std::endl;
-            cameraInfoCache[LEFT] = *camInfo;
+            mCameraConfig.width[LEFT] = camInfo->width;
+            mCameraConfig.height[LEFT] = camInfo->width;
+            mCameraConfig.f_x[LEFT] = camInfo->K[0];
+            mCameraConfig.f_y[LEFT] = camInfo->K[4];
+            mCameraConfig.c_x[LEFT] = camInfo->K[2];
+            mCameraConfig.c_y[LEFT] = camInfo->K[5];
             mIsCameraInfoInit[LEFT] = true;
-            mSubCamInfoLeft.shutdown();
         }
         if ( mIsCameraInfoInit[RIGHT] )
         {
             newROSCameraInfoCallback();
         }
+        mSubCamInfoLeft.shutdown();
     }
+
     void VideoROSNode::newROSCameraInfoCallbackRight(
         const sensor_msgs::CameraInfo::ConstPtr& camInfo )
     {
-        std::cout << "camera_info_right" << std::endl;
+        LOG << "camera_info_right" << LOGEND;
         if (!mIsCameraInfoInit[RIGHT])
         {
-            std::cout << "camera_info_right" << std::endl;
-            cameraInfoCache[RIGHT] = *camInfo;
+            mCameraConfig.width[RIGHT] = camInfo->width;
+            mCameraConfig.height[RIGHT] = camInfo->width;
+            mCameraConfig.f_x[RIGHT] = camInfo->K[0];
+            mCameraConfig.f_y[RIGHT] = camInfo->K[4];
+            mCameraConfig.c_x[RIGHT] = camInfo->K[2];
+            mCameraConfig.c_y[RIGHT] = camInfo->K[5];
             mIsCameraInfoInit[RIGHT] = true;
-            mSubCamInfoRight.shutdown();
         }
-        if ( mIsCameraInfoInit[RIGHT] )
+        if ( mIsCameraInfoInit[LEFT] )
         {
             newROSCameraInfoCallback();
         }
+        mSubCamInfoRight.shutdown();
     }
 
     void VideoROSNode::newROSCameraInfoCallback()
     {
         if (!mIsCameraInfoInit[LEFT] || !mIsCameraInfoInit[RIGHT])
             return;
-        CameraConfig cc = {
-            { cameraInfoCache[LEFT].width, cameraInfoCache[RIGHT].width },
-            { cameraInfoCache[LEFT].height, cameraInfoCache[RIGHT].height },
-            { cameraInfoCache[LEFT].K[0], cameraInfoCache[RIGHT].K[0] },
-            { cameraInfoCache[LEFT].K[4], cameraInfoCache[RIGHT].K[4] },
-            { cameraInfoCache[LEFT].K[2], cameraInfoCache[RIGHT].K[2] },
-            { cameraInfoCache[LEFT].K[5], cameraInfoCache[RIGHT].K[5] }
-        };
-        mGraphicsSystem->calcAlign( cc );
+        mGraphicsSystem->calcAlign( mCameraConfig );
     }
 
     void VideoROSNode::deinitialize(void)

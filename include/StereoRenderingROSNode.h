@@ -36,7 +36,7 @@ namespace Demo
         std::shared_ptr<ApproximateSync> mApproximateSync;
         RosInputType mRosInputType;
         //Not the most beautifault solution
-        sensor_msgs::CameraInfo cameraInfoCache[2];
+        CameraConfig mCameraConfig;
         bool mIsCameraInfoInit[2];
         bool mQuit;
 

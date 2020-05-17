@@ -18,6 +18,7 @@ namespace Demo
         Ogre::SceneNode          *mSceneNodeCamera;
         Ogre::SceneNode          *mSceneNodeLight;
         bool                     mIsStereo;
+        size_t                   mEyeNum;
 
     public:
         StereoRenderingGameState(

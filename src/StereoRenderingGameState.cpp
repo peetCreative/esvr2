@@ -26,7 +26,8 @@ namespace Demo
         mProjectionRectangle{ nullptr, nullptr },
         mSceneNodeCamera( nullptr ),
         mSceneNodeLight( nullptr ),
-        mIsStereo( isStereo )
+        mIsStereo( isStereo ),
+        mEyeNum( isStereo ? 2 : 1 )
     {
     }
 
@@ -72,9 +73,18 @@ namespace Demo
                     createChildSceneNode( Ogre::SCENE_DYNAMIC );
         }
 
-        Ogre::String categories[2] = {"Left", "Right"};
+        Ogre::String categories[2];
+        if( mIsStereo )
+        {
+            categories[LEFT] = "Left";
+            categories[RIGHT] = "Right";
+        }
+        else
+        {
+            categories[0] = "Mono";
+        }
 
-        for( size_t eye = 0; eye < 2; eye++ )
+        for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
             Ogre::String textureName = "VideoTexture" + categories[eye];
             Ogre::String datablockName = "Video" + categories[eye];
@@ -108,8 +118,12 @@ namespace Demo
 
             mSceneNodeCamera->attachObject(mProjectionRectangle[eye]);
         }
-        mProjectionRectangle[LEFT]->setVisibilityFlags(0x000000002);
-        mProjectionRectangle[RIGHT]->setVisibilityFlags(0x000000001);
+
+        if ( mIsStereo )
+        {
+            mProjectionRectangle[LEFT]->setVisibilityFlags(0x000000001);
+            mProjectionRectangle[RIGHT]->setVisibilityFlags(0x000000002);
+        }
 
         Ogre::Light *light = sceneManager->createLight();
         mSceneNodeLight = sceneManager->getRootSceneNode()->createChildSceneNode();

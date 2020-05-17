@@ -525,7 +525,7 @@ namespace Demo
             else
             {
                 mVideoTexture[LEFT] = textureManager->createTexture(
-                    "VideoTexture",
+                    "VideoTextureMono",
                     Ogre::GpuPageOutStrategy::Discard,
                     Ogre::TextureFlags::AutomaticBatching |
                     Ogre::TextureFlags::ManualTexture |
@@ -706,19 +706,21 @@ namespace Demo
         GraphicsSystem::deinitialize();
     }
 
-    void StereoGraphicsSystem::setImgPtr(const cv::Mat *left, const cv::Mat *right)
+    void StereoGraphicsSystem::setImgPtr(
+        const cv::Mat *left, const cv::Mat *right)
     {
+        const cv::Mat *img[2] = { left, right };
         if( !mShowVideo )
             return;
         //we have to wait some frames after we can send new texture
         // maybe we have to look this also applies to Hlms
-        if ( !right )
-            right = left;
+        if ( !img[RIGHT] )
+            img[RIGHT] = img[LEFT];
         if ( mVideoTarget == TO_BACKGROUND  && mImageRenderConfig )
         {
             //why don't we just fire images to the lens as we have them
-            resize(*left, mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
-            resize(*right, mImageResize[RIGHT], mImageRenderConfig->size[RIGHT]);
+            resize(*img[LEFT], mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
+            resize(*img[RIGHT], mImageResize[RIGHT], mImageRenderConfig->size[RIGHT]);
 
             if (mDrawHelpers)
             {
@@ -738,21 +740,22 @@ namespace Demo
 //             mOvrCompositorListener->getFrameCnt() % 256;
 
             const cv::Mat *img_ptr[2];
-            if ( static_cast<size_t>( left->cols ) == mCameraWidth[LEFT] &&
-                static_cast<size_t>(  left->rows ) == mCameraHeight[LEFT] &&
-                static_cast<size_t>( right->cols ) == mCameraWidth[RIGHT] &&
-                static_cast<size_t>( right->rows ) == mCameraHeight[RIGHT] )
+            if ( static_cast<size_t>( img[LEFT]->cols ) == mCameraWidth[LEFT] &&
+                static_cast<size_t>(  img[LEFT]->rows ) == mCameraHeight[LEFT] &&
+                static_cast<size_t>( img[RIGHT]->cols ) == mCameraWidth[RIGHT] &&
+                static_cast<size_t>( img[RIGHT]->rows ) == mCameraHeight[RIGHT] )
             {
-                img_ptr[LEFT] = left;
-                img_ptr[RIGHT] = right;
+                img_ptr[LEFT] = img[LEFT];
+                img_ptr[RIGHT] = img[RIGHT];
             }
             else
             {
                 //TODO:probably not the most efficient methode
-                resize(*left, mImageResize[LEFT], cv::Size(mCameraWidth[LEFT], mCameraHeight[LEFT]));
-                resize(*right, mImageResize[RIGHT], cv::Size(mCameraWidth[RIGHT], mCameraHeight[RIGHT]));
-                img_ptr[LEFT] = &mImageResize[LEFT];
-                img_ptr[RIGHT] = &mImageResize[RIGHT];
+                for (size_t eye = 0; eye < mEyeNum; eye++ )
+                {
+                    resize(*(img[eye]), mImageResize[eye], cv::Size(mCameraWidth[eye], mCameraHeight[eye]));
+                    img_ptr[eye] = &mImageResize[eye];
+                }
             }
 
             mMtxImageResize.lock();
