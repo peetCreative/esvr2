@@ -120,11 +120,16 @@ int main( int argc, char *argv[] )
     const char *config_file = nullptr;
     CameraConfig *cameraConfig = nullptr;
 //     std::cout << config_file << std::endl;
+    //TODO: strangely vrData needs this but hmdConfig needs initialized list
+    const Ogre::Matrix4 id[2] = { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY };
     HmdConfig hmdConfig{
         { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
         { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
         { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45}},
         1920, 1080 };
+    //TODO:That's not the most beautifaul solution charing vrData with GameState
+    Ogre::VrData *vrData = new Ogre::VrData();
+    vrData->set( id, id );
     VideoInput videoInput;
     videoInput.videoInputType = VIDEO_NONE;
     videoInput.path = "";
@@ -342,10 +347,10 @@ int main( int argc, char *argv[] )
 
     StereoRenderingGameState *graphicsGameState =
         new StereoRenderingGameState(
-            "Description of what we are doing", isStereo );
+            "Description of what we are doing", isStereo, vrData );
 
     StereoGraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
-            graphicsGameState, workspace,
+            graphicsGameState, workspace, vrData,
             hmdConfig, isStereo, show_ogre_dialog,
             show_video, renderVideoTarget );
 
@@ -405,6 +410,7 @@ int main( int argc, char *argv[] )
         if ( cameraConfig )
         {
             graphicsSystem->calcAlign( *cameraConfig );
+            graphicsGameState->calcAlign( *cameraConfig, 1.0f );
         }
 
         if( !graphicsSystem->getQuit() )

@@ -55,10 +55,10 @@ namespace Demo
             {
 //                 const Ogre::Vector3 camPos( eyeDistance * (leftOrRight * 2 - 1), 0, 0 );
 
-                Ogre::Vector4 camPos = mVrData.mHeadToEye[leftOrRight] *
-                    Ogre::Vector4( 0, 0, 0, -1.0 );
+                Ogre::Vector4 camPos = mVrData->mHeadToEye[leftOrRight] *
+                    Ogre::Vector4( 0, 0, 0, 1.0 );
                 // Look back along -Z
-                Ogre::Vector4 camDir = mVrData.mHeadToEye[leftOrRight] *
+                Ogre::Vector4 camDir = mVrData->mHeadToEye[leftOrRight] *
                     Ogre::Vector4( 0, 0, -1.0, 0 );
 
                 mEyeCameras[leftOrRight]->setPosition( camPos.xyz() );
@@ -69,7 +69,7 @@ namespace Demo
                 mEyeCameras[leftOrRight]->setDirection( camDir.xyz() );
                 mEyeCameras[leftOrRight]->setNearClipDistance( mCamNear );
                 mEyeCameras[leftOrRight]->setFarClipDistance( mCamFar );
-                mEyeCameras[leftOrRight]->setCustomProjectionMatrix( true, mVrData.mProjectionMatrix[leftOrRight] );
+                mEyeCameras[leftOrRight]->setCustomProjectionMatrix( true, mVrData->mProjectionMatrix[leftOrRight] );
                 mEyeCameras[leftOrRight]->setAutoAspectRatio( true );
 
                 //By default cameras are attached to the Root Scene Node.
@@ -91,7 +91,7 @@ namespace Demo
             mCamera->setFarClipDistance( mCamFar );
             mCamera->setAutoAspectRatio( true );
             mCamera->detachFromParent();
-            mCamera->setVrData( &mVrData );
+            mCamera->setVrData( mVrData );
             mCamerasNode->attachObject( mCamera );
             mEyeCameras[LEFT] = mCamera;
         }
@@ -121,7 +121,7 @@ namespace Demo
     //-------------------------------------------------------------------------
     void StereoGraphicsSystem::syncCameraProjection( bool bForceUpdate )
     {
-        if( bForceUpdate )
+        if( bForceUpdate && mVrData )
         {
             Ogre::Matrix4 eyeToHead[2];
             Ogre::Matrix4 projectionMatrix[2];
@@ -161,7 +161,7 @@ namespace Demo
                 printMatrix4(projectionMatrixRS[i]);
             }
 
-            mVrData.set( eyeToHead, projectionMatrixRS );
+            mVrData->set( eyeToHead, projectionMatrixRS );
 
             Ogre::Vector4 cameraCullFrustumExtents;
             cameraCullFrustumExtents.x = std::min(
@@ -180,7 +180,7 @@ namespace Demo
                 cameraCullFrustumExtents.z,
                 Ogre::FET_TAN_HALF_ANGLES );
 
-            const float ipd = mVrData.mLeftToRight.x;
+            const float ipd = mVrData->mLeftToRight.x;
             Ogre::Vector3 cullCameraOffset = Ogre::Vector3::ZERO;
             cullCameraOffset.z = (ipd / 2.0f) /
                 Ogre::Math::Abs( cameraCullFrustumExtents.x );
@@ -485,7 +485,6 @@ namespace Demo
                 mCamera, "InstancedStereoWorkspace", true, 0 );
         }
 
-        //TODO:probably we need two if we have two cameras
         mOvrCompositorListener =
             new Demo::OpenVRCompositorListener(
                 mHMD, mVRCompositor, mVrTexture,
@@ -600,6 +599,7 @@ namespace Demo
     StereoGraphicsSystem::StereoGraphicsSystem(
             GameState* gameState,
             WorkspaceType wsType,
+            Ogre::VrData *vrData,
             HmdConfig hmdConfig,
             bool isStereo,
             bool showOgreConfigDialog,
@@ -617,6 +617,7 @@ namespace Demo
         mVrCullCamera( nullptr ),
         mVrTexture( nullptr ),
         mVideoTexture{ nullptr, nullptr },
+        mVrData( vrData ),
         mHmdConfig( hmdConfig ),
         mOvrCompositorListener( nullptr ),
         mHMD( nullptr ),
@@ -645,7 +646,6 @@ namespace Demo
         LOG << "RESOURCE_FOLDER:" << RESOURCE_FOLDER << LOGEND;
         LOG << "PLUGIN_FOLDER:" << PLUGIN_FOLDER << LOGEND;
         memset( mTrackedDevicePose, 0, sizeof (mTrackedDevicePose) );
-        memset( &mVrData, 0, sizeof( mVrData ) );
     }
 
     void StereoGraphicsSystem::deinitialize(void)

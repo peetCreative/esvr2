@@ -45,7 +45,7 @@ namespace Demo
         Ogre::Camera                *mVrCullCamera;
         Ogre::TextureGpu            *mVrTexture;
         Ogre::TextureGpu            *mVideoTexture[2];
-        Ogre::VrData                mVrData;
+        Ogre::VrData                *mVrData;
         HmdConfig                   mHmdConfig;
 
         OpenVRCompositorListener    *mOvrCompositorListener;
@@ -109,6 +109,7 @@ namespace Demo
         StereoGraphicsSystem(
             GameState *gameState,
             WorkspaceType wsType,
+            Ogre::VrData *vrData,
             HmdConfig hmdConfig,
             bool mIsStereo,
             bool showOgreDialog = false,
