@@ -118,6 +118,9 @@ namespace Demo
             Ogre::Real camNear = 0.1f, Ogre::Real camFar = 200.0f);
         virtual void deinitialize(void);
 
+        // we are overwriting initialize
+        void initialize( const Ogre::String &windowTitle );
+
         void setImgPtr(const cv::Mat *left, const cv::Mat *right);
         bool calcAlign(CameraConfig &mCameraConfig);
 
