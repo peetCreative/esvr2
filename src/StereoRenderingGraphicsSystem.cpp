@@ -609,6 +609,7 @@ namespace Demo
             WorkspaceType wsType,
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
+            int screen,
             bool isStereo,
             bool showOgreConfigDialog,
             bool showVideo,
@@ -646,6 +647,7 @@ namespace Demo
         mDrawHelpers(true),
         mCVr{{ 0, 0 }, { 0, 0 }},
         mImgMiddleResize{{ 0, 0 }, { 0, 0 }},
+        mScreen( screen ),
         mIsStereo( isStereo ),
         mEyeNum( isStereo ? 2 : 1 ),
         mShowVideo(showVideo),
@@ -735,14 +737,19 @@ namespace Demo
         bool fullscreen = Ogre::StringConverter::parseBool(
             cfgOpts["Full Screen"].currentValue );
     #if OGRE_USE_SDL2
-        int screen = 1;
-        int posX = SDL_WINDOWPOS_CENTERED_DISPLAY(screen);
-        int posY = SDL_WINDOWPOS_CENTERED_DISPLAY(screen);
+        if (mScreen >= SDL_GetNumVideoDisplays())
+        {
+            OGRE_EXCEPT( Ogre::Exception::ERR_INTERNAL_ERROR,
+                         "Requested Screen does not exist",
+                         "GraphicsSystem::initialize" );
+        }
+        int posX = SDL_WINDOWPOS_CENTERED_DISPLAY(mScreen);
+        int posY = SDL_WINDOWPOS_CENTERED_DISPLAY(mScreen);
 
         if(fullscreen)
         {
-            posX = SDL_WINDOWPOS_UNDEFINED_DISPLAY(screen);
-            posY = SDL_WINDOWPOS_UNDEFINED_DISPLAY(screen);
+            posX = SDL_WINDOWPOS_UNDEFINED_DISPLAY(mScreen);
+            posY = SDL_WINDOWPOS_UNDEFINED_DISPLAY(mScreen);
         }
 
         Uint32 flags =

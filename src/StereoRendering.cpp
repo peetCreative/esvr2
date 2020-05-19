@@ -113,6 +113,7 @@ int main( int argc, char *argv[] )
     bool show_ogre_dialog = false;
     bool show_video = true;
     bool multiThreading = false;
+    int screen = 0;
     bool isStereo = false;
     WorkspaceType workspace = WS_TWO_CAMERAS_STEREO;
     InputType input = NONE;
@@ -139,8 +140,9 @@ int main( int argc, char *argv[] )
         //TODO check we are not using ros commands
         if ( std::strcmp(argv[i], "--config") == 0 && i+1 < argc )
         {
-            config_files_begin = i++;
-            config_files_end = i+1;
+            i++;
+            config_files_begin = i;
+            config_files_end = i;
             while( i < argc && std::strncmp(argv[i], "--", 2) != 0 )
             {
                 config_files_end++;
@@ -179,6 +181,8 @@ int main( int argc, char *argv[] )
                 cfg.lookupValue ("show_ogre_dialog", show_ogre_dialog);
             if (cfg.exists("multithreading"))
                 cfg.lookupValue ("multithreading", multiThreading);
+            if (cfg.exists("screen"))
+                cfg.lookupValue ("screen", screen);
             if (cfg.exists("workspace_type"))
             {
                 std::string workspace_str;
@@ -359,7 +363,7 @@ int main( int argc, char *argv[] )
 
     StereoGraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
             graphicsGameState, workspace, vrData,
-            hmdConfig, isStereo, show_ogre_dialog,
+            hmdConfig, screen, isStereo, show_ogre_dialog,
             show_video, renderVideoTarget );
 
     graphicsGameState->_notifyGraphicsSystem( graphicsSystem );

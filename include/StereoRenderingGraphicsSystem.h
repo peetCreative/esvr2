@@ -79,6 +79,7 @@ namespace Demo
         int mCVr[2][2];
         int mImgMiddleResize[2][2];
 
+        int mScreen;
         bool mIsStereo;
         size_t mEyeNum;
         bool mShowVideo;
@@ -111,6 +112,7 @@ namespace Demo
             WorkspaceType wsType,
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
+            int screen,
             bool mIsStereo,
             bool showOgreDialog = false,
             bool showVideo = true,
