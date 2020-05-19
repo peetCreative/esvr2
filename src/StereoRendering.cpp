@@ -117,7 +117,7 @@ int main( int argc, char *argv[] )
     WorkspaceType workspace = WS_TWO_CAMERAS_STEREO;
     InputType input = NONE;
     VideoRenderTarget renderVideoTarget = TO_SQUARE;
-    const char *config_file = nullptr;
+    size_t config_files_end = 0, config_files_begin = 0;
     CameraConfig *cameraConfig = nullptr;
 //     std::cout << config_file << std::endl;
     //TODO: strangely vrData needs this but hmdConfig needs initialized list
@@ -139,7 +139,15 @@ int main( int argc, char *argv[] )
         //TODO check we are not using ros commands
         if ( std::strcmp(argv[i], "--config") == 0 && i+1 < argc )
         {
-            config_file = argv[i+1];
+            config_files_begin = i++;
+            config_files_end = i+1;
+            while( i < argc && std::strncmp(argv[i], "--", 2) != 0 )
+            {
+                config_files_end++;
+                i++;
+            }
+            if( i >= argc )
+                break;
         }
         if ( std::strcmp(argv[i], "--input-type") == 0 && i+1 < argc )
         {
@@ -157,13 +165,13 @@ int main( int argc, char *argv[] )
     }
 
     //from config file
-    if(config_file)
+    Config cfg;
+    try
     {
-        Config cfg;
-        try
+        for (size_t i = config_files_begin; i < config_files_end; i++ )
         {
-            LOG << "read from config file" << LOGEND;
-            cfg.readFile(config_file);
+            LOG << "read from config file: " << argv[i] << LOGEND;
+            cfg.readFile(argv[i]);
 
             if (cfg.exists("show_video"))
                 cfg.lookupValue ("show_video", show_video);
@@ -332,17 +340,17 @@ int main( int argc, char *argv[] )
                 }
             }
         }
-        catch(const FileIOException &fioex)
-        {
-            std::cerr << "I/O error while reading file." << std::endl;
-            return(EXIT_FAILURE);
-        }
-        catch(const ParseException &pex)
-        {
-            std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
-                    << " - " << pex.getError() << std::endl;
-            return(EXIT_FAILURE);
-        }
+    }
+    catch(const FileIOException &fioex)
+    {
+        std::cerr << "I/O error while reading file." << std::endl;
+        return(EXIT_FAILURE);
+    }
+    catch(const ParseException &pex)
+    {
+        std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
+                << " - " << pex.getError() << std::endl;
+        return(EXIT_FAILURE);
     }
 
     StereoRenderingGameState *graphicsGameState =
