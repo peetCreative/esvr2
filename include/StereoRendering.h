@@ -62,6 +62,7 @@ namespace Demo {
         float f_y[2] = {0, 0};
         float c_x[2] = {0, 0};
         float c_y[2] = {0, 0};
+        float leftToRight = 0;
     } CameraConfig;
 
     Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose );

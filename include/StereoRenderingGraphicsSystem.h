@@ -124,6 +124,8 @@ namespace Demo
         void initialize( const Ogre::String &windowTitle );
 
         void setImgPtr(const cv::Mat *left, const cv::Mat *right);
+        bool getShowVideo( void ) { return mShowVideo; };
+        void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
         bool calcAlign(CameraConfig &mCameraConfig);
 
         virtual void beginFrameParallel(void);

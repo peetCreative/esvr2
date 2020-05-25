@@ -102,7 +102,7 @@ compositor_node TwoCamerasNode
 			execution_mask			0x01
 			//Be affected by the modifier, so we render just to a portion of the screen.
 			viewport_modifier_mask	0x01
-            visibility_mask	0x01
+            visibility_mask	0x1F
 			overlays	off
 		}
 
@@ -113,7 +113,7 @@ compositor_node TwoCamerasNode
 			execution_mask			0x02
 			//Be affected by the modifier, so we render just to a portion of the screen.
 			viewport_modifier_mask	0x02
-            visibility_mask	0x02
+            visibility_mask	0x2F
 			overlays	off
 		}
 

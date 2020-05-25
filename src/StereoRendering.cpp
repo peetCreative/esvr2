@@ -36,6 +36,7 @@ using namespace Demo;
 struct ThreadData
 {
     StereoGraphicsSystem  *graphicsSystem;
+    StereoRenderingGameState  *graphicsGameState;
     VideoLoader     *videoSource;
     InputType       inputType;
     CameraConfig    *cameraConfig;
@@ -134,7 +135,7 @@ int main( int argc, char *argv[] )
     VideoInput videoInput;
     videoInput.videoInputType = VIDEO_NONE;
     videoInput.path = "";
-    RosInputType rosInputType;
+    RosInputType rosInputType = ROS_NONE;
     for (int i = 1; i < argc; i++)
     {
         //TODO check we are not using ros commands
@@ -239,6 +240,10 @@ int main( int argc, char *argv[] )
             {
                 cameraConfig = new CameraConfig();
                 const Setting& cis = cfg.lookup("camera_info");
+                if (cis.exists("left_to_right"))
+                {
+                    cameraConfig->leftToRight = cis["left_to_right"];
+                }
                 for (int leftOrRight = 0; leftOrRight < 2; leftOrRight++)
                 {
                     Setting& s = cis.lookup(categories[leftOrRight]);
@@ -398,6 +403,7 @@ int main( int argc, char *argv[] )
         Ogre::Barrier *barrier = new Ogre::Barrier( 2 );
         ThreadData *threadData = new ThreadData();
         threadData->graphicsSystem   = graphicsSystem;
+        threadData->graphicsGameState = graphicsGameState;
         threadData->videoSource      = videoLoader;
         threadData->inputType        = input;
         threadData->cameraConfig     = cameraConfig;
@@ -422,7 +428,7 @@ int main( int argc, char *argv[] )
         if ( cameraConfig )
         {
             graphicsSystem->calcAlign( *cameraConfig );
-            graphicsGameState->calcAlign( *cameraConfig, 1.0f );
+            graphicsGameState->calcAlign( *cameraConfig, 2.0f );
         }
 
         if( !graphicsSystem->getQuit() )
@@ -478,12 +484,16 @@ unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
 {
     ThreadData *threadData = reinterpret_cast<ThreadData*>( threadHandle->getUserParam() );
     StereoGraphicsSystem *graphicsSystem  = threadData->graphicsSystem;
+    StereoRenderingGameState *graphicsGameState  = threadData->graphicsGameState;
     Ogre::Barrier *barrier          = threadData->barrier;
     CameraConfig *cameraConfig      = threadData->cameraConfig;
 
     graphicsSystem->initialize( "esvr2" );
     if( cameraConfig )
+    {
         graphicsSystem->calcAlign( *cameraConfig );
+        graphicsGameState->calcAlign( *cameraConfig, 2.0f );
+    }
     barrier->sync();
 
     if( graphicsSystem->getQuit() )

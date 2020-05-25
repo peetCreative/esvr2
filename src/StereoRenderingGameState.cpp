@@ -1,4 +1,5 @@
 
+#include "StereoRenderingGraphicsSystem.h"
 #include "StereoRenderingGameState.h"
 #include "StereoRendering.h"
 #include "CameraController.h"
@@ -10,7 +11,8 @@
 #include "OgreHlmsUnlit.h"
 #include "OgreHlmsUnlitDatablock.h"
 #include "OgreManualObject2.h"
-
+#include "OgreBillboard.h"
+#include "OgreBillboardSet.h"
 #include "OgreCamera.h"
 
 using namespace Demo;
@@ -26,6 +28,7 @@ namespace Demo
         mProjectionRectangle{ nullptr, nullptr },
         mSceneNodeCamera( nullptr ),
         mSceneNodeLight( nullptr ),
+        mSceneNodeTooltips( nullptr ),
         mVrData( vrData ),
         mIsStereo( isStereo ),
         mEyeNum( isStereo ? 2 : 1 ),
@@ -33,7 +36,8 @@ namespace Demo
         mLeft{ 0, 0 },
         mRight{ 0, 0 },
         mTop{ 0, 0 },
-        mBottom{ 0, 0 }
+        mBottom{ 0, 0 },
+        mScale( 1.0f )
     {
         if( mIsStereo )
         {
@@ -54,9 +58,10 @@ namespace Demo
     }
 
     void StereoRenderingGameState::calcAlign(CameraConfig &cameraConfig,
-                                         Ogre::Real projPlaneDistance)
+                                         Ogre::Real projPlaneDistance )
     {
         mProjPlaneDistance = projPlaneDistance;
+        mScale = mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
             Ogre::Real width = cameraConfig.width[eye];
@@ -71,25 +76,6 @@ namespace Demo
             mTop[eye] = c_y * mProjPlaneDistance / f_y;
             mBottom[eye] = ( c_y - height ) * mProjPlaneDistance / f_y;
         }
-    }
-
-    void StereoRenderingGameState::createCube()
-    {
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-        Ogre::Item *mCube = sceneManager->createItem(
-            "Cube_d.mesh",
-            Ogre::ResourceGroupManager::
-            AUTODETECT_RESOURCE_GROUP_NAME,
-            Ogre::SCENE_DYNAMIC );
-
-        mCube->setVisibilityFlags( 0x000000003 );
-        mSceneNodeCube = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
-                createChildSceneNode( Ogre::SCENE_DYNAMIC );
-
-        mSceneNodeCube->setPosition( 0, 0, 0 );
-
-        mSceneNodeCube->scale(0.25, 0.25, 0.25);
-        mSceneNodeCube->attachObject( mCube );
     }
 
     void StereoRenderingGameState::createProjectionPlanes()
@@ -113,40 +99,80 @@ namespace Demo
 
             mProjectionRectangle[eye]->begin(mDatablockName[eye], Ogre::OT_TRIANGLE_LIST);
 
+            Ogre::Matrix4 eyeToHead = mVrData->mHeadToEye[eye].inverse();
             // Back
-            edge = mVrData->mHeadToEye[eye] *
+            edge = eyeToHead *
                 Ogre::Vector4( mLeft[eye], mTop[eye],
                                -mProjPlaneDistance, 1.0f );
             mProjectionRectangle[eye]->position( edge.xyz() );
             mProjectionRectangle[eye]->textureCoord(0 , 0);
-            edge = mVrData->mHeadToEye[eye] *
+            edge = eyeToHead *
                 Ogre::Vector4( mRight[eye], mTop[eye],
                                -mProjPlaneDistance, 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(1 , 0);
-            edge = mVrData->mHeadToEye[eye] *
+            edge = eyeToHead *
                 Ogre::Vector4( mRight[eye], mBottom[eye],
                                -mProjPlaneDistance, 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(1 , 1);
-            edge = mVrData->mHeadToEye[eye] *
+            edge = eyeToHead *
                 Ogre::Vector4( mLeft[eye], mBottom[eye],
                                -mProjPlaneDistance, 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(0 , 1);
+            mProjectionRectangle[eye]->quad(0, 1, 2, 3);
             mProjectionRectangle[eye]->quad(3, 2, 1, 0);
 
             mProjectionRectangle[eye]->end();
 
 
             mSceneNodeCamera->attachObject(mProjectionRectangle[eye]);
+            mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
         }
+    }
 
-        if ( mIsStereo )
-        {
-            mProjectionRectangle[LEFT]->setVisibilityFlags(0x000000001);
-            mProjectionRectangle[RIGHT]->setVisibilityFlags(0x000000002);
-        }
+    void StereoRenderingGameState::createTooltips( void )
+    {
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
+        mSceneNodeTooltips = sceneManager->getRootSceneNode(
+                Ogre::SCENE_DYNAMIC )->
+                    createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mSceneNodeTooltips->setPosition( 0, 0, -0.05 * mScale );
+        mTooltips = sceneManager->createBillboardSet();
+        mTooltips->beginBillboards(1);
+        Ogre::v1::Billboard* b = mTooltips->createBillboard(
+            0.0, 0.0, 0.0);
+        b->setDimensions(0.001 * mScale, 0.001 * mScale);
+        b->setColour(Ogre::ColourValue::Red);
+        mTooltips->endBillboards();
+        mTooltips->setVisibilityFlags( 0x1 );
+        mSceneNodeTooltips->attachObject( mTooltips );
+    }
+
+
+    void StereoRenderingGameState::createMesh()
+    {
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
+        Ogre::Item *mCube = sceneManager->createItem(
+            "Cube_d.mesh",
+            Ogre::ResourceGroupManager::
+            AUTODETECT_RESOURCE_GROUP_NAME,
+            Ogre::SCENE_DYNAMIC );
+
+        mCube->setVisibilityFlags( 0x1 << 1 );
+        mSceneNodeCube = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
+                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+
+        mSceneNodeCube->setPosition( 0, 0, -1.0 );
+
+        mSceneNodeCube->scale(0.25, 0.25, 0.25);
+        mSceneNodeCube->attachObject( mCube );
+    }
+
+    void StereoRenderingGameState::createPointCloud( void )
+    {
+        // 0x1 << 2
     }
 
     //-----------------------------------------------------------------------------------
@@ -154,7 +180,6 @@ namespace Demo
     {
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
 
-        createCube();
 
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->getRoot()->getHlmsManager();
         Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>( hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
@@ -187,6 +212,9 @@ namespace Demo
         }
 
         createProjectionPlanes();
+        createTooltips();
+        createPointCloud();
+        createMesh();
 
         Ogre::Light *light = sceneManager->createLight();
         mSceneNodeLight = sceneManager->getRootSceneNode()->createChildSceneNode();
@@ -197,13 +225,63 @@ namespace Demo
 
         mCameraController = new CameraController( mGraphicsSystem, true );
 
+        sceneManager->setVisibilityMask(0xFFFFFFFF);
         TutorialGameState::createScene01();
     }
     //-----------------------------------------------------------------------------------
     void StereoRenderingGameState::update( float timeSinceLast )
     {
         //update Pointcloud
-
         TutorialGameState::update( timeSinceLast );
+    }
+
+    void StereoRenderingGameState::keyReleased( const SDL_KeyboardEvent &arg )
+    {
+        if( arg.keysym.scancode == SDL_SCANCODE_ESCAPE )
+        {
+            mGraphicsSystem->setQuit();
+            return;
+        }
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
+        Ogre::uint32 flipMask = 0x0;
+        //strg + 1 projectionplanes
+        if( arg.keysym.scancode == SDL_SCANCODE_1 &&
+            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+        {
+            flipMask = 0x30;
+        }
+        //strg + 2 tool tip
+        if( arg.keysym.scancode == SDL_SCANCODE_2 &&
+            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+        {
+            flipMask = 0x1;
+        }
+        //strg + 4 mesh
+        if( arg.keysym.scancode == SDL_SCANCODE_3 &&
+            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+        {
+            flipMask = 0x1 << 1;
+        }
+        //strg + 3 point cloud
+        if( arg.keysym.scancode == SDL_SCANCODE_4 &&
+            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+        {
+            flipMask = 0x1 << 2;
+        }
+
+        //TODO: It's too complicated
+        Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
+        visibilityMask &= ~flipMask;
+        visibilityMask |= ~sceneManager->getVisibilityMask() & flipMask;
+        sceneManager->setVisibilityMask( visibilityMask );
+
+        // stop Video
+        if( arg.keysym.scancode == SDL_SCANCODE_SPACE )
+        {
+            //TODO: connect GraphicsSystem with StereoGameState or so
+//             mGraphicsSystem->toggleShowVideo();
+        }
+
+        TutorialGameState::keyReleased( arg );
     }
 }

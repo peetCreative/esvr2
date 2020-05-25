@@ -63,10 +63,12 @@ namespace Demo
             {
 //                 const Ogre::Vector3 camPos( eyeDistance * (leftOrRight * 2 - 1), 0, 0 );
 
-                Ogre::Vector4 camPos = mVrData->mHeadToEye[leftOrRight] *
+                Ogre::Matrix4 eyeToHead =
+                    mVrData->mHeadToEye[leftOrRight].inverse();
+                Ogre::Vector4 camPos = eyeToHead *
                     Ogre::Vector4( 0, 0, 0, 1.0 );
                 // Look back along -Z
-                Ogre::Vector4 camDir = mVrData->mHeadToEye[leftOrRight] *
+                Ogre::Vector4 camDir = eyeToHead *
                     Ogre::Vector4( 0, 0, -1.0, 0 );
 
                 mEyeCameras[leftOrRight]->setPosition( camPos.xyz() );
@@ -750,6 +752,15 @@ namespace Demo
         {
             posX = SDL_WINDOWPOS_UNDEFINED_DISPLAY(mScreen);
             posY = SDL_WINDOWPOS_UNDEFINED_DISPLAY(mScreen);
+            SDL_DisplayMode dm;
+
+            if (SDL_GetDesktopDisplayMode(mScreen, &dm) != 0)
+            {
+                SDL_Log("SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
+            }
+
+            width = dm.w;
+            height = dm.h;
         }
 
         Uint32 flags =
