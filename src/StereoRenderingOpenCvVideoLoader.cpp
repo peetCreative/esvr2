@@ -5,7 +5,7 @@
 
 #include "opencv2/opencv.hpp"
 
-namespace Demo
+namespace esvr2
 {
     OpenCvVideoLoader::OpenCvVideoLoader(
             StereoGraphicsSystem *graphicsSystem,
@@ -103,7 +103,7 @@ namespace Demo
     }
 
     void OpenCvVideoLoader::processIncomingMessage(
-        Mq::MessageId messageId, const void *data )
+        Demo::Mq::MessageId messageId, const void *data )
     {}
 
 }

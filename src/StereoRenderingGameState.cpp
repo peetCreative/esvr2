@@ -15,9 +15,7 @@
 #include "OgreBillboardSet.h"
 #include "OgreCamera.h"
 
-using namespace Demo;
-
-namespace Demo
+namespace esvr2
 {
     StereoRenderingGameState::StereoRenderingGameState(
             const Ogre::String &helpDescription,
@@ -223,7 +221,7 @@ namespace Demo
         light->setType( Ogre::Light::LT_DIRECTIONAL );
         light->setDirection( Ogre::Vector3( -1, -1, -1 ).normalisedCopy() );
 
-        mCameraController = new CameraController( mGraphicsSystem, true );
+        mCameraController = new Demo::CameraController( mGraphicsSystem, true );
 
         sceneManager->setVisibilityMask(0xFFFFFFFF);
         TutorialGameState::createScene01();

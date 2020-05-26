@@ -2,7 +2,7 @@
 #include "StereoRenderingGraphicsSystem.h"
 #include "StereoRendering.h"
 
-namespace Demo
+namespace esvr2
 {
     VideoLoader::VideoLoader( StereoGraphicsSystem *graphicsSystem ):
         mGraphicsSystem( graphicsSystem )
@@ -31,5 +31,5 @@ namespace Demo
     void VideoLoader::finishFrame(void) {}
 
     void VideoLoader::processIncomingMessage(
-        Mq::MessageId messageId, const void *data ) {}
+        Demo::Mq::MessageId messageId, const void *data ) {}
 }

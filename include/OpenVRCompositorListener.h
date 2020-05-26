@@ -20,7 +20,7 @@
     #endif
 #endif
 
-namespace Demo
+namespace esvr2
 {
     namespace VrWaitingMode
     {

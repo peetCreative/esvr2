@@ -20,7 +20,7 @@
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproximatePolicy;
 typedef message_filters::Synchronizer<ApproximatePolicy> ApproximateSync;
 
-namespace Demo
+namespace esvr2
 {
     class VideoLoader;
 

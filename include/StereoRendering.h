@@ -17,7 +17,7 @@
 #define PLUGIN_FOLDER "./"
 #endif
 
-namespace Demo {
+namespace esvr2 {
     typedef enum {
         NONE,
         ROS,

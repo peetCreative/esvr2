@@ -30,9 +30,7 @@
 #include <SDL_syswm.h>
 #include <SDL.h>
 
-using namespace Demo;
-
-namespace Demo
+namespace esvr2
 {
 
     //-------------------------------------------------------------------------------
@@ -496,7 +494,7 @@ namespace Demo
         }
 
         mOvrCompositorListener =
-            new Demo::OpenVRCompositorListener(
+            new OpenVRCompositorListener(
                 mHMD, mVRCompositor, mVrTexture,
                 mRoot, mVrWorkspaces,
                 mCamerasNode
@@ -607,7 +605,7 @@ namespace Demo
     }
 
     StereoGraphicsSystem::StereoGraphicsSystem(
-            GameState* gameState,
+            Demo::GameState* gameState,
             WorkspaceType wsType,
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
@@ -615,9 +613,9 @@ namespace Demo
             bool isStereo,
             bool showOgreConfigDialog,
             bool showVideo,
-            Demo::VideoRenderTarget renderVideoTarget,
+            VideoRenderTarget renderVideoTarget,
             Ogre::Real camNear, Ogre::Real camFar ) :
-        GraphicsSystem( gameState, showOgreConfigDialog,
+        Demo::GraphicsSystem( gameState, showOgreConfigDialog,
                         RESOURCE_FOLDER, PLUGIN_FOLDER ),
         mWorkSpaceType( wsType ),
         mCamerasNode( nullptr ),
@@ -847,7 +845,7 @@ namespace Demo
         mWorkspace = setupCompositor();
 
     #if OGRE_USE_SDL2
-        mInputHandler = new SdlInputHandler( mSdlWindow, mCurrentGameState,
+        mInputHandler = new Demo::SdlInputHandler( mSdlWindow, mCurrentGameState,
                                              mCurrentGameState, mCurrentGameState );
     #endif
 

@@ -32,6 +32,7 @@ const double cFrametime = 1.0 / 25.0;
 
 using namespace libconfig;
 using namespace Demo;
+using namespace esvr2;
 
 struct ThreadData
 {
@@ -571,7 +572,7 @@ unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
 unsigned long logicThread1( Ogre::ThreadHandle *threadHandle )
 {
     ThreadData *threadData = reinterpret_cast<ThreadData*>( threadHandle->getUserParam() );
-    GraphicsSystem *graphicsSystem  = threadData->graphicsSystem;
+    Demo::GraphicsSystem *graphicsSystem  = threadData->graphicsSystem;
     VideoLoader *videoLoader        = threadData->videoSource;
     Ogre::Barrier *barrier          = threadData->barrier;
 
@@ -621,7 +622,7 @@ unsigned long logicThread1( Ogre::ThreadHandle *threadHandle )
 };
 
 
-namespace Demo {
+namespace esvr2 {
     //-------------------------------------------------------------------------
     Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose )
     {
@@ -643,7 +644,10 @@ namespace Demo {
                     matPose.m[3][0], matPose.m[3][1], matPose.m[3][2], matPose.m[3][3] );
         return matrixObj;
     }
+}
 
+namespace Demo
+{
     // Ihave to declare this so it compiles with std ogre
     void MainEntryPoints::createSystems( GameState **outGraphicsGameState, GraphicsSystem **outGraphicsSystem,
                                 GameState **outLogicGameState, LogicSystem **outLogicSystem ) {}

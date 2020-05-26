@@ -6,11 +6,10 @@
 
 #include "Threading/MessageQueueSystem.h"
 
-
-namespace Demo {
+namespace esvr2 {
     class StereoGraphicsSystem;
 
-    class VideoLoader : public Mq::MessageQueueSystem
+    class VideoLoader : public Demo::Mq::MessageQueueSystem
     {
     protected:
         StereoGraphicsSystem *mGraphicsSystem;
@@ -27,7 +26,7 @@ namespace Demo {
         void finishFrameParallel(void);
         void finishFrame(void);
 
-        virtual void processIncomingMessage( Mq::MessageId messageId, const void *data );
+        virtual void processIncomingMessage( Demo::Mq::MessageId messageId, const void *data );
 
         virtual bool getQuit() {return false;};
     };

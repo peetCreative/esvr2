@@ -11,9 +11,9 @@
 #include "OgreHlmsUnlitDatablock.h"
 #include "OgreManualObject2.h"
 
-namespace Demo
+namespace esvr2
 {
-    class StereoRenderingGameState : public TutorialGameState
+    class StereoRenderingGameState : public Demo::TutorialGameState
     {
         Ogre::SceneNode          *mSceneNodeCube;
         Ogre::HlmsUnlitDatablock *mVideoDatablock[2];

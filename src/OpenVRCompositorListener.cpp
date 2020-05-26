@@ -12,7 +12,7 @@
 
 #include "Compositor/OgreCompositorWorkspace.h"
 
-namespace Demo
+namespace esvr2
 {
     OpenVRCompositorListener::OpenVRCompositorListener(
             vr::IVRSystem *hmd, vr::IVRCompositor *vrCompositor,

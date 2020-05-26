@@ -9,7 +9,7 @@
 #include "opencv2/opencv.hpp"
 
 
-namespace Demo {
+namespace esvr2 {
     class StereoGraphicsSystem;
 
     class OpenCvVideoLoader : public VideoLoader
@@ -30,7 +30,8 @@ namespace Demo {
         void deinitialize(void);
         void update( float timeSinceLast );
 
-        void processIncomingMessage( Mq::MessageId messageId, const void *data );
+        void processIncomingMessage(
+            Demo::Mq::MessageId messageId, const void *data );
     };
 }
 

@@ -21,14 +21,13 @@
 #include <experimental/filesystem>
 #include <mutex>
 
-
-namespace Demo
+namespace esvr2
 {
     class OpenVRCompositorListener;
 
     class VideoLoader;
 
-    class StereoGraphicsSystem : public GraphicsSystem
+    class StereoGraphicsSystem : public Demo::GraphicsSystem
     {
     private:
         //Depending on this type start with different Compositor setup
@@ -108,7 +107,7 @@ namespace Demo
 
     public:
         StereoGraphicsSystem(
-            GameState *gameState,
+            Demo::GameState *gameState,
             WorkspaceType wsType,
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
@@ -116,8 +115,8 @@ namespace Demo
             bool mIsStereo,
             bool showOgreDialog = false,
             bool showVideo = true,
-            Demo::VideoRenderTarget renderVideoTarget = TO_SQUARE,
-            Ogre::Real camNear = 0.1f, Ogre::Real camFar = 200.0f);
+            esvr2::VideoRenderTarget renderVideoTarget = TO_SQUARE,
+            Ogre::Real camNear = 0.05f, Ogre::Real camFar = 200.0f);
         virtual void deinitialize(void);
 
         // we are overwriting initialize

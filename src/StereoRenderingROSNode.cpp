@@ -19,7 +19,7 @@
 #include <message_filters/synchronizer.h>
 
 
-namespace Demo
+namespace esvr2
 {
     VideoROSNode::VideoROSNode(
             StereoGraphicsSystem *graphicsSystem,
