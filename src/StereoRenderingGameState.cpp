@@ -2,6 +2,7 @@
 #include "StereoRenderingGraphicsSystem.h"
 #include "StereoRenderingGameState.h"
 #include "StereoRendering.h"
+#include "PointCloud.h"
 #include "CameraController.h"
 #include "GraphicsSystem.h"
 
@@ -13,6 +14,7 @@
 #include "OgreManualObject2.h"
 #include "OgreBillboard.h"
 #include "OgreBillboardSet.h"
+#include "OgreEntity.h"
 #include "OgreCamera.h"
 
 namespace esvr2
@@ -21,12 +23,15 @@ namespace esvr2
             const Ogre::String &helpDescription,
             bool isStereo, Ogre::VrData *vrData ) :
         TutorialGameState( helpDescription ),
-        mSceneNodeCube( nullptr ),
         mVideoDatablock{ nullptr, nullptr },
         mProjectionRectangle{ nullptr, nullptr },
-        mSceneNodeCamera( nullptr ),
+        mTooltips( nullptr ),
+        mPointCloud( nullptr ),
         mSceneNodeLight( nullptr ),
+        mSceneNodeCamera( nullptr ),
+        mSceneNodePointCloud( nullptr ),
         mSceneNodeTooltips( nullptr ),
+        mSceneNodeMesh( nullptr ),
         mVrData( vrData ),
         mIsStereo( isStereo ),
         mEyeNum( isStereo ? 2 : 1 ),
@@ -159,17 +164,36 @@ namespace esvr2
             Ogre::SCENE_DYNAMIC );
 
         mCube->setVisibilityFlags( 0x1 << 1 );
-        mSceneNodeCube = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
-                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mSceneNodeMesh = sceneManager
+            ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
+            ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
 
-        mSceneNodeCube->setPosition( 0, 0, -1.0 );
+        mSceneNodeMesh->setPosition( 0, 0, -1.0 );
 
-        mSceneNodeCube->scale(0.25, 0.25, 0.25);
-        mSceneNodeCube->attachObject( mCube );
+        mSceneNodeMesh->scale(0.25, 0.25, 0.25);
+        mSceneNodeMesh->attachObject( mCube );
     }
 
     void StereoRenderingGameState::createPointCloud( void )
     {
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
+        size_t numpoints = 100;
+        Ogre::Real colorarray[numpoints*4];
+        Ogre::Real pointlist[numpoints*3];
+        Ogre::String pcname = "PointCloud";
+        Ogre::String pcEntName = "PointCloudEntity";
+        mPointCloud = new PointCloud(
+            pcname, "General", numpoints, pointlist, colorarray);
+
+        Ogre::v1::Entity *pcEnt = sceneManager->createEntity(pcEntName, pcname);
+
+        pcEnt->setMaterialName("Pointcloud");
+
+        mSceneNodePointCloud = sceneManager
+            ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
+            ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mSceneNodePointCloud->setPosition( 0, 0, -1.0 );
+        mSceneNodePointCloud->attachObject( pcEnt );
         // 0x1 << 2
     }
 

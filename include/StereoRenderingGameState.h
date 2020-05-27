@@ -3,6 +3,7 @@
 #define _Demo_StereoRenderingGameState_H_
 
 #include "StereoRendering.h"
+#include "PointCloud.h"
 
 #include "OgrePrerequisites.h"
 #include "TutorialGameState.h"
@@ -15,13 +16,15 @@ namespace esvr2
 {
     class StereoRenderingGameState : public Demo::TutorialGameState
     {
-        Ogre::SceneNode          *mSceneNodeCube;
         Ogre::HlmsUnlitDatablock *mVideoDatablock[2];
         Ogre::ManualObject       *mProjectionRectangle[2];
         Ogre::v1::BillboardSet   *mTooltips;
-        Ogre::SceneNode          *mSceneNodeCamera;
+        PointCloud               *mPointCloud;
         Ogre::SceneNode          *mSceneNodeLight;
+        Ogre::SceneNode          *mSceneNodeCamera;
+        Ogre::SceneNode          *mSceneNodePointCloud;
         Ogre::SceneNode          *mSceneNodeTooltips;
+        Ogre::SceneNode          *mSceneNodeMesh;
         Ogre::VrData             *mVrData;
         bool                     mIsStereo;
         size_t                   mEyeNum;
