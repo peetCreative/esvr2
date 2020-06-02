@@ -53,6 +53,8 @@ endmacro()
 
 include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/include" ${OpenVR_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} )
 
+link_libraries(stdc++fs)
+
 add_recursive( ${CMAKE_CURRENT_SOURCE_DIR}/src SOURCES )
 add_recursive( ${CMAKE_CURRENT_SOURCE_DIR}/include HEADERS )
 

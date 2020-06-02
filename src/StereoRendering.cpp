@@ -25,6 +25,7 @@
 
 #include "System/MainEntryPoints.h"
 
+#include <experimental/filesystem>
 #include <libconfig.h++>
 
 extern const double cFrametime;
@@ -33,6 +34,8 @@ const double cFrametime = 1.0 / 25.0;
 using namespace libconfig;
 using namespace Demo;
 using namespace esvr2;
+
+namespace fs = std::experimental::filesystem;
 
 struct ThreadData
 {
@@ -168,14 +171,30 @@ int main( int argc, char *argv[] )
             multiThreading = true;
     }
 
+    std::vector<std::string> config_files{};
+    for (size_t i = config_files_begin; i < config_files_end; i++ )
+    {
+        std::string path_str(argv[i]);
+        if ( path_str.back() == '/' )
+        {
+            for( auto& p: fs::directory_iterator(path_str) )
+            {
+                config_files.push_back( p.path() );
+            }
+        }
+        else
+        {
+            config_files.push_back( path_str );
+        }
+    }
     //from config file
     Config cfg;
     try
     {
-        for (size_t i = config_files_begin; i < config_files_end; i++ )
+        for ( auto& config_file: config_files )
         {
-            LOG << "read from config file: " << argv[i] << LOGEND;
-            cfg.readFile(argv[i]);
+            LOG << "read from config file: " << config_file << LOGEND;
+            cfg.readFile( config_file.c_str() );
 
             if (cfg.exists("show_video"))
                 cfg.lookupValue ("show_video", show_video);
