@@ -64,7 +64,8 @@ namespace esvr2
                                          Ogre::Real projPlaneDistance )
     {
         mProjPlaneDistance = projPlaneDistance;
-        mScale = mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
+        if ( cameraConfig.leftToRight )
+            mScale = mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
             Ogre::Real width = cameraConfig.width[eye];
