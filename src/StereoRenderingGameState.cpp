@@ -204,7 +204,7 @@ namespace esvr2
             ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
         mSceneNodePointCloud->setPosition( 0, 0, -1.0 );
         mSceneNodePointCloud->attachObject( pcEnt );
-        // 0x1 << 2
+        pcEnt->setVisibilityFlags( 0x1 << 2 );
     }
 
     //-----------------------------------------------------------------------------------
@@ -257,7 +257,7 @@ namespace esvr2
 
         mCameraController = new Demo::CameraController( mGraphicsSystem, true );
 
-        sceneManager->setVisibilityMask(0xFFFFFFFF);
+        sceneManager->setVisibilityMask(0xFFFFFFF0);
         TutorialGameState::createScene01();
     }
     //-----------------------------------------------------------------------------------
