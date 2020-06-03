@@ -256,7 +256,7 @@ namespace esvr2
     }
 
     void VideoROSNode::processIncomingMessage(
-        Mq::MessageId messageId, const void *data )
+        Demo::Mq::MessageId messageId, const void *data )
     {}
 
     bool VideoROSNode::getQuit()

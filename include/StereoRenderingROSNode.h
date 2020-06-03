@@ -67,7 +67,7 @@ namespace esvr2
         void deinitialize(void);
         void update( float timeSinceLast );
 
-        void processIncomingMessage( Mq::MessageId messageId, const void *data );
+        void processIncomingMessage( Demo::Mq::MessageId messageId, const void *data );
 
         bool getQuit();
     };
