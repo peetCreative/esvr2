@@ -223,9 +223,12 @@ int main( int argc, char *argv[] )
                 cfg.lookupValue("input_type", input_str);
                 input = getInputType(input_str);
             }
+
             //VIDEO
             if (input == VIDEO && cfg.exists("video"))
             {
+                if ( input == NONE )
+                    input = VIDEO;
                 Setting& vs = cfg.lookup("video");
                 if (vs.exists("path"))
                     videoInput.path = vs["path"].c_str();
@@ -242,6 +245,8 @@ int main( int argc, char *argv[] )
             //ROS
             if (input == ROS && cfg.exists("ros"))
             {
+                if ( input == NONE )
+                    input = ROS;
                 Setting& vs = cfg.lookup("ros");
                 if (vs.exists("input_type"))
                 {
