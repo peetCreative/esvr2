@@ -101,9 +101,15 @@ namespace esvr2
         {
             mProjectionRectangle[eye] = sceneManager->createManualObject();
 
-            mProjectionRectangle[eye]->begin(mDatablockName[eye], Ogre::OT_TRIANGLE_LIST);
+            mProjectionRectangle[eye]->begin(
+                mDatablockName[eye], Ogre::OT_TRIANGLE_LIST);
 
-            Ogre::Matrix4 eyeToHead = mVrData->mHeadToEye[eye].inverse();
+            Ogre::Matrix4 eyeToHead;
+            if ( mEyeNum == 2 )
+                eyeToHead = mVrData->mHeadToEye[eye].inverse();
+            else
+                eyeToHead = Ogre::Matrix4::IDENTITY;
+
             // Back
             edge = eyeToHead *
                 Ogre::Vector4( mLeft[eye], mTop[eye],
@@ -132,7 +138,10 @@ namespace esvr2
 
 
             mSceneNodeCamera->attachObject(mProjectionRectangle[eye]);
-            mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
+            if ( mEyeNum == 2 )
+                mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
+            else
+                mProjectionRectangle[eye]->setVisibilityFlags( 0x30 );
         }
     }
 
