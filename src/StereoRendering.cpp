@@ -217,7 +217,7 @@ int main( int argc, char *argv[] )
                 renderVideoTarget = getRenderVideoTarget(input_str);
             }
             //only set input if we didn't set it by cmdline
-            if (cfg.exists("input_type") && input == NONE)
+            if ( cfg.exists("input_type") )
             {
                 std::string input_str;
                 cfg.lookupValue("input_type", input_str);
@@ -225,9 +225,9 @@ int main( int argc, char *argv[] )
             }
 
             //VIDEO
-            if (input == VIDEO && cfg.exists("video"))
+            if ( cfg.exists("video") )
             {
-                if ( input == NONE )
+                if ( input == NONE && input == NONE )
                     input = VIDEO;
                 Setting& vs = cfg.lookup("video");
                 if (vs.exists("path"))
@@ -243,7 +243,7 @@ int main( int argc, char *argv[] )
             }
 
             //ROS
-            if (input == ROS && cfg.exists("ros"))
+            if ( cfg.exists("ros"))
             {
                 if ( input == NONE )
                     input = ROS;
@@ -396,7 +396,7 @@ int main( int argc, char *argv[] )
             hmdConfig, screen, isStereo, show_ogre_dialog,
             show_video, renderVideoTarget );
 
-    graphicsGameState->_notifyGraphicsSystem( graphicsSystem );
+    graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );
 
     VideoLoader *videoLoader = nullptr;
     switch(input)

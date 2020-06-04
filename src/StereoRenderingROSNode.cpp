@@ -108,7 +108,9 @@ namespace esvr2
         cv::Mat leftImage( outputRows, cols, CV_8UC3 );
         cv::Mat rightImage( outputRows, cols, CV_8UC3 );
 
-        // Split the input image into left and right, line by line. First line is right image:
+        // Split the input image into left and right, line by line.
+        //TODO: normally First line is right image,
+        //but somehow here it is different
         for( size_t inputRow = 0; inputRow < inputRows; inputRow++ )
         {
             if( inputRow % 2 == 0 )
@@ -116,14 +118,14 @@ namespace esvr2
                 int outputRow = inputRow/2;
                 unsigned int srcPos = inputRow * cols * sizeof(unsigned char) *3;
                 unsigned int destPos = outputRow*cols*sizeof(unsigned char)*3;
-                memcpy( rightImage.data + destPos, cv_ptr->image.data + srcPos, sizeof(unsigned char)*3*cols );
+                memcpy( leftImage.data + destPos, cv_ptr->image.data + srcPos, sizeof(unsigned char)*3*cols );
             }
             else
             {
                 int outputRow = (inputRow-1)/2;
                 unsigned int srcPos = inputRow*cols*sizeof(unsigned char)*3;
                 unsigned int destPos = outputRow*cols*sizeof(unsigned char)*3;
-                memcpy( leftImage.data + destPos, cv_ptr->image.data + srcPos, sizeof(unsigned char)*3*cols );
+                memcpy( rightImage.data + destPos, cv_ptr->image.data + srcPos, sizeof(unsigned char)*3*cols );
             }
         }
         mGraphicsSystem->setImgPtr( &leftImage, &rightImage );

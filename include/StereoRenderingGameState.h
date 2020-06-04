@@ -1,8 +1,8 @@
-
 #ifndef _Demo_StereoRenderingGameState_H_
 #define _Demo_StereoRenderingGameState_H_
 
 #include "StereoRendering.h"
+#include "StereoRenderingGraphicsSystem.h"
 #include "PointCloud.h"
 
 #include "OgrePrerequisites.h"
@@ -16,6 +16,8 @@ namespace esvr2
 {
     class StereoRenderingGameState : public Demo::TutorialGameState
     {
+        StereoGraphicsSystem *mStereoGraphicsSystem;
+
         Ogre::HlmsUnlitDatablock *mVideoDatablock[2];
         Ogre::ManualObject       *mProjectionRectangle[2];
         Ogre::v1::BillboardSet   *mTooltips;
@@ -47,6 +49,13 @@ namespace esvr2
 
         void update( float timeSinceLast );
         void keyReleased( const SDL_KeyboardEvent &arg );
+
+        void _notifyStereoGraphicsSystem(
+            StereoGraphicsSystem *stereoGraphicsSystem )
+        {
+            mStereoGraphicsSystem = stereoGraphicsSystem;
+            _notifyGraphicsSystem( stereoGraphicsSystem );
+        }
     };
 }
 

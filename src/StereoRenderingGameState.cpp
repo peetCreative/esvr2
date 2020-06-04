@@ -23,6 +23,7 @@ namespace esvr2
             const Ogre::String &helpDescription,
             bool isStereo, Ogre::VrData *vrData ) :
         TutorialGameState( helpDescription ),
+        mStereoGraphicsSystem( nullptr ),
         mVideoDatablock{ nullptr, nullptr },
         mProjectionRectangle{ nullptr, nullptr },
         mTooltips( nullptr ),
@@ -138,11 +139,14 @@ namespace esvr2
 
 
             mSceneNodeCamera->attachObject(mProjectionRectangle[eye]);
-            if ( mEyeNum == 2 )
-                mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
-            else
-                mProjectionRectangle[eye]->setVisibilityFlags( 0x30 );
         }
+        if ( mEyeNum == 2 )
+        {
+            mProjectionRectangle[LEFT]->setVisibilityFlags( 0x10 );
+            mProjectionRectangle[RIGHT]->setVisibilityFlags( 0x20 );
+        }
+        else
+            mProjectionRectangle[0]->setVisibilityFlags( 0x30 );
     }
 
     void StereoRenderingGameState::createTooltips( void )
@@ -310,8 +314,7 @@ namespace esvr2
         // stop Video
         if( arg.keysym.scancode == SDL_SCANCODE_SPACE )
         {
-            //TODO: connect GraphicsSystem with StereoGameState or so
-//             mGraphicsSystem->toggleShowVideo();
+            mStereoGraphicsSystem->toggleShowVideo();
         }
 
         TutorialGameState::keyReleased( arg );
