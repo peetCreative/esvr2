@@ -21,15 +21,15 @@ namespace esvr2
         const int numpoints, float *parray, float *carray)
     {
         /// Create the mesh via the MeshManager
-        Ogre::v1::MeshPtr msh = Ogre::v1::MeshManager::getSingleton().createManual(name, resourcegroup);
+        mMeshPtr = Ogre::v1::MeshManager::getSingleton().createManual(name, resourcegroup);
 
         /// Create one submesh
-        Ogre::v1::SubMesh* sub = msh->createSubMesh();
+        Ogre::v1::SubMesh* sub = mMeshPtr->createSubMesh();
 
         /// Create vertex data structure for vertices shared between submeshes
         Ogre::v1::VertexData *vtData = new Ogre::v1::VertexData();
-        msh->sharedVertexData[Ogre::VertexPass::VpNormal] = vtData;
-        msh->sharedVertexData[Ogre::VertexPass::VpShadow] = vtData;
+        mMeshPtr->sharedVertexData[Ogre::VertexPass::VpNormal] = vtData;
+        mMeshPtr->sharedVertexData[Ogre::VertexPass::VpShadow] = vtData;
 
         /// Create declaration (memory format) of vertex data
         Ogre::v1::VertexDeclaration* decl =
@@ -81,7 +81,7 @@ namespace esvr2
         }
         sub->useSharedVertices = true;
         sub->operationType = Ogre::OperationType::OT_POINT_LIST;
-        msh->load();
+        mMeshPtr->load();
     }
     void PointCloud::updateVertexPositions(int size, float *points)
     {
@@ -107,9 +107,14 @@ namespace esvr2
         cbuf->unlock();
     }
 
+    Ogre::v1::MeshPtr PointCloud::getMeshPtr()
+    {
+        return mMeshPtr;
+    }
+
     PointCloud::~PointCloud()
     {
-
+        //TODO: unload mesh
     }
 }
 #endif

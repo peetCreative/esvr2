@@ -26,7 +26,10 @@ namespace esvr2
         /// Update vertex colours
         void updateVertexColours(int size, float *colours);
 
+        Ogre::v1::MeshPtr getMeshPtr( void );
+
     private:
+        Ogre::v1::MeshPtr mMeshPtr;
         int mSize;
         Ogre::v1::HardwareVertexBufferSharedPtr vbuf;
         Ogre::v1::HardwareVertexBufferSharedPtr cbuf;

@@ -192,14 +192,26 @@ namespace esvr2
     {
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
         size_t numpoints = 100;
-        Ogre::Real colorarray[numpoints*4];
+        Ogre::Real colorarray[numpoints*3];
         Ogre::Real pointlist[numpoints*3];
+        for( size_t i = 0; i < numpoints; i++ )
+        {
+            size_t color_cnt = i*3;
+            colorarray[color_cnt] = 1.0f;
+            colorarray[color_cnt + 1] = 1.0f;
+            colorarray[color_cnt + 2] = 1.0f;
+            size_t point_cnt = i*3;
+            pointlist[point_cnt] = (numpoints % 10) * 0.001 * mScale;
+            pointlist[point_cnt + 1] = (numpoints / 10) * 0.001 * mScale;
+            pointlist[point_cnt + 2] = -0.01 * mScale;
+        }
         Ogre::String pcname = "PointCloud";
         Ogre::String pcEntName = "PointCloudEntity";
         mPointCloud = new PointCloud(
-            pcname, "General", numpoints, pointlist, colorarray);
+            pcEntName, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, numpoints, pointlist, colorarray);
 
-        Ogre::v1::Entity *pcEnt = sceneManager->createEntity(pcEntName, pcname);
+        Ogre::v1::Entity *pcEnt = sceneManager->createEntity(
+            mPointCloud->getMeshPtr());
 
         pcEnt->setMaterialName("Pointcloud");
 
@@ -305,7 +317,7 @@ namespace esvr2
             flipMask = 0x1 << 2;
         }
 
-        //TODO: It's too complicated
+        //TODO: It's too complicated for just flipping certain bits
         Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
         visibilityMask &= ~flipMask;
         visibilityMask |= ~sceneManager->getVisibilityMask() & flipMask;
