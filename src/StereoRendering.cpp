@@ -27,6 +27,7 @@
 
 #include <experimental/filesystem>
 #include <libconfig.h++>
+#include <mutex>
 
 extern const double cFrametime;
 const double cFrametime = 1.0 / 25.0;
@@ -44,6 +45,7 @@ struct ThreadData
     VideoLoader     *videoSource;
     InputType       inputType;
     CameraConfig    *cameraConfig;
+    std::mutex      *cameraConfigLock;
     Ogre::Barrier   *barrier;
 };
 
@@ -124,7 +126,8 @@ int main( int argc, char *argv[] )
     InputType input = NONE;
     VideoRenderTarget renderVideoTarget = TO_SQUARE;
     size_t config_files_end = 0, config_files_begin = 0;
-    CameraConfig *cameraConfig = nullptr;
+    CameraConfig *cameraConfig = new CameraConfig();
+
 //     std::cout << config_file << std::endl;
     //TODO: strangely vrData needs this but hmdConfig needs initialized list
     const Ogre::Matrix4 id[2] = { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY };
@@ -263,7 +266,6 @@ int main( int argc, char *argv[] )
             if (cfg.exists("camera_info.left") &&
                 cfg.exists("camera_info.right"))
             {
-                cameraConfig = new CameraConfig();
                 const Setting& cis = cfg.lookup("camera_info");
                 if (cis.exists("left_to_right"))
                 {
@@ -399,6 +401,8 @@ int main( int argc, char *argv[] )
     graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );
 
     VideoLoader *videoLoader = nullptr;
+    std::mutex *cameraConfigLock = new std::mutex();
+    bool cameraConfigFromROS = true;
     switch(input)
     {
         case VIDEO:
@@ -408,9 +412,11 @@ int main( int argc, char *argv[] )
             break;
         case ROS:
 #ifdef USE_ROS
-        //TODO: GraphicsSystem
+            if ( cameraConfigFromROS )
+                cameraConfigLock->lock();
             videoLoader = new VideoROSNode(
-                graphicsSystem, argc, argv, rosInputType );
+                graphicsSystem, cameraConfig, cameraConfigLock,
+                argc, argv, rosInputType );
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
 #endif
@@ -432,6 +438,7 @@ int main( int argc, char *argv[] )
         threadData->videoSource      = videoLoader;
         threadData->inputType        = input;
         threadData->cameraConfig     = cameraConfig;
+        threadData->cameraConfigLock = cameraConfigLock;
         threadData->barrier          = barrier;
 
         Ogre::ThreadHandlePtr threadHandles[2];
@@ -450,6 +457,7 @@ int main( int argc, char *argv[] )
         LOG << "singleThreading" << LOGEND;
         graphicsSystem->initialize( "esvr2" );
         videoLoader->initialize();
+        cameraConfigLock->lock();
         if ( cameraConfig )
         {
             graphicsSystem->calcAlign( *cameraConfig );
@@ -514,6 +522,7 @@ unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
     CameraConfig *cameraConfig      = threadData->cameraConfig;
 
     graphicsSystem->initialize( "esvr2" );
+    threadData->cameraConfigLock->lock();
     if( cameraConfig )
     {
         graphicsSystem->calcAlign( *cameraConfig );

@@ -17,6 +17,8 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 
+#include <mutex>
+
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproximatePolicy;
 typedef message_filters::Synchronizer<ApproximatePolicy> ApproximateSync;
 
@@ -36,7 +38,8 @@ namespace esvr2
         std::shared_ptr<ApproximateSync> mApproximateSync;
         RosInputType mRosInputType;
         //Not the most beautifault solution
-        CameraConfig mCameraConfig;
+        CameraConfig *mCameraConfig;
+        std::mutex *mCameraConfigLock;
         bool mIsCameraInfoInit[2];
         bool mQuit;
 
@@ -45,6 +48,7 @@ namespace esvr2
     public:
         VideoROSNode(
             StereoGraphicsSystem *graphicsSystem,
+            CameraConfig *cameraConfig, std::mutex *cameraConfigLock,
             int argc, char *argv[],
             RosInputType rosInputType );
         ~VideoROSNode();

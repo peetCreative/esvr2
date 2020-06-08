@@ -18,7 +18,7 @@ namespace esvr2 {
         VideoLoader( StereoGraphicsSystem *graphicsSystem );
         ~VideoLoader();
 
-        virtual void initialize(void);
+        virtual void initialize( void );
         virtual void deinitialize(void);
         virtual void update( float timeSinceLast );
 

@@ -1030,7 +1030,7 @@ namespace esvr2
         BaseSystem::beginFrameParallel();
         if ( mOvrCompositorListener->getFrameCnt() >=
                 mLastFrameUpdate + mUpdateFrames &&
-            mVideoTexture )
+            mVideoTexture && mStagingTexture[LEFT])
         {
             mLastFrameUpdate = mOvrCompositorListener->getFrameCnt();
 //             LOG << "update" << LOGEND;

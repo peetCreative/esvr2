@@ -1,7 +1,9 @@
 #ifdef USE_ROS
 
+#include "StereoRenderingVideoLoader.h"
 #include "StereoRenderingROSNode.h"
 #include "StereoRenderingGraphicsSystem.h"
+#include "StereoRenderingGameState.h"
 #include "StereoRendering.h"
 
 #include "opencv2/opencv.hpp"
@@ -18,14 +20,18 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 
+#include <mutex>
 
 namespace esvr2
 {
     VideoROSNode::VideoROSNode(
             StereoGraphicsSystem *graphicsSystem,
+            CameraConfig *cameraConfig, std::mutex *cameraConfigLock,
             int argc, char *argv[],
             RosInputType rosInputType ):
-        VideoLoader(graphicsSystem),
+        VideoLoader( graphicsSystem ),
+        mCameraConfig( cameraConfig ),
+        mCameraConfigLock( cameraConfigLock ),
         mNh( nullptr ),
         mSubImageLeft( nullptr ),
         mSubImageRight( nullptr ),
@@ -78,6 +84,9 @@ namespace esvr2
                     &VideoROSNode::newROSCameraInfoCallbackRight, this);
                 break;
         }
+        while(!mCameraConfigLock->try_lock())
+            ros::spinOnce();
+        mCameraConfigLock->unlock();
     }
 
     void VideoROSNode::newROSImageStereoSliced(
@@ -204,12 +213,12 @@ namespace esvr2
         LOG << "camera_info_left" << LOGEND;
         if ( !mIsCameraInfoInit[LEFT] )
         {
-            mCameraConfig.width[LEFT] = camInfo->width;
-            mCameraConfig.height[LEFT] = camInfo->width;
-            mCameraConfig.f_x[LEFT] = camInfo->K[0];
-            mCameraConfig.f_y[LEFT] = camInfo->K[4];
-            mCameraConfig.c_x[LEFT] = camInfo->K[2];
-            mCameraConfig.c_y[LEFT] = camInfo->K[5];
+            mCameraConfig->width[LEFT] = camInfo->width;
+            mCameraConfig->height[LEFT] = camInfo->height;
+            mCameraConfig->f_x[LEFT] = camInfo->K[0];
+            mCameraConfig->f_y[LEFT] = camInfo->K[4];
+            mCameraConfig->c_x[LEFT] = camInfo->K[2];
+            mCameraConfig->c_y[LEFT] = camInfo->K[5];
             mIsCameraInfoInit[LEFT] = true;
         }
         if ( mIsCameraInfoInit[RIGHT] )
@@ -225,12 +234,12 @@ namespace esvr2
         LOG << "camera_info_right" << LOGEND;
         if (!mIsCameraInfoInit[RIGHT])
         {
-            mCameraConfig.width[RIGHT] = camInfo->width;
-            mCameraConfig.height[RIGHT] = camInfo->width;
-            mCameraConfig.f_x[RIGHT] = camInfo->K[0];
-            mCameraConfig.f_y[RIGHT] = camInfo->K[4];
-            mCameraConfig.c_x[RIGHT] = camInfo->K[2];
-            mCameraConfig.c_y[RIGHT] = camInfo->K[5];
+            mCameraConfig->width[RIGHT] = camInfo->width;
+            mCameraConfig->height[RIGHT] = camInfo->height;
+            mCameraConfig->f_x[RIGHT] = camInfo->K[0];
+            mCameraConfig->f_y[RIGHT] = camInfo->K[4];
+            mCameraConfig->c_x[RIGHT] = camInfo->K[2];
+            mCameraConfig->c_y[RIGHT] = camInfo->K[5];
             mIsCameraInfoInit[RIGHT] = true;
         }
         if ( mIsCameraInfoInit[LEFT] )
@@ -244,7 +253,7 @@ namespace esvr2
     {
         if (!mIsCameraInfoInit[LEFT] || !mIsCameraInfoInit[RIGHT])
             return;
-        mGraphicsSystem->calcAlign( mCameraConfig );
+        mCameraConfigLock->unlock();
     }
 
     void VideoROSNode::deinitialize(void)
