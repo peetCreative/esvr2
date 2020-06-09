@@ -56,14 +56,17 @@ namespace esvr2 {
         Ogre::uint32 height;
     } HmdConfig;
     typedef struct {
-        int width[2] = {0,0};
-        int height[2] = {0, 0};
-        float f_x[2] = {0, 0};
-        float f_y[2] = {0, 0};
-        float c_x[2] = {0, 0};
-        float c_y[2] = {0, 0};
-        float leftToRight = 0;
+        int width = 0;
+        int height = 0;
+        std::vector<float> D = { 0, 0, 0, 0, 0 };
+        std::vector<float> K = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        std::vector<float> R = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        std::vector<float> P = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     } CameraConfig;
+    typedef struct {
+        CameraConfig cfg[2];
+        float leftToRight = 0;
+    } StereoCameraConfig;
 
     Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose );
     Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix44_t matPose );

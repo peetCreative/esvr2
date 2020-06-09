@@ -199,7 +199,7 @@ namespace esvr2
         }
     }
 
-    bool StereoGraphicsSystem::calcAlign(CameraConfig &cameraConfig)
+    bool StereoGraphicsSystem::calcAlign(StereoCameraConfig &cameraConfig)
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
         Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
@@ -210,8 +210,8 @@ namespace esvr2
 
         for ( size_t eye = 0; eye < mEyeNum; eye++)
         {
-            mCameraWidth[eye] = cameraConfig.width[eye];
-            mCameraHeight[eye] = cameraConfig.height[eye];
+            mCameraWidth[eye] = cameraConfig.cfg[eye].width;
+            mCameraHeight[eye] = cameraConfig.cfg[eye].height;
 
             if ( mVideoTarget == TO_SQUARE )
             {
@@ -288,20 +288,24 @@ namespace esvr2
 
         for (size_t eye = 0; eye < mEyeNum; eye++)
         {
+            float f_x = cameraConfig.cfg[eye].K[0];
+            float f_y = cameraConfig.cfg[eye].K[4];
+            float c_x = cameraConfig.cfg[eye].K[2];
+            float c_y = cameraConfig.cfg[eye].K[5];
             float c_vr_h = -mHmdConfig.tan[eye][0] * vr_width_half /
                 (-mHmdConfig.tan[eye][0] + mHmdConfig.tan[eye][1]);
             float c_vr_v = -mHmdConfig.tan[eye][2] * vr_height /
                 (-mHmdConfig.tan[eye][2] + mHmdConfig.tan[eye][3]);
 
-            float img_size_resize_h = c_vr_h * cameraConfig.width[eye] /
-                (cameraConfig.f_x[eye] *-mHmdConfig.tan[eye][0]);
-            float img_size_resize_v = c_vr_v * cameraConfig.height[eye] /
-                (cameraConfig.f_y[eye] *-mHmdConfig.tan[eye][2]);
+            float img_size_resize_h = c_vr_h * cameraConfig.cfg[eye].width /
+                (f_x *-mHmdConfig.tan[eye][0]);
+            float img_size_resize_v = c_vr_v * cameraConfig.cfg[eye].height /
+                (f_y *-mHmdConfig.tan[eye][2]);
 
             float img_middle_resize_h =
-                img_size_resize_h * cameraConfig.c_x[eye] / cameraConfig.width[eye];
+                img_size_resize_h * c_x / cameraConfig.cfg[eye].width;
             float img_middle_resize_v =
-                img_size_resize_v * cameraConfig.c_y[eye] / cameraConfig.height[eye];
+                img_size_resize_v * c_y / cameraConfig.cfg[eye].height;
 
             float align_f_h = c_vr_h - img_middle_resize_h;
             float align_f_v = c_vr_v - img_middle_resize_v;
@@ -325,6 +329,24 @@ namespace esvr2
                 std::round(img_middle_resize_h));
             mImgMiddleResize[eye][1] = static_cast<size_t>(
                 std::round(img_middle_resize_v));
+
+            //NODELET_INFO( "New Camera Info received." );
+            cv::Mat intrinsics = cv::Mat::zeros(3, 3, CV_64FC1);
+            for( int y = 0; y < 3; y++ )
+                    for( int x = 0; x < 3; x++ )
+                            intrinsics.at<double>(x,y) = cameraConfig.cfg[eye].K[x*3+y];
+            cv::Size size( cameraConfig.cfg[eye].width, cameraConfig.cfg[eye].height );
+            cv::initUndistortRectifyMap( intrinsics, cameraConfig.cfg[eye].D,
+                            cv::_InputArray(), cv::_InputArray(), size,
+                            CV_32FC1, mUndistortMap1[eye], mUndistortMap2[eye] );
+
+            cv::Mat rectify = cv::Mat::zeros(3, 3, CV_64FC1);
+            for( int y = 0; y < 3; y++ )
+                    for( int x = 0; x < 3; x++ )
+                            rectify.at<double>(x,y) = cameraConfig.cfg[eye].R[x*3+y];
+            cv::initUndistortRectifyMap( intrinsics, cameraConfig.cfg[eye].D,
+                            rectify, cv::_InputArray(), size,
+                            CV_32FC1, mUndistortRectifyMap1[eye], mUndistortRectifyMap2[eye] );
         }
         return true;
     }
@@ -925,18 +947,18 @@ namespace esvr2
     void StereoGraphicsSystem::setImgPtr(
         const cv::Mat *left, const cv::Mat *right)
     {
-        const cv::Mat *img[2] = { left, right };
+        const cv::Mat *img_ptr[2] = { left, right };
         if( !mShowVideo )
             return;
         //we have to wait some frames after we can send new texture
         // maybe we have to look this also applies to Hlms
-        if ( !img[RIGHT] )
-            img[RIGHT] = img[LEFT];
+        if ( !img_ptr[RIGHT] )
+            img_ptr[RIGHT] = img_ptr[LEFT];
         if ( mVideoTarget == TO_BACKGROUND  && mImageRenderConfig )
         {
             //why don't we just fire images to the lens as we have them
-            resize(*img[LEFT], mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
-            resize(*img[RIGHT], mImageResize[RIGHT], mImageRenderConfig->size[RIGHT]);
+            resize(*img_ptr[LEFT], mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
+            resize(*img_ptr[RIGHT], mImageResize[RIGHT], mImageRenderConfig->size[RIGHT]);
 
             if (mDrawHelpers)
             {
@@ -953,36 +975,39 @@ namespace esvr2
         }
         else if ( mVideoTarget == TO_SQUARE )
         {
-//             mOvrCompositorListener->getFrameCnt() % 256;
+            //TODO:probably not the most efficient methode
+            const cv::Mat *img_in_ptr[2] = {left, right};
 
-            const cv::Mat *img_ptr[2];
-            if ( static_cast<size_t>( img[LEFT]->cols ) == mCameraWidth[LEFT] &&
-                static_cast<size_t>(  img[LEFT]->rows ) == mCameraHeight[LEFT] &&
-                static_cast<size_t>( img[RIGHT]->cols ) == mCameraWidth[RIGHT] &&
-                static_cast<size_t>( img[RIGHT]->rows ) == mCameraHeight[RIGHT] )
-            {
-                img_ptr[LEFT] = img[LEFT];
-                img_ptr[RIGHT] = img[RIGHT];
-            }
-            else
-            {
-                //TODO:probably not the most efficient methode
-                for (size_t eye = 0; eye < mEyeNum; eye++ )
-                {
-                    resize(*(img[eye]), mImageResize[eye], cv::Size(mCameraWidth[eye], mCameraHeight[eye]));
-                    img_ptr[eye] = &mImageResize[eye];
-                }
-            }
-
+            bool undist = false, undistRect = false;
             mMtxImageResize.lock();
-            for( size_t eye = 0; eye < mEyeNum; eye++ )
+            for (size_t eye = 0; eye < mEyeNum; eye++ )
             {
+                if ( static_cast<size_t>( img_ptr[eye]->cols ) != mCameraWidth[eye] ||
+                    static_cast<size_t>(  img_ptr[eye]->rows ) != mCameraHeight[eye] )
+                {
+                    resize(*(img_in_ptr[eye]), mImageResize[eye], cv::Size(mCameraWidth[eye], mCameraHeight[eye]));
+                    img_in_ptr[eye] = &mImageResize[eye];
+                }
+                if (undist)
+                {
+                    cv::remap( *(img_in_ptr[eye]), mImageResize[eye],
+                                    mUndistortMap1[eye], mUndistortMap2[eye],
+                                    cv::INTER_LINEAR );
+                    img_in_ptr[eye] = &mImageResize[eye];
+                }
+                else if (undistRect)
+                {
+                    cv::remap( *(img_in_ptr[eye]), mImageResize[eye],
+                                    mUndistortRectifyMap1[eye], mUndistortRectifyMap2[eye],
+                                    cv::INTER_LINEAR );
+                    img_in_ptr[eye] = &mImageResize[eye];
+                }
                 const size_t bytesPerRow =
                     mVideoTexture[eye]->_getSysRamCopyBytesPerRow( 0 );
                 size_t row_cnt = 0;
                 for (size_t y = 0; y < mCameraHeight[eye]; y++) {
                     size_t cnt = row_cnt;
-                    const uint8_t* img_row_ptr = img_ptr[eye]->ptr<const uint8_t>(y);
+                    const uint8_t* img_row_ptr = img_in_ptr[eye]->ptr<const uint8_t>(y);
                     for (size_t x = 0; x < mCameraWidth[eye]; x++) {
                         mImageData[eye][cnt++] = *(img_row_ptr+2);
                         mImageData[eye][cnt++] = *(img_row_ptr+1);

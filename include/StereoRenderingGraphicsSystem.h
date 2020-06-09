@@ -1,4 +1,3 @@
-
 #ifndef _Demo_StereoRenderingGraphicsSystem_H_
 #define _Demo_StereoRenderingGraphicsSystem_H_
 
@@ -73,6 +72,9 @@ namespace esvr2
         size_t mImageDataSize[2];
         Ogre::StagingTexture *mStagingTexture[2];
 
+        cv::Mat mUndistortMap1[2], mUndistortMap2[2];
+        cv::Mat mUndistortRectifyMap1[2], mUndistortRectifyMap2[2];
+
         //used for mDrawHelpers
         bool mDrawHelpers;
         int mCVr[2][2];
@@ -125,7 +127,7 @@ namespace esvr2
         void setImgPtr(const cv::Mat *left, const cv::Mat *right);
         bool getShowVideo( void ) { return mShowVideo; };
         void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
-        bool calcAlign(CameraConfig &mCameraConfig);
+        bool calcAlign(StereoCameraConfig &mCameraConfig);
 
         virtual void beginFrameParallel(void);
 

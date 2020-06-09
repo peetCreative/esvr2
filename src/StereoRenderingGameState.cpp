@@ -61,7 +61,7 @@ namespace esvr2
 
     }
 
-    void StereoRenderingGameState::calcAlign(CameraConfig &cameraConfig,
+    void StereoRenderingGameState::calcAlign(StereoCameraConfig &cameraConfig,
                                          Ogre::Real projPlaneDistance )
     {
         mProjPlaneDistance = projPlaneDistance;
@@ -69,12 +69,12 @@ namespace esvr2
             mScale = mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
-            Ogre::Real width = cameraConfig.width[eye];
-            Ogre::Real height = cameraConfig.height[eye];
-            Ogre::Real f_x = cameraConfig.f_x[eye];
-            Ogre::Real f_y = cameraConfig.f_y[eye];
-            Ogre::Real c_x = cameraConfig.c_x[eye];
-            Ogre::Real c_y = cameraConfig.c_y[eye];
+            Ogre::Real width = cameraConfig.cfg [eye].width;
+            Ogre::Real height = cameraConfig.cfg [eye].height;
+            Ogre::Real f_x = cameraConfig.cfg [eye].K[0];
+            Ogre::Real f_y = cameraConfig.cfg [eye].K[4];
+            Ogre::Real c_x = cameraConfig.cfg [eye].K[2];
+             Ogre::Real c_y = cameraConfig.cfg [eye].K[5];
             //in xy left is negativ
             mLeft[eye] = -c_x * mProjPlaneDistance / f_x;
             mRight[eye] = -( c_x - width ) * mProjPlaneDistance / f_x;

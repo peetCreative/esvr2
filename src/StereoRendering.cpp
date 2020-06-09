@@ -44,7 +44,7 @@ struct ThreadData
     StereoRenderingGameState  *graphicsGameState;
     VideoLoader     *videoSource;
     InputType       inputType;
-    CameraConfig    *cameraConfig;
+    StereoCameraConfig    *cameraConfig;
     std::mutex      *cameraConfigLock;
     Ogre::Barrier   *barrier;
 };
@@ -126,7 +126,7 @@ int main( int argc, char *argv[] )
     InputType input = NONE;
     VideoRenderTarget renderVideoTarget = TO_SQUARE;
     size_t config_files_end = 0, config_files_begin = 0;
-    CameraConfig *cameraConfig = new CameraConfig();
+    StereoCameraConfig *cameraConfig = new StereoCameraConfig();
 
 //     std::cout << config_file << std::endl;
     //TODO: strangely vrData needs this but hmdConfig needs initialized list
@@ -278,25 +278,47 @@ int main( int argc, char *argv[] )
                     {
                         //I'm not sure I have seen such a shit lib like libconfig++
                         //lookupValue gives me back 0 because it is parse point sth to 0 SHIT!!!!!
-                        cameraConfig->width[leftOrRight] = s["width"];
-                        cameraConfig->height[leftOrRight] = s["height"];
+                        cameraConfig->cfg[leftOrRight].width = s["width"];
+                        cameraConfig->cfg[leftOrRight].height = s["height"];
                     }
                     else
                         LOG << "camera_config is invalid" << LOGEND;
                     if (s.exists("f_x") && s.exists("f_y") &&
                         s.exists("c_x") && s.exists("c_y"))
                     {
-                        cameraConfig->f_x[leftOrRight] = s["f_x"];
-                        cameraConfig->f_y[leftOrRight] = s["f_y"];
-                        cameraConfig->c_x[leftOrRight] = s["c_x"];
-                        cameraConfig->c_y[leftOrRight] = s["c_y"];
+                        cameraConfig->cfg[leftOrRight].K[0] = s["f_x"];
+                        cameraConfig->cfg[leftOrRight].K[4] = s["f_y"];
+                        cameraConfig->cfg[leftOrRight].K[2] = s["c_x"];
+                        cameraConfig->cfg[leftOrRight].K[5] = s["c_y"];
+                        cameraConfig->cfg[leftOrRight].K[8] = 1.0;
                     }
                     if (s.exists("K") && s["K"].getLength() == 9)
                     {
-                        cameraConfig->f_x[leftOrRight] = s["K"][0];
-                        cameraConfig->f_y[leftOrRight] = s["K"][4];
-                        cameraConfig->c_x[leftOrRight] = s["K"][2];
-                        cameraConfig->c_y[leftOrRight] = s["K"][5];
+                        for (size_t i = 0; i < 9; i ++)
+                        {
+                            cameraConfig->cfg[leftOrRight].K[i] = s["K"][i];
+                        }
+                    }
+                    if (s.exists("D") && s["D"].getLength() == 5)
+                    {
+                        for (size_t i = 0; i < 5; i ++)
+                        {
+                            cameraConfig->cfg[leftOrRight].D[i] = s["D"][i];
+                        }
+                    }
+                    if (s.exists("P") && s["P"].getLength() == 12)
+                    {
+                        for (size_t i = 0; i < 12; i ++)
+                        {
+                            cameraConfig->cfg[leftOrRight].P[i] = s["P"][i];
+                        }
+                    }
+                    if (s.exists("R") && s["R"].getLength() == 9)
+                    {
+                        for (size_t i = 0; i < 9; i ++)
+                        {
+                            cameraConfig->cfg[leftOrRight].R[i] = s["R"][i];
+                        }
                     }
                 }
             }
@@ -386,6 +408,11 @@ int main( int argc, char *argv[] )
     {
         std::cerr << "Parse error at " << pex.getFile() << ":" << pex.getLine()
                 << " - " << pex.getError() << std::endl;
+        return(EXIT_FAILURE);
+    }
+    catch(const SettingTypeException &stex)
+    {
+        std::cerr << "SettingTypeException error at " << stex.getPath() << std::endl;
         return(EXIT_FAILURE);
     }
 
@@ -519,7 +546,7 @@ unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
     StereoGraphicsSystem *graphicsSystem  = threadData->graphicsSystem;
     StereoRenderingGameState *graphicsGameState  = threadData->graphicsGameState;
     Ogre::Barrier *barrier          = threadData->barrier;
-    CameraConfig *cameraConfig      = threadData->cameraConfig;
+    StereoCameraConfig *cameraConfig      = threadData->cameraConfig;
 
     graphicsSystem->initialize( "esvr2" );
     threadData->cameraConfigLock->lock();
