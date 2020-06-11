@@ -38,7 +38,6 @@
 #include <ctime>
 #include <cassert>
 #include <cstring>
-#include <ros/console.h>
 
 namespace esvr2 {
 

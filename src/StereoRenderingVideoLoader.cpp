@@ -5,7 +5,8 @@
 namespace esvr2
 {
     VideoLoader::VideoLoader( StereoGraphicsSystem *graphicsSystem ):
-        mGraphicsSystem( graphicsSystem )
+        mGraphicsSystem( graphicsSystem ),
+        mQuit(false)
     {}
 
     VideoLoader::~VideoLoader()

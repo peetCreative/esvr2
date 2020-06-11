@@ -13,6 +13,7 @@ namespace esvr2 {
     {
     protected:
         StereoGraphicsSystem *mGraphicsSystem;
+        bool mQuit;
 
     public:
         VideoLoader( StereoGraphicsSystem *graphicsSystem );
@@ -28,7 +29,8 @@ namespace esvr2 {
 
         virtual void processIncomingMessage( Demo::Mq::MessageId messageId, const void *data );
 
-        virtual bool getQuit() {return false;};
+        void quit() {mQuit = true;};
+        bool getQuit() {return mQuit;};
     };
 }
 

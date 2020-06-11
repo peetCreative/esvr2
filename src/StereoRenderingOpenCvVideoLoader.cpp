@@ -67,7 +67,39 @@ namespace esvr2
             imageOrigLeftPtr = &mMat;
             break;
         case VIDEO_STEREO_SLICED:
-//             TODO:implement manage sliced images
+        {
+            size_t outputRows = mCaptureFrameHeight/2;
+
+            if( mCaptureFrameHeight % 2 != 0 ) {
+                LOG << "Height of input image must be divisible by 2 (but current height is " << mCaptureFrameHeight  << ")!";
+                quit();
+                return;
+            }
+
+            imageOrigLeft = cv::Mat( outputRows,  mCaptureFrameWidth, CV_8UC3 );
+            imageOrigRight = cv::Mat( outputRows,  mCaptureFrameWidth, CV_8UC3 );
+
+            // Split the input image into left and right, line by line.
+            //TODO: normally First line is right image,
+            //but somehow here it is different
+            for( int inputRow = 0; inputRow < mCaptureFrameHeight; inputRow++ )
+            {
+                if( inputRow % 2 == 0 )
+                {
+                    int outputRow = inputRow/2;
+                    unsigned int srcPos = inputRow * mCaptureFrameWidth * sizeof(unsigned char) *3;
+                    unsigned int destPos = outputRow*mCaptureFrameWidth*sizeof(unsigned char)*3;
+                    memcpy( imageOrigLeft.data + destPos, mMat.data + srcPos, sizeof(unsigned char)*3*mCaptureFrameWidth );
+                }
+                else
+                {
+                    int outputRow = (inputRow-1)/2;
+                    unsigned int srcPos = inputRow*mCaptureFrameWidth*sizeof(unsigned char)*3;
+                    unsigned int destPos = outputRow*mCaptureFrameWidth*sizeof(unsigned char)*3;
+                    memcpy( imageOrigRight.data + destPos, mMat.data + srcPos, sizeof(unsigned char)*3*mCaptureFrameWidth );
+                }
+            }
+        }
             break;
         case VIDEO_STEREO_VERTICAL_SPLIT:
             lrect = cv::Rect(0, 0,

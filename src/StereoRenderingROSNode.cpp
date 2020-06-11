@@ -37,8 +37,7 @@ namespace esvr2
         mRosInputType( rosInputType ),
         mCameraConfig( cameraConfig ),
         mCameraConfigLock( cameraConfigLock ),
-        mIsCameraInfoInit{ false, false },
-        mQuit( false )
+        mIsCameraInfoInit{ false, false }
     {
         ros::init(argc, argv, "esvr2");
         mNh = new ros::NodeHandle();
@@ -51,7 +50,7 @@ namespace esvr2
         switch (mRosInputType)
         {
             case ROS_NONE:
-                mQuit = true;
+                quit();
                 break;
             case ROS_MONO:
                 mSubImage = mNh->subscribe(
@@ -153,20 +152,20 @@ namespace esvr2
         }
         catch (cv_bridge::Exception& e)
         {
-            mQuit = true;
+            quit;
             std::cout <<"cv_bridge exception: " << e.what() << std::endl;
             return;
         }
         catch( Ogre::Exception &e )
         {
-            mQuit = true;
+            quit();
             std::cout << "ROS oh sth went wront with OGRE!!" << std::endl;
             //TODO: let's unregister this as well
             throw e;
         }
         catch( ... )
         {
-            mQuit = true;
+            quit();
 //             destroySystems( graphicsGameState, graphicsSystem );
         }
 
@@ -249,7 +248,7 @@ namespace esvr2
 
     bool VideoROSNode::getQuit()
     {
-        return !mNh->ok() || mQuit;
+        return !mNh->ok() || getQuit();
     }
 }
 
