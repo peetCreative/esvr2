@@ -59,16 +59,16 @@ namespace esvr2
                 break;
             case ROS_STEREO_SLICED:
                 mSubImage = mNh->subscribe(
-                    "/stereo/camera_driver/image_raw", 1,
+                    "/stereo/camera_driver/image", 1,
                     &VideoROSNode::newROSImageStereoSliced, this);
                 break;
             case ROS_STEREO_SPLIT:
                 mSubImageLeft = new
                     message_filters::Subscriber<sensor_msgs::Image> (
-                        *mNh, "/stereo/left/image_undist_rect", 20);
+                        *mNh, "/stereo/left/image", 20);
                 mSubImageRight = new
                     message_filters::Subscriber<sensor_msgs::Image> (
-                        *mNh, "/stereo/right/image_undist_rect", 20);
+                        *mNh, "/stereo/right/image", 20);
                 mApproximateSync.reset(
                     new ApproximateSync(
                         ApproximatePolicy(20),
@@ -152,7 +152,7 @@ namespace esvr2
         }
         catch (cv_bridge::Exception& e)
         {
-            quit;
+            quit();
             std::cout <<"cv_bridge exception: " << e.what() << std::endl;
             return;
         }
@@ -210,7 +210,7 @@ namespace esvr2
     void VideoROSNode::newROSCameraInfoCallback(
         const sensor_msgs::CameraInfo::ConstPtr& camInfo )
     {
-        LOG << "camera_info_left" << LOGEND;
+        LOG << "camera_info " << eye << LOGEND;
         if ( !mIsCameraInfoInit[eye] )
         {
             mCameraConfig->cfg[eye].width = camInfo->width;
@@ -225,7 +225,14 @@ namespace esvr2
                 mCameraConfig->cfg[eye].R[i] = camInfo->R[i];
             mIsCameraInfoInit[eye] = true;
         }
-        mSubCamInfoLeft.shutdown();
+        if (eye == LEFT)
+        {
+            mSubCamInfoLeft.shutdown();
+        }
+        else if (eye == RIGHT)
+        {
+            mSubCamInfoRight.shutdown();
+        }
         if ( mIsCameraInfoInit[LEFT] && mIsCameraInfoInit[RIGHT] )
         {
             mCameraConfigLock->unlock();
