@@ -8,6 +8,7 @@
 #include "StereoRenderingOpenCvVideoLoader.h"
 #include "StereoRenderingVideoLoader.h"
 #include "StereoRenderingROSNode.h"
+#include "ParseYml.h"
 
 #include "OgreSceneManager.h"
 #include "OgreCamera.h"
@@ -274,6 +275,15 @@ int main( int argc, char *argv[] )
                 for (int leftOrRight = 0; leftOrRight < 2; leftOrRight++)
                 {
                     Setting& s = cis.lookup(categories[leftOrRight]);
+                    if (s.exists("yaml_path"))
+                    {
+                        std::string yaml_path;
+                        yaml_path = s["yaml_path"].c_str();
+                        readCalibrationYml(
+                            yaml_path, categories[leftOrRight],
+                            cameraConfig->cfg[leftOrRight]);
+
+                    }
                     if (s.exists("width") && s.exists("height"))
                     {
                         //I'm not sure I have seen such a shit lib like libconfig++

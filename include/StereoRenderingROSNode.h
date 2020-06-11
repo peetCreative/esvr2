@@ -38,7 +38,7 @@ namespace esvr2
         std::shared_ptr<ApproximateSync> mApproximateSync;
         RosInputType mRosInputType;
         //Not the most beautifault solution
-        CameraConfig *mCameraConfig;
+        StereoCameraConfig *mCameraConfig;
         std::mutex *mCameraConfigLock;
         bool mIsCameraInfoInit[2];
         bool mQuit;
@@ -48,7 +48,7 @@ namespace esvr2
     public:
         VideoROSNode(
             StereoGraphicsSystem *graphicsSystem,
-            CameraConfig *cameraConfig, std::mutex *cameraConfigLock,
+            StereoCameraConfig *cameraConfig, std::mutex *cameraConfigLock,
             int argc, char *argv[],
             RosInputType rosInputType );
         ~VideoROSNode();
@@ -58,14 +58,9 @@ namespace esvr2
         void newROSImageCallback (
             const sensor_msgs::Image::ConstPtr& imgLeft,
             const sensor_msgs::Image::ConstPtr& imgRight );
-        void newROSCameraInfoCallbackLeft (
+        template <int eye>
+        void newROSCameraInfoCallback (
             const sensor_msgs::CameraInfo::ConstPtr& camInfo );
-        void newROSCameraInfoCallbackRight (
-            const sensor_msgs::CameraInfo::ConstPtr& camInfo );
-
-        void newROSCameraInfoCallback(
-            const sensor_msgs::CameraInfo::ConstPtr& camInfoLeft,
-            const sensor_msgs::CameraInfo::ConstPtr& camInfoRight);
 
         void initialize(void);
         void deinitialize(void);

@@ -26,17 +26,17 @@ namespace esvr2
 {
     VideoROSNode::VideoROSNode(
             StereoGraphicsSystem *graphicsSystem,
-            CameraConfig *cameraConfig, std::mutex *cameraConfigLock,
+            StereoCameraConfig *cameraConfig, std::mutex *cameraConfigLock,
             int argc, char *argv[],
             RosInputType rosInputType ):
         VideoLoader( graphicsSystem ),
-        mCameraConfig( cameraConfig ),
-        mCameraConfigLock( cameraConfigLock ),
         mNh( nullptr ),
         mSubImageLeft( nullptr ),
         mSubImageRight( nullptr ),
         mApproximateSync( nullptr ),
         mRosInputType( rosInputType ),
+        mCameraConfig( cameraConfig ),
+        mCameraConfigLock( cameraConfigLock ),
         mIsCameraInfoInit{ false, false },
         mQuit( false )
     {
@@ -78,10 +78,10 @@ namespace esvr2
                     boost::bind( &VideoROSNode::newROSImageCallback, this,_1, _2));
                 mSubCamInfoLeft = mNh->subscribe(
                     "/stereo/left/camera_info", 1,
-                    &VideoROSNode::newROSCameraInfoCallbackLeft, this);
+                    &VideoROSNode::newROSCameraInfoCallback<LEFT>, this);
                 mSubCamInfoRight = mNh->subscribe(
                     "/stereo/right/camera_info", 1,
-                    &VideoROSNode::newROSCameraInfoCallbackRight, this);
+                    &VideoROSNode::newROSCameraInfoCallback<RIGHT>, this);
                 break;
         }
         while(!mCameraConfigLock->try_lock())
@@ -207,53 +207,30 @@ namespace esvr2
         }
     }
 
-    void VideoROSNode::newROSCameraInfoCallbackLeft(
+    template<int eye>
+    void VideoROSNode::newROSCameraInfoCallback(
         const sensor_msgs::CameraInfo::ConstPtr& camInfo )
     {
         LOG << "camera_info_left" << LOGEND;
-        if ( !mIsCameraInfoInit[LEFT] )
+        if ( !mIsCameraInfoInit[eye] )
         {
-            mCameraConfig->width[LEFT] = camInfo->width;
-            mCameraConfig->height[LEFT] = camInfo->height;
-            mCameraConfig->f_x[LEFT] = camInfo->K[0];
-            mCameraConfig->f_y[LEFT] = camInfo->K[4];
-            mCameraConfig->c_x[LEFT] = camInfo->K[2];
-            mCameraConfig->c_y[LEFT] = camInfo->K[5];
-            mIsCameraInfoInit[LEFT] = true;
-        }
-        if ( mIsCameraInfoInit[RIGHT] )
-        {
-            newROSCameraInfoCallback();
+            mCameraConfig->cfg[eye].width = camInfo->width;
+            mCameraConfig->cfg[eye].height = camInfo->height;
+            for( size_t i = 0; i < 9; i++ )
+                mCameraConfig->cfg[eye].K[i] = camInfo->K[i];
+            for( size_t i = 0; i < 12; i++ )
+                mCameraConfig->cfg[eye].P[i] = camInfo->P[i];
+            for( size_t i = 0; i < 5; i++ )
+                mCameraConfig->cfg[eye].D[i] = camInfo->D[i];
+            for( size_t i = 0; i < 9; i++ )
+                mCameraConfig->cfg[eye].R[i] = camInfo->R[i];
+            mIsCameraInfoInit[eye] = true;
         }
         mSubCamInfoLeft.shutdown();
-    }
-
-    void VideoROSNode::newROSCameraInfoCallbackRight(
-        const sensor_msgs::CameraInfo::ConstPtr& camInfo )
-    {
-        LOG << "camera_info_right" << LOGEND;
-        if (!mIsCameraInfoInit[RIGHT])
+        if ( mIsCameraInfoInit[LEFT] && mIsCameraInfoInit[RIGHT] )
         {
-            mCameraConfig->width[RIGHT] = camInfo->width;
-            mCameraConfig->height[RIGHT] = camInfo->height;
-            mCameraConfig->f_x[RIGHT] = camInfo->K[0];
-            mCameraConfig->f_y[RIGHT] = camInfo->K[4];
-            mCameraConfig->c_x[RIGHT] = camInfo->K[2];
-            mCameraConfig->c_y[RIGHT] = camInfo->K[5];
-            mIsCameraInfoInit[RIGHT] = true;
+            mCameraConfigLock->unlock();
         }
-        if ( mIsCameraInfoInit[LEFT] )
-        {
-            newROSCameraInfoCallback();
-        }
-        mSubCamInfoRight.shutdown();
-    }
-
-    void VideoROSNode::newROSCameraInfoCallback()
-    {
-        if (!mIsCameraInfoInit[LEFT] || !mIsCameraInfoInit[RIGHT])
-            return;
-        mCameraConfigLock->unlock();
     }
 
     void VideoROSNode::deinitialize(void)
