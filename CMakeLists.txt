@@ -29,6 +29,15 @@ endif()
 
 setupOgre( OGRE_SOURCE, OGRE_BINARIES, OGRE_LIBRARIES, FALSE )
 
+find_package(PkgConfig)
+
+pkg_check_modules(YAML_CPP yaml-cpp)
+if(${YAML_CPP_VERSION} VERSION_GREATER 0.5)
+add_definitions(-DHAVE_NEW_YAMLCPP)
+endif()
+link_directories(${YAML_CPP_LIBRARY_DIRS})
+include_directories(${YAML_CPP_INCLUDE_DIRS})
+
 #TODO: make the
 # set(OpenVR_DIR /usr/local/include/openvr/)
 find_package( OpenVR REQUIRED )
@@ -64,8 +73,8 @@ if (BUILD_ROS)
         ${SOURCES} ${SOURCES_ROS} ${HEADERS} ${RESOURCES} )
     target_link_libraries( ${PROJECT_NAME}Node
         ${catkin_LIBRARIES} ${OGRE_LIBRARIES}
-        ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++)
+        ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++ ${YAML_CPP_LIBRARIES})
 else()
     add_executable( ${PROJECT_NAME} ${SOURCES} ${HEADERS} ${RESOURCES} )
-    target_link_libraries( ${PROJECT_NAME} ${OGRE_LIBRARIES} ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++)
+    target_link_libraries( ${PROJECT_NAME} ${OGRE_LIBRARIES} ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++ ${YAML_CPP_LIBRARIES})
 endif()
