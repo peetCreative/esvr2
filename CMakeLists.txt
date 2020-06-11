@@ -33,18 +33,20 @@ find_package(PkgConfig)
 
 pkg_check_modules(YAML_CPP yaml-cpp)
 if(${YAML_CPP_VERSION} VERSION_GREATER 0.5)
-add_definitions(-DHAVE_NEW_YAMLCPP)
+    add_definitions(-DHAVE_NEW_YAMLCPP)
 endif()
 link_directories(${YAML_CPP_LIBRARY_DIRS})
 include_directories(${YAML_CPP_INCLUDE_DIRS})
 
-#TODO: make the
 # set(OpenVR_DIR /usr/local/include/openvr/)
-find_package( OpenVR REQUIRED )
+#TODO: write proper findlibconfig++.cmake to find this library
+# find_package(libconfig++ REQUIRED)
+#TODO: automatically find package make the
+# find_package( OpenVR REQUIRED )
 if (NOT OpenVR_FOUND)
 	message("no openvr")
-	set(OpenVR_INCLUDE_DIRS /opt/include/openvr/)
-	set(OpenVR_LIBRARIES /opt/lib/libOpenVR.so)
+	set(OpenVR_INCLUDE_DIRS /usr/local/include/openvr/)
+	set(OpenVR_LIBRARIES /usr/local/lib/libopenvr_api.so)
 endif()
 
 # Setup our application

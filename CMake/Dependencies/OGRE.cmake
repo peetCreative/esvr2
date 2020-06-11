@@ -139,7 +139,28 @@ endfunction()
 macro( setupOgre OGRE_SOURCE, OGRE_BINARIES, OGRE_LIBRARIES_OUT,
 		OGRE_USE_SCENE_FORMAT)
 
+
 MESSAGE("${CMAKE_CURRENT_BIN_DIR}")
+#check Ogre exists in Dependencies
+#check if we can find Ogre with find_package
+# find_package( OGRE )
+
+
+# if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies/Ogre")
+# 	message("build Ogre manually")
+# 	include(FetchContent)
+# 	set(EXTERNAL_INSTALL_LOCATION ${CMAKE_CURRENT_SOURCE_DIR}/Dependencies)
+# 
+# 	FetchContent_Declare( Ogre
+# 		SOURCE_DIR "${EXTERNAL_INSTALL_LOCATION}/Ogre"
+# 		GIT_REPOSITORY https://github.com/OGRECave/ogre-next.git
+# 	)
+# 	FetchContent_GetProperties(Ogre)
+# 	if(NOT Ogre_POPULATED)
+# 		FetchContent_Populate(Ogre)
+# 		add_subdirectory(${Ogre_SOURCE_DIR} ${Ogre_BINARY_DIR})
+# 	endif()
+# endif()
 set( CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/Dependencies/Ogre/CMake/Packages" )
 
 # Guess the paths.
