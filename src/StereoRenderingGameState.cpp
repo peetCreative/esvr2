@@ -328,6 +328,12 @@ namespace esvr2
         {
             mStereoGraphicsSystem->toggleShowVideo();
         }
+        // stop Video
+        if( arg.keysym.scancode == SDL_SCANCODE_X
+        )
+        {
+            mStereoGraphicsSystem->itterateDistortion();
+        }
 
         TutorialGameState::keyReleased( arg );
     }

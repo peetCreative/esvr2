@@ -40,6 +40,11 @@ namespace esvr2 {
         ROS_STEREO_SLICED,
         ROS_STEREO_SPLIT
     } RosInputType;
+    typedef enum {
+        RAW,
+        UNDISTORT,
+        UNDISTORT_RECTIFY
+    } Distortion;
     typedef struct {
         std::string path;
         VideoInputType videoInputType;

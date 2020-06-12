@@ -199,6 +199,20 @@ namespace esvr2
         }
     }
 
+    void StereoGraphicsSystem::itterateDistortion()
+    {
+        if (mInputDistortion != RAW )
+            return;
+        if( mOutputDistortion == RAW )
+            mOutputDistortion = UNDISTORT;
+        else
+        if( mOutputDistortion == UNDISTORT )
+            mOutputDistortion = UNDISTORT_RECTIFY;
+        else
+        if ( mOutputDistortion == UNDISTORT_RECTIFY)
+            mOutputDistortion = RAW;
+    }
+
     bool StereoGraphicsSystem::calcAlign(StereoCameraConfig &cameraConfig)
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
@@ -632,6 +646,7 @@ namespace esvr2
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
             int screen,
+            Distortion inputDistortion,
             bool isStereo,
             bool showOgreConfigDialog,
             bool showVideo,
@@ -673,6 +688,8 @@ namespace esvr2
         mIsStereo( isStereo ),
         mEyeNum( isStereo ? 2 : 1 ),
         mShowVideo(showVideo),
+        mInputDistortion ( inputDistortion ),
+        mOutputDistortion ( RAW ),
         mLastFrameUpdate(0),
         mUpdateFrames(2)
     {
@@ -990,19 +1007,25 @@ namespace esvr2
                     resize(*(img_in_ptr[eye]), mImageResize[eye], cv::Size(mCameraWidth[eye], mCameraHeight[eye]));
                     img_in_ptr[eye] = &mImageResize[eye];
                 }
-                if (undist)
+                switch( mOutputDistortion )
                 {
-                    cv::remap( *(img_in_ptr[eye]), mImageResize[eye],
-                                    mUndistortMap1[eye], mUndistortMap2[eye],
-                                    cv::INTER_LINEAR );
-                    img_in_ptr[eye] = &mImageResize[eye];
-                }
-                else if (undistRect)
-                {
-                    cv::remap( *(img_in_ptr[eye]), mImageResize[eye],
-                                    mUndistortRectifyMap1[eye], mUndistortRectifyMap2[eye],
-                                    cv::INTER_LINEAR );
-                    img_in_ptr[eye] = &mImageResize[eye];
+                    case RAW:
+                        break;
+                    case UNDISTORT:
+                        cv::remap(
+                            *(img_in_ptr[eye]), mImageResize[eye],
+                            mUndistortMap1[eye], mUndistortMap2[eye],
+                            cv::INTER_LINEAR );
+                        img_in_ptr[eye] = &mImageResize[eye];
+                        break;
+                    case UNDISTORT_RECTIFY:
+                        cv::remap(
+                            *(img_in_ptr[eye]), mImageResize[eye],
+                            mUndistortRectifyMap1[eye],
+                            mUndistortRectifyMap2[eye],
+                            cv::INTER_LINEAR );
+                        img_in_ptr[eye] = &mImageResize[eye];
+                        break;
                 }
                 const size_t bytesPerRow =
                     mVideoTexture[eye]->_getSysRamCopyBytesPerRow( 0 );

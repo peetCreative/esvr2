@@ -445,7 +445,7 @@ int main( int argc, char *argv[] )
 
     StereoGraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
             graphicsGameState, workspace, vrData,
-            hmdConfig, screen, isStereo, show_ogre_dialog,
+            hmdConfig, screen, RAW, isStereo, show_ogre_dialog,
             show_video, renderVideoTarget );
 
     graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );

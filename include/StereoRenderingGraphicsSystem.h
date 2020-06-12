@@ -85,6 +85,9 @@ namespace esvr2
         size_t mEyeNum;
         bool mShowVideo;
 
+        Distortion mInputDistortion;
+        Distortion mOutputDistortion;
+
         int mLastFrameUpdate;
         int mUpdateFrames;
         //------------------------------------
@@ -114,6 +117,7 @@ namespace esvr2
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
             int screen,
+            Distortion inputDistortion,
             bool mIsStereo,
             bool showOgreDialog = false,
             bool showVideo = true,
@@ -127,6 +131,8 @@ namespace esvr2
         void setImgPtr(const cv::Mat *left, const cv::Mat *right);
         bool getShowVideo( void ) { return mShowVideo; };
         void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
+        void itterateDistortion( void );
+        Distortion getDistortion( void ) {return mOutputDistortion;};
         bool calcAlign(StereoCameraConfig &mCameraConfig);
 
         virtual void beginFrameParallel(void);
