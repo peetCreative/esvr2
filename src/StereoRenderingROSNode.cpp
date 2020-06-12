@@ -75,17 +75,28 @@ namespace esvr2
                         *mSubImageLeft, *mSubImageRight));
                 mApproximateSync->registerCallback(
                     boost::bind( &VideoROSNode::newROSImageCallback, this,_1, _2));
-                mSubCamInfoLeft = mNh->subscribe(
-                    "/stereo/left/camera_info", 1,
-                    &VideoROSNode::newROSCameraInfoCallback<LEFT>, this);
-                mSubCamInfoRight = mNh->subscribe(
-                    "/stereo/right/camera_info", 1,
-                    &VideoROSNode::newROSCameraInfoCallback<RIGHT>, this);
+                if (mCameraConfig && mCameraConfigLock)
+                {
+                    mSubCamInfoLeft = mNh->subscribe(
+                        "/stereo/left/camera_info", 1,
+                        &VideoROSNode::newROSCameraInfoCallback<LEFT>, this);
+                    mSubCamInfoRight = mNh->subscribe(
+                        "/stereo/right/camera_info", 1,
+                        &VideoROSNode::newROSCameraInfoCallback<RIGHT>, this);
+                }
                 break;
         }
-        while(!mCameraConfigLock->try_lock())
-            ros::spinOnce();
-        mCameraConfigLock->unlock();
+        if( mCameraConfigLock && mCameraConfig )
+        {
+            while(!mCameraConfigLock->try_lock())
+                ros::spinOnce();
+            mCameraConfigLock->unlock();
+        }
+        else
+        {
+            mIsCameraInfoInit[LEFT] = true;
+            mIsCameraInfoInit[RIGHT] = true;
+        }
     }
 
     void VideoROSNode::newROSImageStereoSliced(

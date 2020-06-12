@@ -676,6 +676,7 @@ namespace esvr2
         mLastFrameUpdate(0),
         mUpdateFrames(2)
     {
+        mMtxImageResize.lock();
         LOG << "RESOURCE_FOLDER:" << RESOURCE_FOLDER << LOGEND;
         LOG << "PLUGIN_FOLDER:" << PLUGIN_FOLDER << LOGEND;
         memset( mTrackedDevicePose, 0, sizeof (mTrackedDevicePose) );
@@ -884,6 +885,7 @@ namespace esvr2
                     mWriteAccessFolder + "ProfileAccum" );
     #endif
 #endif
+    mMtxImageResize.unlock();
     }
 
     void StereoGraphicsSystem::deinitialize(void)

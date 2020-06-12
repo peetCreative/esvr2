@@ -291,8 +291,6 @@ int main( int argc, char *argv[] )
                         cameraConfig->cfg[leftOrRight].width = s["width"];
                         cameraConfig->cfg[leftOrRight].height = s["height"];
                     }
-                    else
-                        LOG << "camera_config is invalid" << LOGEND;
                     if (s.exists("f_x") && s.exists("f_y") &&
                         s.exists("c_x") && s.exists("c_y"))
                     {
@@ -426,6 +424,21 @@ int main( int argc, char *argv[] )
         return(EXIT_FAILURE);
     }
 
+        bool validCameraConfig = cameraConfig->leftToRight != 0 &&
+        cameraConfig->cfg[LEFT].width != 0 &&
+        cameraConfig->cfg[LEFT].height != 0 &&
+        ( !isStereo ||
+            ( isStereo &&
+            cameraConfig->cfg[RIGHT].width != 0 &&
+            cameraConfig->cfg[RIGHT].height != 0));
+    if ( validCameraConfig && input != ROS )
+    {
+        LOG << "no valid cameraConfig quit" << LOGEND;
+        delete cameraConfig;
+        delete vrData;
+        return 1;
+    }
+
     StereoRenderingGameState *graphicsGameState =
         new StereoRenderingGameState(
             "Description of what we are doing", isStereo, vrData );
@@ -438,8 +451,8 @@ int main( int argc, char *argv[] )
     graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );
 
     VideoLoader *videoLoader = nullptr;
+
     std::mutex *cameraConfigLock = new std::mutex();
-    bool cameraConfigFromROS = true;
     switch(input)
     {
         case VIDEO:
@@ -449,11 +462,21 @@ int main( int argc, char *argv[] )
             break;
         case ROS:
 #ifdef USE_ROS
-            if ( cameraConfigFromROS )
+            if ( !validCameraConfig )
+            {
                 cameraConfigLock->lock();
-            videoLoader = new VideoROSNode(
-                graphicsSystem, cameraConfig, cameraConfigLock,
-                argc, argv, rosInputType );
+                videoLoader = new VideoROSNode(
+                    graphicsSystem,
+                    cameraConfig, cameraConfigLock,
+                    argc, argv, rosInputType );
+            }
+            else
+            {
+                videoLoader = new VideoROSNode(
+                    graphicsSystem,
+                    nullptr, nullptr,
+                    argc, argv, rosInputType );
+            }
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
 #endif
