@@ -2,8 +2,8 @@
  * The class can be intialized with a array of points organized like: [0]=P1x [1]=P1y [2]=P1z
  * [3]=P2x [4]=P2y [5]=P2z ...
  */
-#ifndef _POINTCLOUD_H_
-#define _POINTCLOUD_H_
+#ifndef _Esvr2_POINTCLOUD_H_
+#define _Esvr2_POINTCLOUD_H_
 #define USE_POINTCLOUD
 #ifdef USE_POINTCLOUD
 

@@ -33,10 +33,10 @@
 *  POSSIBILITY OF SUCH DAMAGE.
 *********************************************************************/
 
-#ifndef _PARSE_YML_H
-#define _PARSE_YML_H
+#ifndef _Esvr2_Parse_Yml_H
+#define _Esvr2_Parse_Yml_H
 
-#include "StereoRendering.h"
+#include "Esvr2StereoRendering.h"
 
 #include <string>
 #include <istream>

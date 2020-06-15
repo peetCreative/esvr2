@@ -1,8 +1,9 @@
+#include "Esvr2GameState.h"
 
-#include "StereoRenderingGraphicsSystem.h"
-#include "StereoRenderingGameState.h"
-#include "StereoRendering.h"
-#include "PointCloud.h"
+#include "Esvr2StereoRendering.h"
+#include "Esvr2GraphicsSystem.h"
+#include "Esvr2PointCloud.h"
+
 #include "CameraController.h"
 #include "GraphicsSystem.h"
 
@@ -19,7 +20,7 @@
 
 namespace esvr2
 {
-    StereoRenderingGameState::StereoRenderingGameState(
+    GameState::GameState(
             const Ogre::String &helpDescription,
             bool isStereo, Ogre::VrData *vrData ) :
         TutorialGameState( helpDescription ),
@@ -61,7 +62,7 @@ namespace esvr2
 
     }
 
-    void StereoRenderingGameState::calcAlign(StereoCameraConfig &cameraConfig,
+    void GameState::calcAlign(StereoCameraConfig &cameraConfig,
                                          Ogre::Real projPlaneDistance )
     {
         mProjPlaneDistance = projPlaneDistance;
@@ -83,7 +84,7 @@ namespace esvr2
         }
     }
 
-    void StereoRenderingGameState::createProjectionPlanes()
+    void GameState::createProjectionPlanes()
     {
         bool alldata = mVrData->mHeadToEye[LEFT] != Ogre::Matrix4::IDENTITY &&
             mProjPlaneDistance &&
@@ -149,7 +150,7 @@ namespace esvr2
             mProjectionRectangle[0]->setVisibilityFlags( 0x30 );
     }
 
-    void StereoRenderingGameState::createTooltips( void )
+    void GameState::createTooltips( void )
     {
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
         mSceneNodeTooltips = sceneManager->getRootSceneNode(
@@ -168,7 +169,7 @@ namespace esvr2
     }
 
 
-    void StereoRenderingGameState::createMesh()
+    void GameState::createMesh()
     {
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
         Ogre::Item *mCube = sceneManager->createItem(
@@ -188,7 +189,7 @@ namespace esvr2
         mSceneNodeMesh->attachObject( mCube );
     }
 
-    void StereoRenderingGameState::createPointCloud( void )
+    void GameState::createPointCloud( void )
     {
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
         size_t numpoints = 100;
@@ -224,7 +225,7 @@ namespace esvr2
     }
 
     //-----------------------------------------------------------------------------------
-    void StereoRenderingGameState::createScene01(void)
+    void GameState::createScene01(void)
     {
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
 
@@ -277,13 +278,13 @@ namespace esvr2
         TutorialGameState::createScene01();
     }
     //-----------------------------------------------------------------------------------
-    void StereoRenderingGameState::update( float timeSinceLast )
+    void GameState::update( float timeSinceLast )
     {
         //update Pointcloud
         TutorialGameState::update( timeSinceLast );
     }
 
-    void StereoRenderingGameState::keyReleased( const SDL_KeyboardEvent &arg )
+    void GameState::keyReleased( const SDL_KeyboardEvent &arg )
     {
         if( arg.keysym.scancode == SDL_SCANCODE_ESCAPE )
         {

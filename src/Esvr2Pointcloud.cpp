@@ -1,7 +1,7 @@
 #define USE_POINTCLOUD
 #ifdef USE_POINTCLOUD
 
-#include "PointCloud.h"
+#include "Esvr2PointCloud.h"
 
 #include "OgreMesh.h"
 #include "OgreSubMesh.h"

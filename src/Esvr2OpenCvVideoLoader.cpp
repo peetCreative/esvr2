@@ -1,14 +1,16 @@
-#include "StereoRenderingOpenCvVideoLoader.h"
-#include "StereoRenderingVideoLoader.h"
-#include "StereoRenderingGraphicsSystem.h"
-#include "StereoRendering.h"
+#include "Esvr2OpenCvVideoLoader.h"
+
+#include "Esvr2StereoRendering.h"
+
+#include "Esvr2VideoLoader.h"
+#include "Esvr2GraphicsSystem.h"
 
 #include "opencv2/opencv.hpp"
 
 namespace esvr2
 {
     OpenCvVideoLoader::OpenCvVideoLoader(
-            StereoGraphicsSystem *graphicsSystem,
+            GraphicsSystem *graphicsSystem,
             VideoInput vInput):
         VideoLoader(graphicsSystem),
         mVideoInput( vInput ),

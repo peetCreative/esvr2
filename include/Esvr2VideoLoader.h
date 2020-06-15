@@ -1,22 +1,22 @@
 
-#ifndef _Demo_StereoRenderingVideoLoader_H_
-#define _Demo_StereoRenderingVideoLoader_H_
+#ifndef _Esvr2_VideoLoader_H_
+#define _Esvr2_VideoLoader_H_
 
-#include "StereoRendering.h"
+#include "Esvr2StereoRendering.h"
 
 #include "Threading/MessageQueueSystem.h"
 
 namespace esvr2 {
-    class StereoGraphicsSystem;
+    class GraphicsSystem;
 
     class VideoLoader : public Demo::Mq::MessageQueueSystem
     {
     protected:
-        StereoGraphicsSystem *mGraphicsSystem;
+        GraphicsSystem *mGraphicsSystem;
         bool mQuit;
 
     public:
-        VideoLoader( StereoGraphicsSystem *graphicsSystem );
+        VideoLoader( GraphicsSystem *graphicsSystem );
         ~VideoLoader();
 
         virtual void initialize( void );

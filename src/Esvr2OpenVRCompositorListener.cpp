@@ -1,6 +1,6 @@
+#include "Esvr2OpenVRCompositorListener.h"
 
-#include "OpenVRCompositorListener.h"
-#include "StereoRendering.h"
+#include "Esvr2StereoRendering.h"
 
 #include "OgreTextureGpuManager.h"
 #include "OgreTextureGpu.h"

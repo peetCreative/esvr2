@@ -1,16 +1,16 @@
 
-#ifndef _Demo_StereoRenderingOpenCvVideoLoader_H_
-#define _Demo_StereoRenderingOpenCvVideoLoader_H_
+#ifndef _Esvr2_OpenCvVideoLoader_H_
+#define _Esvr2_OpenCvVideoLoader_H_
 
-#include "StereoRendering.h"
+#include "Esvr2StereoRendering.h"
 
-#include "StereoRenderingVideoLoader.h"
+#include "Esvr2VideoLoader.h"
 
 #include "opencv2/opencv.hpp"
 
 
 namespace esvr2 {
-    class StereoGraphicsSystem;
+    class GraphicsSystem;
 
     class OpenCvVideoLoader : public VideoLoader
     {
@@ -22,7 +22,7 @@ namespace esvr2 {
 
     public:
         OpenCvVideoLoader(
-            StereoGraphicsSystem *graphicsSystem,
+            GraphicsSystem *graphicsSystem,
             VideoInput vInput );
         ~OpenCvVideoLoader();
 

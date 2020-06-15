@@ -1,5 +1,5 @@
-#ifndef _Demo_StereoRendering_H_
-#define _Demo_StereoRendering_H_
+#ifndef _Esvr2_StereoRendering_H_
+#define _Esvr2_StereoRendering_H_
 
 #include "OgreMatrix4.h"
 #include "openvr.h"

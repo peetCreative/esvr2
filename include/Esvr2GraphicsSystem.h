@@ -1,10 +1,11 @@
-#ifndef _Demo_StereoRenderingGraphicsSystem_H_
-#define _Demo_StereoRenderingGraphicsSystem_H_
+#ifndef _Esvr2_GraphicsSystem_H_
+#define _Esvr2_GraphicsSystem_H_
 
-#include "StereoRendering.h"
-#include "StereoRenderingVideoLoader.h"
+#include "Esvr2StereoRendering.h"
+#include "Esvr2VideoLoader.h"
 
 #include "GraphicsSystem.h"
+
 #include "OgreSceneNode.h"
 #include "OgreCamera.h"
 #include "Compositor/OgreCompositorManager2.h"
@@ -26,7 +27,7 @@ namespace esvr2
 
     class VideoLoader;
 
-    class StereoGraphicsSystem : public Demo::GraphicsSystem
+    class GraphicsSystem : public Demo::GraphicsSystem
     {
     private:
         //Depending on this type start with different Compositor setup
@@ -111,7 +112,7 @@ namespace esvr2
 
 
     public:
-        StereoGraphicsSystem(
+        GraphicsSystem(
             Demo::GameState *gameState,
             WorkspaceType wsType,
             Ogre::VrData *vrData,

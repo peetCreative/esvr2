@@ -1,12 +1,11 @@
-#include "StereoRenderingGraphicsSystem.h"
+#include "Esvr2GraphicsSystem.h"
 
-
-#include "OgrePlatform.h"
-#include "StereoRendering.h"
-#include "OpenVRCompositorListener.h"
+#include "Esvr2StereoRendering.h"
+#include "Esvr2OpenVRCompositorListener.h"
 
 #include "GameState.h"
 
+#include "OgrePlatform.h"
 #include "OgreTextureGpuManager.h"
 #include "OgreSceneManager.h"
 #include "OgreCamera.h"
@@ -34,7 +33,7 @@ namespace esvr2
 {
 
     //-------------------------------------------------------------------------------
-    void StereoGraphicsSystem::createCamera(void)
+    void GraphicsSystem::createCamera(void)
     {
         //Use one node to control both cameras
         mCamerasNode = mSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
@@ -127,7 +126,7 @@ namespace esvr2
     }
 
     //-------------------------------------------------------------------------
-    void StereoGraphicsSystem::syncCameraProjection( bool bForceUpdate )
+    void GraphicsSystem::syncCameraProjection( bool bForceUpdate )
     {
         if( bForceUpdate && mVrData )
         {
@@ -199,7 +198,7 @@ namespace esvr2
         }
     }
 
-    void StereoGraphicsSystem::itterateDistortion()
+    void GraphicsSystem::itterateDistortion()
     {
         if (mInputDistortion != RAW )
             return;
@@ -213,7 +212,7 @@ namespace esvr2
             mOutputDistortion = RAW;
     }
 
-    bool StereoGraphicsSystem::calcAlign(StereoCameraConfig &cameraConfig)
+    bool GraphicsSystem::calcAlign(StereoCameraConfig &cameraConfig)
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
         Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
@@ -365,7 +364,7 @@ namespace esvr2
         return true;
     }
 
-    Ogre::CompositorWorkspace* StereoGraphicsSystem::setupCompositor(void)
+    Ogre::CompositorWorkspace* GraphicsSystem::setupCompositor(void)
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
 
@@ -392,7 +391,7 @@ namespace esvr2
     // Purpose: Helper to get a string from a tracked device property and turn it
     //			into a std::string
     //-----------------------------------------------------------------------------
-    std::string StereoGraphicsSystem::GetTrackedDeviceString(
+    std::string GraphicsSystem::GetTrackedDeviceString(
         vr::TrackedDeviceIndex_t unDevice,
         vr::TrackedDeviceProperty prop,
         vr::TrackedPropertyError *peError)
@@ -414,7 +413,7 @@ namespace esvr2
         return sResult;
     }
 
-    void StereoGraphicsSystem::initCompositorVR(void)
+    void GraphicsSystem::initCompositorVR(void)
     {
         mVRCompositor = vr::VRCompositor();
         if ( !mVRCompositor )
@@ -425,7 +424,7 @@ namespace esvr2
         }
     }
 
-    void StereoGraphicsSystem::initOpenVR(void)
+    void GraphicsSystem::initOpenVR(void)
     {
         // Loading the SteamVR via OpenVR Runtime
         LOG << "initOpenVR" << LOGEND;
@@ -537,7 +536,7 @@ namespace esvr2
             );
     }
 
-    void StereoGraphicsSystem::setupImageData()
+    void GraphicsSystem::setupImageData()
     {
         Ogre::TextureGpuManager *textureManager =
             mRoot->getRenderSystem()->getTextureGpuManager();
@@ -578,7 +577,7 @@ namespace esvr2
         }
     }
 
-    bool StereoGraphicsSystem::fillTexture(void)
+    bool GraphicsSystem::fillTexture(void)
     {
         const size_t bytesPerPixel = 4u;
         const size_t bytesPerRow =
@@ -640,7 +639,7 @@ namespace esvr2
         return true;
     }
 
-    StereoGraphicsSystem::StereoGraphicsSystem(
+    GraphicsSystem::GraphicsSystem(
             Demo::GameState* gameState,
             WorkspaceType wsType,
             Ogre::VrData *vrData,
@@ -701,7 +700,7 @@ namespace esvr2
 
     //-----------------------------------------------------------------------------------
     // Just little bit modified code from GraphicsSystem
-    void StereoGraphicsSystem::initialize( const Ogre::String &windowTitle )
+    void GraphicsSystem::initialize( const Ogre::String &windowTitle )
     {
     #if OGRE_USE_SDL2
         //if( SDL_Init( SDL_INIT_EVERYTHING ) != 0 )
@@ -905,7 +904,7 @@ namespace esvr2
     mMtxImageResize.unlock();
     }
 
-    void StereoGraphicsSystem::deinitialize(void)
+    void GraphicsSystem::deinitialize(void)
     {
 
         delete mOvrCompositorListener;
@@ -963,7 +962,7 @@ namespace esvr2
         GraphicsSystem::deinitialize();
     }
 
-    void StereoGraphicsSystem::setImgPtr(
+    void GraphicsSystem::setImgPtr(
         const cv::Mat *left, const cv::Mat *right)
     {
         const cv::Mat *img_ptr[2] = { left, right };
@@ -1048,7 +1047,7 @@ namespace esvr2
     }
 
     //-------------------------------------------------------------------------
-    bool StereoGraphicsSystem::clearTexture(void)
+    bool GraphicsSystem::clearTexture(void)
     {
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
@@ -1075,7 +1074,7 @@ namespace esvr2
         return true;
     }
 
-    void StereoGraphicsSystem::beginFrameParallel(void)
+    void GraphicsSystem::beginFrameParallel(void)
     {
         BaseSystem::beginFrameParallel();
         if ( mOvrCompositorListener->getFrameCnt() >=

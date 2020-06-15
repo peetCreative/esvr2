@@ -1,14 +1,16 @@
 
+#include "Esvr2StereoRendering.h"
+
+#include "Esvr2GameState.h"
+#include "Esvr2GraphicsSystem.h"
+#include "Esvr2OpenCvVideoLoader.h"
+#include "Esvr2VideoLoader.h"
+#include "Esvr2ROSNode.h"
+#include "Esvr2ParseYml.h"
+
 #include "GraphicsSystem.h"
 #include "GameState.h"
 #include "LogicSystem.h"
-#include "StereoRendering.h"
-#include "StereoRenderingGameState.h"
-#include "StereoRenderingGraphicsSystem.h"
-#include "StereoRenderingOpenCvVideoLoader.h"
-#include "StereoRenderingVideoLoader.h"
-#include "StereoRenderingROSNode.h"
-#include "ParseYml.h"
 
 #include "OgreSceneManager.h"
 #include "OgreCamera.h"
@@ -34,15 +36,14 @@ extern const double cFrametime;
 const double cFrametime = 1.0 / 25.0;
 
 using namespace libconfig;
-using namespace Demo;
 using namespace esvr2;
 
 namespace fs = std::experimental::filesystem;
 
 struct ThreadData
 {
-    StereoGraphicsSystem  *graphicsSystem;
-    StereoRenderingGameState  *graphicsGameState;
+    GraphicsSystem  *graphicsSystem;
+    GameState  *graphicsGameState;
     VideoLoader     *videoSource;
     InputType       inputType;
     StereoCameraConfig    *cameraConfig;
@@ -144,6 +145,7 @@ int main( int argc, char *argv[] )
     videoInput.videoInputType = VIDEO_NONE;
     videoInput.path = "";
     RosInputType rosInputType = ROS_NONE;
+
     for (int i = 1; i < argc; i++)
     {
         //TODO check we are not using ros commands
@@ -439,16 +441,16 @@ int main( int argc, char *argv[] )
         return 1;
     }
 
-    StereoRenderingGameState *graphicsGameState =
-        new StereoRenderingGameState(
+    GameState *graphicsGameState =
+        new GameState(
             "Description of what we are doing", isStereo, vrData );
 
-    StereoGraphicsSystem *graphicsSystem = new StereoGraphicsSystem(
+    GraphicsSystem *graphicsSystem = new GraphicsSystem(
             graphicsGameState, workspace, vrData,
             hmdConfig, screen, RAW, isStereo, show_ogre_dialog,
             show_video, renderVideoTarget );
 
-    graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );
+    graphicsGameState->_notifyGraphicsSystem( graphicsSystem );
 
     VideoLoader *videoLoader = nullptr;
 
@@ -576,8 +578,8 @@ int main( int argc, char *argv[] )
 unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
 {
     ThreadData *threadData = reinterpret_cast<ThreadData*>( threadHandle->getUserParam() );
-    StereoGraphicsSystem *graphicsSystem  = threadData->graphicsSystem;
-    StereoRenderingGameState *graphicsGameState  = threadData->graphicsGameState;
+    GraphicsSystem *graphicsSystem  = threadData->graphicsSystem;
+    GameState *graphicsGameState  = threadData->graphicsGameState;
     Ogre::Barrier *barrier          = threadData->barrier;
     StereoCameraConfig *cameraConfig      = threadData->cameraConfig;
 
@@ -684,7 +686,7 @@ unsigned long logicThread1( Ogre::ThreadHandle *threadHandle )
     Ogre::Window *renderWindow = graphicsSystem->getRenderWindow();
 
     Ogre::Timer timer;
-    YieldTimer yieldTimer( &timer );
+    Demo::YieldTimer yieldTimer( &timer );
 
     Ogre::uint64 startTime = timer.getMicroseconds();
 

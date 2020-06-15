@@ -1,10 +1,12 @@
-#include "StereoRenderingVideoLoader.h"
-#include "StereoRenderingGraphicsSystem.h"
-#include "StereoRendering.h"
+#include "Esvr2VideoLoader.h"
+
+#include "Esvr2StereoRendering.h"
+
+#include "Esvr2GraphicsSystem.h"
 
 namespace esvr2
 {
-    VideoLoader::VideoLoader( StereoGraphicsSystem *graphicsSystem ):
+    VideoLoader::VideoLoader( GraphicsSystem *graphicsSystem ):
         mGraphicsSystem( graphicsSystem ),
         mQuit(false)
     {}

@@ -1,9 +1,9 @@
 #ifdef USE_ROS
-#ifndef _Demo_StereoRenderingROSNode_H_
-#define _Demo_StereoRenderingROSNode_H_
+#ifndef _Esvr2_ROSNode_H_
+#define _Esvr2_ROSNode_H_
 
-#include "StereoRenderingVideoLoader.h"
-#include "StereoRendering.h"
+#include "Esvr2VideoLoader.h"
+#include "Esvr2StereoRendering.h"
 
 #include <cv_bridge/cv_bridge.h>
 #include <ros/ros.h>
@@ -47,7 +47,7 @@ namespace esvr2
 
     public:
         VideoROSNode(
-            StereoGraphicsSystem *graphicsSystem,
+            GraphicsSystem *graphicsSystem,
             StereoCameraConfig *cameraConfig, std::mutex *cameraConfigLock,
             int argc, char *argv[],
             RosInputType rosInputType );
