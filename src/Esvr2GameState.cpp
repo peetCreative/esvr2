@@ -70,23 +70,24 @@ namespace esvr2
             mScale = mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
         for( size_t eye = 0; eye < mEyeNum * 2; eye++ )
         {
-            Ogre::Real width = cameraConfig.cfg [eye].width;
-            Ogre::Real height = cameraConfig.cfg [eye].height;
+            CameraConfig cfg = cameraConfig.cfg [eye%2];
+            Ogre::Real width = cfg.width;
+            Ogre::Real height = cfg.height;
 
             Ogre::Real f_x, f_y, c_x, c_y;
             if (eye < mEyeNum)
             {
-                f_x = cameraConfig.cfg [eye%2].K[0];
-                f_y = cameraConfig.cfg [eye%2].K[4];
-                c_x = cameraConfig.cfg [eye%2].K[2];
-                c_y = cameraConfig.cfg [eye%2].K[5];
+                f_x = cfg.K[0];
+                f_y = cfg.K[4];
+                c_x = cfg.K[2];
+                c_y = cfg.K[5];
             }
             else
             {
-                f_x = cameraConfig.cfg [eye%2].P[0];
-                f_y = cameraConfig.cfg [eye%2].P[4];
-                c_x = cameraConfig.cfg [eye%2].P[2];
-                c_y = cameraConfig.cfg [eye%2].P[5];
+                f_x = cfg.P[0];
+                f_y = cfg.P[5];
+                c_x = cfg.P[2];
+                c_y = cfg.P[6];
             }
 
             //in xy left is negativ
@@ -154,16 +155,8 @@ namespace esvr2
 
 
             mSceneNodeCamera->attachObject(mProjectionRectangle[eye]);
+            mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
         }
-        if ( mEyeNum == 2 )
-        {
-            mProjectionRectangle[LEFT]->setVisibilityFlags( 0x10 );
-            mProjectionRectangle[RIGHT]->setVisibilityFlags( 0x20 );
-            mProjectionRectangle[LEFT + 2]->setVisibilityFlags( 0x40 );
-            mProjectionRectangle[RIGHT + 2]->setVisibilityFlags( 0x80 );
-        }
-        else
-            mProjectionRectangle[0]->setVisibilityFlags( 0x30 );
     }
 
     void GameState::createTooltips( void )
@@ -290,7 +283,7 @@ namespace esvr2
 
         mCameraController = new Demo::CameraController( mGraphicsSystem, true );
 
-        sceneManager->setVisibilityMask(0xFFFFFFF0);
+        sceneManager->setVisibilityMask(0xFFFFFF30);
         TutorialGameState::createScene01();
     }
     //-----------------------------------------------------------------------------------
@@ -309,6 +302,9 @@ namespace esvr2
         }
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
         Ogre::uint32 flipMask = 0x0;
+        Ogre::uint32 setMask = 0x0;
+        Ogre::uint32 unsetMask = 0x0;
+
         //strg + 1 projectionplanes
 
         // stop Video
@@ -319,17 +315,35 @@ namespace esvr2
             Distortion dist = mStereoGraphicsSystem->getDistortion();
             if (dist == UNDISTORT_RECTIFY)
             {
-                flipMask = 0x10 | 0x20;
+                setMask = 0x40 | 0x80;
+                unsetMask = 0x10 | 0x20;
             }
             else
             {
-                flipMask = 0x40 | 0x80;
+                setMask = 0x10 | 0x20;
+                unsetMask = 0x40 | 0x80;
             }
         }
         if( arg.keysym.scancode == SDL_SCANCODE_1 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
         {
-            flipMask = 0x15;
+            Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
+            if (visibilityMask & 0xF0)
+                unsetMask = 0xF0;
+            else
+            {
+                Distortion dist = mStereoGraphicsSystem->getDistortion();
+                if (dist == UNDISTORT_RECTIFY)
+                {
+                    setMask = 0x40 | 0x80;
+                    unsetMask = 0x10 | 0x20;
+                }
+                else
+                {
+                    setMask = 0x10 | 0x20;
+                    unsetMask = 0x40 | 0x80;
+                }
+            }
         }
         //strg + 2 tool tip
         if( arg.keysym.scancode == SDL_SCANCODE_2 &&
@@ -354,6 +368,8 @@ namespace esvr2
         Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
         visibilityMask &= ~flipMask;
         visibilityMask |= ~sceneManager->getVisibilityMask() & flipMask;
+        visibilityMask |= setMask;
+        visibilityMask &= ~unsetMask;
         sceneManager->setVisibilityMask( visibilityMask );
 
         // stop Video
