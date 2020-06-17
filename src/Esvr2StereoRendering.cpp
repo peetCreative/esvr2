@@ -5,6 +5,7 @@
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2OpenCvVideoLoader.h"
 #include "Esvr2VideoLoader.h"
+#include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2ROSNode.h"
 #include "Esvr2ParseYml.h"
 
@@ -91,6 +92,8 @@ InputType getInputType(std::string input_str)
     InputType input = NONE;
     if (input_str.compare("VIDEO") == 0)
         input = VIDEO;
+    if (input_str.compare("LOW_LATENCY_VIDEO") == 0)
+        input = LOW_LATENCY_VIDEO;
     if (input_str.compare("ROS") == 0)
         input = ROS;
     return input;
@@ -426,14 +429,14 @@ int main( int argc, char *argv[] )
         return(EXIT_FAILURE);
     }
 
-        bool validCameraConfig = cameraConfig->leftToRight != 0 &&
+    bool validCameraConfig = cameraConfig->leftToRight != 0 &&
         cameraConfig->cfg[LEFT].width != 0 &&
         cameraConfig->cfg[LEFT].height != 0 &&
         ( !isStereo ||
             ( isStereo &&
             cameraConfig->cfg[RIGHT].width != 0 &&
             cameraConfig->cfg[RIGHT].height != 0));
-    if ( validCameraConfig && input != ROS )
+    if ( !validCameraConfig && input != ROS )
     {
         LOG << "no valid cameraConfig quit" << LOGEND;
         delete cameraConfig;
@@ -450,13 +453,18 @@ int main( int argc, char *argv[] )
             hmdConfig, screen, RAW, isStereo, show_ogre_dialog,
             show_video, renderVideoTarget );
 
-    graphicsGameState->_notifyGraphicsSystem( graphicsSystem );
+    graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );
 
     VideoLoader *videoLoader = nullptr;
 
     std::mutex *cameraConfigLock = new std::mutex();
     switch(input)
     {
+        case LOW_LATENCY_VIDEO:
+            videoLoader = new LowLatencyVideoLoader(
+                graphicsSystem,
+                videoInput, false);
+            break;
         case VIDEO:
         //TODO: GraphicsSystem
             videoLoader = new OpenCvVideoLoader( graphicsSystem, videoInput );

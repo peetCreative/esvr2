@@ -21,7 +21,8 @@ namespace esvr2 {
     typedef enum {
         NONE,
         ROS,
-        VIDEO
+        VIDEO,
+        LOW_LATENCY_VIDEO
     } InputType;
     typedef enum {
         TO_BACKGROUND,

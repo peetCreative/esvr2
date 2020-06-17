@@ -959,7 +959,7 @@ namespace esvr2
             mHMD = NULL;
         }
 
-        GraphicsSystem::deinitialize();
+        Demo::GraphicsSystem::deinitialize();
     }
 
     void GraphicsSystem::setImgPtr(

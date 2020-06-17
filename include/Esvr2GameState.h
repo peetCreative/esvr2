@@ -19,7 +19,7 @@ namespace esvr2
         GraphicsSystem *mStereoGraphicsSystem;
 
         Ogre::HlmsUnlitDatablock *mVideoDatablock[2];
-        Ogre::ManualObject       *mProjectionRectangle[2];
+        Ogre::ManualObject       *mProjectionRectangle[4];
         Ogre::v1::BillboardSet   *mTooltips;
         PointCloud               *mPointCloud;
         Ogre::SceneNode          *mSceneNodeLight;
@@ -31,7 +31,8 @@ namespace esvr2
         bool                     mIsStereo;
         size_t                   mEyeNum;
 
-        Ogre::Real mProjPlaneDistance, mLeft[2], mRight[2], mTop[2], mBottom[2];
+        Ogre::Real mProjPlaneDistance,
+            mLeft[4], mRight[4], mTop[4], mBottom[4];
         Ogre::Real mScale;
         Ogre::String mTextureName[2], mDatablockName[2];
         void createProjectionPlanes();
