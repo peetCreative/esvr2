@@ -68,14 +68,27 @@ namespace esvr2
         mProjPlaneDistance = projPlaneDistance;
         if ( cameraConfig.leftToRight )
             mScale = mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
-        for( size_t eye = 0; eye < mEyeNum; eye++ )
+        for( size_t eye = 0; eye < mEyeNum * 2; eye++ )
         {
             Ogre::Real width = cameraConfig.cfg [eye].width;
             Ogre::Real height = cameraConfig.cfg [eye].height;
-            Ogre::Real f_x = cameraConfig.cfg [eye].K[0];
-            Ogre::Real f_y = cameraConfig.cfg [eye].K[4];
-            Ogre::Real c_x = cameraConfig.cfg [eye].K[2];
-             Ogre::Real c_y = cameraConfig.cfg [eye].K[5];
+
+            Ogre::Real f_x, f_y, c_x, c_y;
+            if (eye < mEyeNum)
+            {
+                f_x = cameraConfig.cfg [eye%2].K[0];
+                f_y = cameraConfig.cfg [eye%2].K[4];
+                c_x = cameraConfig.cfg [eye%2].K[2];
+                c_y = cameraConfig.cfg [eye%2].K[5];
+            }
+            else
+            {
+                f_x = cameraConfig.cfg [eye%2].P[0];
+                f_y = cameraConfig.cfg [eye%2].P[4];
+                c_x = cameraConfig.cfg [eye%2].P[2];
+                c_y = cameraConfig.cfg [eye%2].P[5];
+            }
+
             //in xy left is negativ
             mLeft[eye] = -c_x * mProjPlaneDistance / f_x;
             mRight[eye] = -( c_x - width ) * mProjPlaneDistance / f_x;
@@ -99,16 +112,17 @@ namespace esvr2
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
 
         Ogre::Vector4 edge;
-        for( size_t eye = 0; eye < mEyeNum; eye++ )
+        //we need to create two planes for raw and recitified
+        for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
         {
             mProjectionRectangle[eye] = sceneManager->createManualObject();
 
             mProjectionRectangle[eye]->begin(
-                mDatablockName[eye], Ogre::OT_TRIANGLE_LIST);
+                mDatablockName[eye%2], Ogre::OT_TRIANGLE_LIST);
 
             Ogre::Matrix4 eyeToHead;
             if ( mEyeNum == 2 )
-                eyeToHead = mVrData->mHeadToEye[eye].inverse();
+                eyeToHead = mVrData->mHeadToEye[eye%2].inverse();
             else
                 eyeToHead = Ogre::Matrix4::IDENTITY;
 
@@ -145,6 +159,8 @@ namespace esvr2
         {
             mProjectionRectangle[LEFT]->setVisibilityFlags( 0x10 );
             mProjectionRectangle[RIGHT]->setVisibilityFlags( 0x20 );
+            mProjectionRectangle[LEFT + 2]->setVisibilityFlags( 0x40 );
+            mProjectionRectangle[RIGHT + 2]->setVisibilityFlags( 0x80 );
         }
         else
             mProjectionRectangle[0]->setVisibilityFlags( 0x30 );
@@ -294,10 +310,26 @@ namespace esvr2
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
         Ogre::uint32 flipMask = 0x0;
         //strg + 1 projectionplanes
+
+        // stop Video
+        if( arg.keysym.scancode == SDL_SCANCODE_X
+        )
+        {
+            mStereoGraphicsSystem->itterateDistortion();
+            Distortion dist = mStereoGraphicsSystem->getDistortion();
+            if (dist == UNDISTORT_RECTIFY)
+            {
+                flipMask = 0x10 | 0x20;
+            }
+            else
+            {
+                flipMask = 0x40 | 0x80;
+            }
+        }
         if( arg.keysym.scancode == SDL_SCANCODE_1 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
         {
-            flipMask = 0x30;
+            flipMask = 0x15;
         }
         //strg + 2 tool tip
         if( arg.keysym.scancode == SDL_SCANCODE_2 &&
@@ -328,12 +360,6 @@ namespace esvr2
         if( arg.keysym.scancode == SDL_SCANCODE_SPACE )
         {
             mStereoGraphicsSystem->toggleShowVideo();
-        }
-        // stop Video
-        if( arg.keysym.scancode == SDL_SCANCODE_X
-        )
-        {
-            mStereoGraphicsSystem->itterateDistortion();
         }
 
         TutorialGameState::keyReleased( arg );

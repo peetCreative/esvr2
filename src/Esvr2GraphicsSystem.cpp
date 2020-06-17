@@ -996,7 +996,6 @@ namespace esvr2
             //TODO:probably not the most efficient methode
             const cv::Mat *img_in_ptr[2] = {left, right};
 
-            bool undist = false, undistRect = false;
             mMtxImageResize.lock();
             for (size_t eye = 0; eye < mEyeNum; eye++ )
             {
