@@ -24,6 +24,7 @@ namespace esvr2
         PointCloud               *mPointCloud;
         Ogre::SceneNode          *mSceneNodeLight;
         Ogre::SceneNode          *mSceneNodeCamera;
+        Ogre::SceneNode          *mSceneNodeRightProjPlane;
         Ogre::SceneNode          *mSceneNodePointCloud;
         Ogre::SceneNode          *mSceneNodeTooltips;
         Ogre::SceneNode          *mSceneNodeMesh;
@@ -31,7 +32,7 @@ namespace esvr2
         bool                     mIsStereo;
         size_t                   mEyeNum;
 
-        Ogre::Real mProjPlaneDistance,
+        Ogre::Real mProjPlaneDistance[4],
             mLeft[4], mRight[4], mTop[4], mBottom[4];
         Ogre::Real mScale;
         Ogre::String mTextureName[2], mDatablockName[2];

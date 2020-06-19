@@ -31,13 +31,14 @@ namespace esvr2
         mPointCloud( nullptr ),
         mSceneNodeLight( nullptr ),
         mSceneNodeCamera( nullptr ),
+        mSceneNodeRightProjPlane(nullptr),
         mSceneNodePointCloud( nullptr ),
         mSceneNodeTooltips( nullptr ),
         mSceneNodeMesh( nullptr ),
         mVrData( vrData ),
         mIsStereo( isStereo ),
         mEyeNum( isStereo ? 2 : 1 ),
-        mProjPlaneDistance( 0 ),
+        mProjPlaneDistance{ 0, 0, 0, 0 },
         mLeft{ 0, 0 },
         mRight{ 0, 0 },
         mTop{ 0, 0 },
@@ -65,7 +66,6 @@ namespace esvr2
     void GameState::calcAlign(StereoCameraConfig &cameraConfig,
                                          Ogre::Real projPlaneDistance )
     {
-        mProjPlaneDistance = projPlaneDistance;
         if ( cameraConfig.leftToRight )
             mScale = mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
         for( size_t eye = 0; eye < mEyeNum * 2; eye++ )
@@ -81,6 +81,7 @@ namespace esvr2
                 f_y = cfg.K[4];
                 c_x = cfg.K[2];
                 c_y = cfg.K[5];
+                mProjPlaneDistance[eye] = projPlaneDistance;
             }
             else
             {
@@ -88,13 +89,17 @@ namespace esvr2
                 f_y = cfg.P[5];
                 c_x = cfg.P[2];
                 c_y = cfg.P[6];
+
+                mProjPlaneDistance[eye] =
+                    mVrData->mLeftToRight.length() * f_x /
+                    -cameraConfig.cfg[RIGHT].P[3];
             }
 
             //in xy left is negativ
-            mLeft[eye] = -c_x * mProjPlaneDistance / f_x;
-            mRight[eye] = -( c_x - width ) * mProjPlaneDistance / f_x;
-            mTop[eye] = c_y * mProjPlaneDistance / f_y;
-            mBottom[eye] = ( c_y - height ) * mProjPlaneDistance / f_y;
+            mLeft[eye] = -c_x * mProjPlaneDistance[eye] / f_x;
+            mRight[eye] = -( c_x - width ) * mProjPlaneDistance[eye] / f_x;
+            mTop[eye] = c_y * mProjPlaneDistance[eye] / f_y;
+            mBottom[eye] = ( c_y - height ) * mProjPlaneDistance[eye] / f_y;
         }
     }
 
@@ -112,6 +117,8 @@ namespace esvr2
 
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
 
+        mSceneNodeRightProjPlane = mSceneNodeCamera->createChildSceneNode( Ogre::SCENE_DYNAMIC );
+
         Ogre::Vector4 edge;
         //we need to create two planes for raw and recitified
         for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
@@ -123,29 +130,31 @@ namespace esvr2
 
             Ogre::Matrix4 eyeToHead;
             if ( mEyeNum == 2 )
+            {
                 eyeToHead = mVrData->mHeadToEye[eye%2].inverse();
+            }
             else
                 eyeToHead = Ogre::Matrix4::IDENTITY;
 
             // Back
             edge = eyeToHead *
                 Ogre::Vector4( mLeft[eye], mTop[eye],
-                               -mProjPlaneDistance, 1.0f );
+                               -mProjPlaneDistance[eye], 1.0f );
             mProjectionRectangle[eye]->position( edge.xyz() );
             mProjectionRectangle[eye]->textureCoord(0 , 0);
             edge = eyeToHead *
                 Ogre::Vector4( mRight[eye], mTop[eye],
-                               -mProjPlaneDistance, 1.0f );
+                               -mProjPlaneDistance[eye], 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(1 , 0);
             edge = eyeToHead *
                 Ogre::Vector4( mRight[eye], mBottom[eye],
-                               -mProjPlaneDistance, 1.0f );
+                               -mProjPlaneDistance[eye], 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(1 , 1);
             edge = eyeToHead *
                 Ogre::Vector4( mLeft[eye], mBottom[eye],
-                               -mProjPlaneDistance, 1.0f );
+                               -mProjPlaneDistance[eye], 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(0 , 1);
             mProjectionRectangle[eye]->quad(0, 1, 2, 3);
@@ -153,8 +162,10 @@ namespace esvr2
 
             mProjectionRectangle[eye]->end();
 
-
-            mSceneNodeCamera->attachObject(mProjectionRectangle[eye]);
+            if (eye % 2 == RIGHT )
+                mSceneNodeRightProjPlane->attachObject(mProjectionRectangle[eye]);
+            else
+                mSceneNodeCamera->attachObject(mProjectionRectangle[eye]);
             mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
         }
     }
@@ -165,12 +176,12 @@ namespace esvr2
         mSceneNodeTooltips = sceneManager->getRootSceneNode(
                 Ogre::SCENE_DYNAMIC )->
                     createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        mSceneNodeTooltips->setPosition( 0, 0, -0.05 * mScale );
+        mSceneNodeTooltips->setPosition( 0, 0, -0.10 * mScale );
         mTooltips = sceneManager->createBillboardSet();
         mTooltips->beginBillboards(1);
         Ogre::v1::Billboard* b = mTooltips->createBillboard(
             0.0, 0.0, 0.0);
-        b->setDimensions(0.001 * mScale, 0.001 * mScale);
+        b->setDimensions(0.0005 * mScale, 0.0005 * mScale);
         b->setColour(Ogre::ColourValue::Red);
         mTooltips->endBillboards();
         mTooltips->setVisibilityFlags( 0x1 );
@@ -307,9 +318,20 @@ namespace esvr2
 
         //strg + 1 projectionplanes
 
+        if( arg.keysym.scancode == SDL_SCANCODE_C )
+        {
+            //TODO: maybe scale
+            mSceneNodeRightProjPlane->translate(Ogre::Vector3(-0.1,0,0));
+        }
+        if( arg.keysym.scancode == SDL_SCANCODE_V )
+        {
+            //TODO: maybe scale
+            mSceneNodeRightProjPlane->translate(Ogre::Vector3(0.1,0,0));
+            LOG << "translate" << mSceneNodeRightProjPlane->getPosition() << LOGEND;
+        }
+
         // stop Video
-        if( arg.keysym.scancode == SDL_SCANCODE_X
-        )
+        if( arg.keysym.scancode == SDL_SCANCODE_X )
         {
             mStereoGraphicsSystem->itterateDistortion();
             Distortion dist = mStereoGraphicsSystem->getDistortion();

@@ -133,17 +133,16 @@ int main( int argc, char *argv[] )
     size_t config_files_end = 0, config_files_begin = 0;
     StereoCameraConfig *cameraConfig = new StereoCameraConfig();
 
-//     std::cout << config_file << std::endl;
-    //TODO: strangely vrData needs this but hmdConfig needs initialized list
-    const Ogre::Matrix4 id[2] = { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY };
     HmdConfig hmdConfig{
         { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
         { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
         { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45}},
         1920, 1080 };
-    //TODO:That's not the most beautifaul solution charing vrData with GameState
+
+    const Ogre::Matrix4 id[2] =
+        { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY };
     Ogre::VrData *vrData = new Ogre::VrData();
-    vrData->set( id, id );
+    vrData->set(id, id);
     VideoInput videoInput;
     videoInput.videoInputType = VIDEO_NONE;
     videoInput.path = "";
@@ -151,7 +150,6 @@ int main( int argc, char *argv[] )
 
     for (int i = 1; i < argc; i++)
     {
-        //TODO check we are not using ros commands
         if ( std::strcmp(argv[i], "--config") == 0 && i+1 < argc )
         {
             i++;
@@ -466,7 +464,6 @@ int main( int argc, char *argv[] )
                 videoInput, false);
             break;
         case VIDEO:
-        //TODO: GraphicsSystem
             videoLoader = new OpenCvVideoLoader( graphicsSystem, videoInput );
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
