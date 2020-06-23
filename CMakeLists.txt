@@ -1,4 +1,4 @@
-cmake_minimum_required( VERSION 3.0.2 )
+cmake_minimum_required( VERSION 3.9 )
 project( esvr2 )
 
 include( CMake/Bootstrap.cmake )
@@ -6,16 +6,19 @@ include( CMake/Dependencies/OGRE.cmake )
 
 include( CMake/FindPkgMacros.cmake )
 find_package( OpenCV REQUIRED )
-
+message("OpenCV Libs: ${OpenCV_LIBS}")
+message("OpenCV Include : ${OpenCV_INCLUDE_DIRS}")
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-class-memaccess" )
 option( BUILD_ROS "compile ROS Nodelet" ON )
+#set( BUILD_ROS catkin_FOUND )
 if (BUILD_ROS)
-    MESSAGE("build ROS")
     find_package(catkin REQUIRED COMPONENTS
         cv_bridge
         roscpp
         sensor_msgs
         message_filters
         pluginlib)
+    MESSAGE("build ROS")
     catkin_package()
     set( CMAKE_CURRENT_BIN_DIR "${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}" )
     message( "CMAKE_CURRENT_BIN_DIR is ${CMAKE_CURRENT_BIN_DIR}" )

@@ -65,15 +65,16 @@ namespace esvr2
                 Ogre::Vector4 camPos = eyeToHead *
                     Ogre::Vector4( 0, 0, 0, 1.0 );
                 // Look back along -Z
-                Ogre::Vector4 camDir = eyeToHead *
-                    Ogre::Vector4( 0, 0, -1.0, 0 );
+                //TODO: make focus dependend from scale is so we are focusing at about 10 cm.
+                // scale is about 10 so 10cm ~ 1m
+                Ogre::Vector3 focusPoint = Ogre::Vector3( 0.0, 0.0, -1.0 );
 
                 mEyeCameras[leftOrRight]->setPosition( camPos.xyz() );
 
 //                 Ogre::Vector3 lookAt( eyeFocusDistance * (leftOrRight * 2 - 1), 0, -1 );
                 //Ogre::Vector3 lookAt( 0, 0, 0 );
 
-                mEyeCameras[leftOrRight]->setDirection( camDir.xyz() );
+                mEyeCameras[leftOrRight]->lookAt( focusPoint );
                 mEyeCameras[leftOrRight]->setNearClipDistance( mCamNear );
                 mEyeCameras[leftOrRight]->setFarClipDistance( mCamFar );
                 mEyeCameras[leftOrRight]->setCustomProjectionMatrix( true, mVrData->mProjectionMatrix[leftOrRight] );

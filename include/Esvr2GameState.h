@@ -24,7 +24,7 @@ namespace esvr2
         PointCloud               *mPointCloud;
         Ogre::SceneNode          *mSceneNodeLight;
         Ogre::SceneNode          *mSceneNodeCamera;
-        Ogre::SceneNode          *mSceneNodeRightProjPlane;
+        Ogre::SceneNode          *mSceneNodeProjPlane[2];
         Ogre::SceneNode          *mSceneNodePointCloud;
         Ogre::SceneNode          *mSceneNodeTooltips;
         Ogre::SceneNode          *mSceneNodeMesh;

@@ -5,7 +5,9 @@
 #include "Esvr2VideoLoader.h"
 #include "Esvr2GraphicsSystem.h"
 
+// #include <opencv/highgui.h>
 #include "opencv2/opencv.hpp"
+// #include <opencv2/core/cvstd.hpp>
 
 namespace esvr2
 {
@@ -30,8 +32,13 @@ namespace esvr2
             LOG << "Video could not be opened" << LOGEND;
             return;
         }
-        mCapture = cv::VideoCapture(mVideoInput.path);
+
+        mCapture = cv::VideoCapture();
+        cv::String path = mVideoInput.path;
+#ifndef USE_ROS
+        mCapture.open( path );
 //         mCapture.set(cv::CAP_PROP_MODE,  cv::CAP_MODE_RGB );
+#endif
         if (!mCapture.isOpened()) {
             LOG << "Video could not be opened" << LOGEND;
             return;

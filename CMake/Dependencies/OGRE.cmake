@@ -42,7 +42,8 @@ macro( findPluginAndSetPath BUILD_TYPE CFG_VARIABLE LIBRARY_NAME )
 			set( ${CFG_VARIABLE} "Plugin=${LIBRARY_NAME}" )
 		endif()
 
-		# Copy the DLLs to the folders.
+        message ( "REAL_LIB_PATH ${REAL_LIB_PATH}" )
+		# Copy the .so to the folders.
 		copyWithSymLink( ${REAL_LIB_PATH} "${CMAKE_CURRENT_BIN_DIR}/${BUILD_TYPE}/Plugins" )
 	endif()
 endmacro()

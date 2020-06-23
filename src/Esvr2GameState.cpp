@@ -31,7 +31,7 @@ namespace esvr2
         mPointCloud( nullptr ),
         mSceneNodeLight( nullptr ),
         mSceneNodeCamera( nullptr ),
-        mSceneNodeRightProjPlane(nullptr),
+        mSceneNodeProjPlane{nullptr, nullptr},
         mSceneNodePointCloud( nullptr ),
         mSceneNodeTooltips( nullptr ),
         mSceneNodeMesh( nullptr ),
@@ -117,43 +117,43 @@ namespace esvr2
 
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
 
-        mSceneNodeRightProjPlane = mSceneNodeCamera->createChildSceneNode( Ogre::SCENE_DYNAMIC );
-
         Ogre::Vector4 edge;
         //we need to create two planes for raw and recitified
         for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
         {
+            Ogre::Matrix4 eyeToHead =
+                mVrData->mHeadToEye[eye %2].inverse();
+            Ogre::Vector4 camPos = eyeToHead *
+                Ogre::Vector4( 0, 0, 0, 1.0 );
+            // Look back along -Z
+            //TODO: make focus dependend from scale is so we are focusing at about 10 cm.
+            // scale is about 10 so 10cm ~ 1m
+            Ogre::Vector3 focusPoint = Ogre::Vector3( 0.0, 0.0, -1.0 );
+            mSceneNodeProjPlane[eye] = mSceneNodeCamera->createChildSceneNode(
+                Ogre::SCENE_DYNAMIC );
+            mSceneNodeProjPlane[eye]->setPosition(camPos.xyz());
+
+            mSceneNodeProjPlane[eye]->lookAt(focusPoint, Ogre::Node::TS_PARENT);
+
             mProjectionRectangle[eye] = sceneManager->createManualObject();
 
             mProjectionRectangle[eye]->begin(
                 mDatablockName[eye%2], Ogre::OT_TRIANGLE_LIST);
 
-            Ogre::Matrix4 eyeToHead;
-            if ( mEyeNum == 2 )
-            {
-                eyeToHead = mVrData->mHeadToEye[eye%2].inverse();
-            }
-            else
-                eyeToHead = Ogre::Matrix4::IDENTITY;
-
             // Back
-            edge = eyeToHead *
-                Ogre::Vector4( mLeft[eye], mTop[eye],
+            edge = Ogre::Vector4( mLeft[eye], mTop[eye],
                                -mProjPlaneDistance[eye], 1.0f );
             mProjectionRectangle[eye]->position( edge.xyz() );
             mProjectionRectangle[eye]->textureCoord(0 , 0);
-            edge = eyeToHead *
-                Ogre::Vector4( mRight[eye], mTop[eye],
+            edge = Ogre::Vector4( mRight[eye], mTop[eye],
                                -mProjPlaneDistance[eye], 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(1 , 0);
-            edge = eyeToHead *
-                Ogre::Vector4( mRight[eye], mBottom[eye],
+            edge = Ogre::Vector4( mRight[eye], mBottom[eye],
                                -mProjPlaneDistance[eye], 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(1 , 1);
-            edge = eyeToHead *
-                Ogre::Vector4( mLeft[eye], mBottom[eye],
+            edge = Ogre::Vector4( mLeft[eye], mBottom[eye],
                                -mProjPlaneDistance[eye], 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(0 , 1);
@@ -162,10 +162,7 @@ namespace esvr2
 
             mProjectionRectangle[eye]->end();
 
-            if (eye % 2 == RIGHT )
-                mSceneNodeRightProjPlane->attachObject(mProjectionRectangle[eye]);
-            else
-                mSceneNodeCamera->attachObject(mProjectionRectangle[eye]);
+            mSceneNodeProjPlane[eye]->attachObject(mProjectionRectangle[eye]);
             mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
         }
     }
@@ -176,7 +173,7 @@ namespace esvr2
         mSceneNodeTooltips = sceneManager->getRootSceneNode(
                 Ogre::SCENE_DYNAMIC )->
                     createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        mSceneNodeTooltips->setPosition( 0, 0, -0.10 * mScale );
+        mSceneNodeTooltips->setPosition( 0, 0, -0.1 * mScale );
         mTooltips = sceneManager->createBillboardSet();
         mTooltips->beginBillboards(1);
         Ogre::v1::Billboard* b = mTooltips->createBillboard(
@@ -321,13 +318,13 @@ namespace esvr2
         if( arg.keysym.scancode == SDL_SCANCODE_C )
         {
             //TODO: maybe scale
-            mSceneNodeRightProjPlane->translate(Ogre::Vector3(-0.1,0,0));
+            mSceneNodeProjPlane[RIGHT]->translate(Ogre::Vector3(-0.1,0,0));
         }
         if( arg.keysym.scancode == SDL_SCANCODE_V )
         {
             //TODO: maybe scale
-            mSceneNodeRightProjPlane->translate(Ogre::Vector3(0.1,0,0));
-            LOG << "translate" << mSceneNodeRightProjPlane->getPosition() << LOGEND;
+            mSceneNodeProjPlane[RIGHT]->translate(Ogre::Vector3(0.1,0,0));
+            LOG << "translate" << mSceneNodeProjPlane[RIGHT]->getPosition() << LOGEND;
         }
 
         // stop Video
