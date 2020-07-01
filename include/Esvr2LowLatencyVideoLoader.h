@@ -3,6 +3,7 @@
 #include "Esvr2VideoLoader.h"
 #include "v4l2/v4l2_interface.h"
 #include <boost/thread.hpp>
+#include <fstream>
 
 namespace esvr2 {
 

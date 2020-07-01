@@ -69,6 +69,7 @@ namespace esvr2
                 // scale is about 10 so 10cm ~ 1m
                 Ogre::Vector3 focusPoint = Ogre::Vector3( 0.0, 0.0, -1.0 );
 
+                focusPoint = eyeToHead * focusPoint;
                 mEyeCameras[leftOrRight]->setPosition( camPos.xyz() );
 
 //                 Ogre::Vector3 lookAt( eyeFocusDistance * (leftOrRight * 2 - 1), 0, -1 );
@@ -302,10 +303,39 @@ namespace esvr2
 
         for (size_t eye = 0; eye < mEyeNum; eye++)
         {
-            float f_x = cameraConfig.cfg[eye].K[0];
-            float f_y = cameraConfig.cfg[eye].K[4];
-            float c_x = cameraConfig.cfg[eye].K[2];
-            float c_y = cameraConfig.cfg[eye].K[5];
+            float f_x, f_y, c_x, c_y;
+            if (false)
+            {
+                f_x = cameraConfig.cfg[eye].K[0];
+                f_y = cameraConfig.cfg[eye].K[4];
+                c_x = cameraConfig.cfg[eye].K[2];
+                c_y = cameraConfig.cfg[eye].K[5];
+            }
+            else
+            {
+                f_x = cameraConfig.cfg[eye].P[0];
+                f_y = cameraConfig.cfg[eye].P[5];
+                c_x = cameraConfig.cfg[eye].P[2];
+                c_y = cameraConfig.cfg[eye].P[6];
+                float far_plane = 100.0;
+                float near_plane = 0.001;
+                float img_width = cameraConfig.cfg[eye].width;
+                float img_height = cameraConfig.cfg[eye].height;
+                Ogre::Matrix4 proj_matrix;
+                proj_matrix = Ogre::Matrix4::ZERO;
+
+                proj_matrix[0][0] = 2.0 * f_x / img_width;
+                proj_matrix[1][1] = 2.0 * f_y / img_height;
+
+                proj_matrix[0][2] = 2.0 * (0.5 - c_x / img_width);
+                proj_matrix[1][2] = 2.0 * (c_y / img_height - 0.5);
+
+                proj_matrix[2][2] = -(far_plane + near_plane) / (far_plane - near_plane);
+                proj_matrix[2][3] = -2.0 * far_plane * near_plane / (far_plane - near_plane);
+
+                proj_matrix[3][2] = -1;
+                mEyeCameras[eye]->setCustomProjectionMatrix( true, proj_matrix);
+            }
             float c_vr_h = -mHmdConfig.tan[eye][0] * vr_width_half /
                 (-mHmdConfig.tan[eye][0] + mHmdConfig.tan[eye][1]);
             float c_vr_v = -mHmdConfig.tan[eye][2] * vr_height /
@@ -361,6 +391,11 @@ namespace esvr2
             cv::initUndistortRectifyMap( intrinsics, cameraConfig.cfg[eye].D,
                             rectify, cv::_InputArray(), size,
                             CV_32FC1, mUndistortRectifyMap1[eye], mUndistortRectifyMap2[eye] );
+        }
+        if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
+        {
+            if (! mVrWorkspaces[LEFT] && !mVrWorkspaces[RIGHT] )
+                createTwoWorkspaces();
         }
         return true;
     }
@@ -490,37 +525,7 @@ namespace esvr2
 
         if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
         {
-            const Ogre::IdString workspaceName( "TwoCamerasWorkspace" );
-            Ogre::uint8 vpModifierMask, executionMask;
-            Ogre::Vector4 vpOffsetScale;
-
-            vpModifierMask  = 0x01;
-            executionMask   = 0x01;
-            vpOffsetScale   = Ogre::Vector4( 0.0f, 0.0f, 0.5f, 1.0f );
-            mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
-                mSceneManager,
-                mVrTexture,
-                mEyeCameras[LEFT], workspaceName,
-                true, -1, (Ogre::UavBufferPackedVec*)0,
-                (Ogre::ResourceLayoutMap*)0,
-                (Ogre::ResourceAccessMap*)0,
-                vpOffsetScale,
-                vpModifierMask,
-                executionMask );
-
-            vpModifierMask  = 0x02;
-            executionMask   = 0x02;
-            vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f, 0.5f, 1.0f );
-            mVrWorkspaces[RIGHT] = compositorManager->addWorkspace(
-                mSceneManager,
-                mVrTexture,
-                mEyeCameras[RIGHT], workspaceName,
-                true, -1, (Ogre::UavBufferPackedVec*)0,
-                (Ogre::ResourceLayoutMap*)0,
-                (Ogre::ResourceAccessMap*)0,
-                vpOffsetScale,
-                vpModifierMask,
-                executionMask);
+            createTwoWorkspaces();
         }
         else if (mWorkSpaceType == WS_INSTANCED_STEREO)
         {
@@ -537,6 +542,60 @@ namespace esvr2
             );
     }
 
+    void GraphicsSystem::createTwoWorkspaces()
+    {
+        if (!mImageRenderConfig)
+            return;
+        Ogre::CompositorManager2 *compositorManager =
+            mRoot->getCompositorManager2();
+        const Ogre::IdString workspaceName( "TwoCamerasWorkspace" );
+        Ogre::uint8 vpModifierMask, executionMask;
+        Ogre::Vector4 vpOffsetScale;
+
+        vpModifierMask  = 0x01;
+        executionMask   = 0x01;
+        //set offset so that we only render to the portion of the screen where there is the image
+        int textureheight = mVrTexture->getHeight();
+        int texturewidth = mVrTexture->getWidth();
+        int texturewidthhalf = mVrTexture->getWidth() / 2;
+        float width = mImageRenderConfig->leftAlign[LEFT] / (float) texturewidth;
+        float height = mImageRenderConfig->topAlign[LEFT] / (float) textureheight;
+        float sizewidth = mImageRenderConfig->size[LEFT].width / (float) texturewidth;
+        float sizeheight = mImageRenderConfig->size[LEFT].height / (float) textureheight;
+
+        vpOffsetScale   = Ogre::Vector4( width, height, sizewidth, sizeheight  );
+        mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
+            mSceneManager,
+            mVrTexture,
+            mEyeCameras[LEFT], workspaceName,
+            true, -1, (Ogre::UavBufferPackedVec*)0,
+            (Ogre::ResourceLayoutMap*)0,
+            (Ogre::ResourceAccessMap*)0,
+            vpOffsetScale,
+            vpModifierMask,
+            executionMask );
+
+        width = mImageRenderConfig->leftAlign[RIGHT] / (float) texturewidth;
+        height = mImageRenderConfig->topAlign[RIGHT] / (float) textureheight;
+        sizewidth = mImageRenderConfig->size[RIGHT].width / (float) texturewidth;
+        sizeheight = mImageRenderConfig->size[RIGHT].height / (float) textureheight;
+
+        vpModifierMask  = 0x02;
+        executionMask   = 0x02;
+        vpOffsetScale   = Ogre::Vector4( width, height,
+                                         sizewidth, sizeheight );
+        mVrWorkspaces[RIGHT] = compositorManager->addWorkspace(
+            mSceneManager,
+            mVrTexture,
+            mEyeCameras[RIGHT], workspaceName,
+            true, -1, (Ogre::UavBufferPackedVec*)0,
+            (Ogre::ResourceLayoutMap*)0,
+            (Ogre::ResourceAccessMap*)0,
+            vpOffsetScale,
+            vpModifierMask,
+            executionMask);
+    }
+    
     void GraphicsSystem::setupImageData()
     {
         Ogre::TextureGpuManager *textureManager =

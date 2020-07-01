@@ -103,6 +103,7 @@ namespace esvr2
             vr::TrackedPropertyError *peError = nullptr);
         void initCompositorVR(void);
         void initOpenVR(void);
+        void createTwoWorkspaces();
         void setupImageData();
 
         void syncCameraProjection( bool bForceUpdate );
