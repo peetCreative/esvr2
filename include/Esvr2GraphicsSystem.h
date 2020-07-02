@@ -95,6 +95,7 @@ namespace esvr2
         // function
         //------------------------------------
         void createCamera(void);
+        void alignCameras(void);
         Ogre::CompositorWorkspace* setupCompositor(void);
 
         std::string GetTrackedDeviceString(

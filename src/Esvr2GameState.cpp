@@ -73,22 +73,25 @@ namespace esvr2
             CameraConfig cfg = cameraConfig.cfg [eye%2];
             Ogre::Real width = cfg.width;
             Ogre::Real height = cfg.height;
-
             Ogre::Real f_x, f_y, c_x, c_y;
             if (eye < mEyeNum)
             {
                 f_x = cfg.K[0];
                 f_y = cfg.K[4];
-                c_x = cfg.K[2];
-                c_y = cfg.K[5];
+                c_x = width/2;
+                c_y = height/2;
+//                 c_x = cfg.K[2];
+//                 c_y = cfg.K[5];
                 mProjPlaneDistance[eye] = projPlaneDistance;
             }
             else
             {
                 f_x = cfg.P[0];
                 f_y = cfg.P[5];
-                c_x = cfg.P[2];
-                c_y = cfg.P[6];
+                c_x = width/2;
+                c_y = height/2;
+//                 c_x = cfg.P[2];
+//                 c_y = cfg.P[6];
 
                 mProjPlaneDistance[eye] =
                     mVrData->mLeftToRight.length() * f_x /
@@ -105,7 +108,8 @@ namespace esvr2
 
     void GameState::createProjectionPlanes()
     {
-        bool alldata = mVrData->mHeadToEye[LEFT] != Ogre::Matrix4::IDENTITY &&
+        bool alldata =
+//             mVrData->mHeadToEye[LEFT] != Ogre::Matrix4::IDENTITY &&
             mProjPlaneDistance &&
             mLeft[LEFT] && mRight[LEFT] && mTop[LEFT] && mBottom[LEFT] &&
             ( !mIsStereo ||
@@ -122,18 +126,18 @@ namespace esvr2
         for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
         {
             Ogre::Matrix4 eyeToHead =
-                mVrData->mHeadToEye[eye %2].inverse();
+                mVrData->mHeadToEye[eye %2]/*.inverse()*/;
             Ogre::Vector4 camPos = eyeToHead *
                 Ogre::Vector4( 0, 0, 0, 1.0 );
             // Look back along -Z
             //TODO: make focus dependend from scale is so we are focusing at about 10 cm.
             // scale is about 10 so 10cm ~ 1m
-            Ogre::Vector3 focusPoint = Ogre::Vector3( 0.0, 0.0, -1.0 );
+            Ogre::Vector4 focusPoint = eyeToHead * Ogre::Vector4( 0.0, 0.0, -1.0, 1.0 );
             mSceneNodeProjPlane[eye] = mSceneNodeCamera->createChildSceneNode(
                 Ogre::SCENE_DYNAMIC );
             mSceneNodeProjPlane[eye]->setPosition(camPos.xyz());
 
-            mSceneNodeProjPlane[eye]->lookAt(focusPoint, Ogre::Node::TS_PARENT);
+            mSceneNodeProjPlane[eye]->lookAt(focusPoint.xyz(), Ogre::Node::TS_PARENT);
 
             mProjectionRectangle[eye] = sceneManager->createManualObject();
 
