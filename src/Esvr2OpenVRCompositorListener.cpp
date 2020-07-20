@@ -1,6 +1,7 @@
 #include "Esvr2OpenVRCompositorListener.h"
 
 #include "Esvr2StereoRendering.h"
+#include "Esvr2PoseState.h"
 
 #include "OgreTextureGpuManager.h"
 #include "OgreTextureGpu.h"
@@ -18,7 +19,7 @@ namespace esvr2
             vr::IVRSystem *hmd, vr::IVRCompositor *vrCompositor,
             Ogre::TextureGpu *vrTexture, Ogre::Root *root,
             Ogre::CompositorWorkspace *workspaces[2],
-            Ogre::SceneNode *camerasNode ) :
+            Ogre::SceneNode *camerasNode, PoseState *poseState ) :
         mHMD( hmd ),
         mVrCompositor( vrCompositor ),
         mVrTexture( vrTexture ),
@@ -26,6 +27,7 @@ namespace esvr2
         mRenderSystem( root->getRenderSystem() ),
         mWorkspaces{ workspaces[LEFT], workspaces[RIGHT] },
         mCamerasNode( camerasNode ),
+        mCameraPoseState( poseState ),
         mApiTextureType( vr::TextureType_Invalid ),
         mWaitingMode( VrWaitingMode::BeforeSceneGraph ),
         mFirstGlitchFreeMode( VrWaitingMode::NumVrWaitingModes ),
@@ -59,39 +61,61 @@ namespace esvr2
 
     void OpenVRCompositorListener::syncCamera(void)
     {
-        //TODO: take pose from mTrackedDevicePose
+        if (!mCamerasNode)
+            LOG << "mCamerasNode does not exist" << LOGEND;
+//         : take pose from mTrackedDevicePose
+//         mTrackedDevicePose();
+
+//         Ogre::Vector3 pos(
+//             -0.0021829536705136577,
+//             -0.04232839038721293,
+//             0.14707343904246845);
+//         Ogre::Quaternion rot(
+//             0.9638096591466656,
+//             -0.23380399717986433,
+//             0.03972169619117772,
+//             0.12177363708948678
+//             );
+//         rot = Ogre::Quaternion::IDENTITY;/*(Ogre::Degree(-45), Ogre::Vector3::UNIT_X);*/
+//         mCamerasNode->setPosition( pos );
+//         mCamerasNode->lookAt( Ogre::Vector3(0,0,0), Ogre::Node::TS_PARENT );
+//         mCamerasNode->setPosition( mCameraPoseState->getPosition());
+//         mCamerasNode->setOrientation( mCameraPoseState->getRotation());
     }
 
     //-------------------------------------------------------------------------
     void OpenVRCompositorListener::updateHmdTrackingPose(void)
     {
+//         if (mCameraPoseState->validPose())
+            syncCamera();
+
         if( !mVrCompositor)
             return;
         // we have to call this so we get focus of the application
         mVrCompositor->WaitGetPoses(
             mTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
 
-        if( !mTrackPose )
-            return;
 
-
-        for( size_t nDevice = 0; nDevice < vr::k_unMaxTrackedDeviceCount; ++nDevice )
-        {
-            if ( mTrackedDevicePose[nDevice].bPoseIsValid )
-            {
-                mDevicePose[nDevice] = convertSteamVRMatrixToMatrix(
-                                           mTrackedDevicePose[nDevice].mDeviceToAbsoluteTracking );
-            }
-        }
-
-        if( mTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid )
-        {
-            const bool canSync = canSyncCameraTransformImmediately();
-            if( canSync )
-                syncCamera();
-            else
-                mMustSyncAtEndOfFrame = true;
-        }
+//         if( !mTrackPose )
+//             return;
+//
+//         for( size_t nDevice = 0; nDevice < vr::k_unMaxTrackedDeviceCount; ++nDevice )
+//         {
+//             if ( mTrackedDevicePose[nDevice].bPoseIsValid )
+//             {
+//                 mDevicePose[nDevice] = convertSteamVRMatrixToMatrix(
+//                                            mTrackedDevicePose[nDevice].mDeviceToAbsoluteTracking );
+//             }
+//         }
+//
+//         if( mTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid )
+//         {
+//             const bool canSync = canSyncCameraTransformImmediately();
+//             if( canSync )
+//                 syncCamera();
+//             else
+//                 mMustSyncAtEndOfFrame = true;
+//         }
     }
 
     //-------------------------------------------------------------------------

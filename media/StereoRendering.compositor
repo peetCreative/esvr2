@@ -82,6 +82,8 @@ compositor_node TwoCamerasNode
 {
 	in 0 rt_renderwindow
 
+	texture video_texture 960 540 PFG_RGBA8_UNORM
+
 	target rt_renderwindow
 	{
 // TODO: only disable clear if render video to background
@@ -92,9 +94,15 @@ compositor_node TwoCamerasNode
 			//Don't be affected by the modifier, apply to the whole screen
 			viewport_modifier_mask	0x00
 
-			colour_value			0.0 0.0 0.0 1
+			colour_value			0.2 0.4 0.6 1
 		}
 
+		pass render_quad
+		{
+			material Ogre/Copy/4xFP32
+			input 0 video_texture
+
+		}
 		//Left Eye render
 		pass render_scene
 		{
@@ -135,5 +143,5 @@ compositor_node TwoCamerasNode
 
 workspace TwoCamerasWorkspace
 {
-	connect_output TwoCamerasNode 0
+	connect_external 0 TwoCamerasNode 0
 }

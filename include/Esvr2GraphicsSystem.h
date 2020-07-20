@@ -3,6 +3,7 @@
 
 #include "Esvr2StereoRendering.h"
 #include "Esvr2VideoLoader.h"
+#include "Esvr2PoseState.h"
 
 #include "GraphicsSystem.h"
 
@@ -33,7 +34,9 @@ namespace esvr2
         //Depending on this type start with different Compositor setup
         WorkspaceType               mWorkSpaceType;
 
+        Ogre::SceneNode             *mCamerasNodeTrans;
         Ogre::SceneNode             *mCamerasNode;
+        Ogre::SceneNode             *mCameraNode[2];
         //two real cameras and two workspaces (two cameras rendering) or
         //only use one VR Camera and workspace (Instanced Rendering)
         Ogre::Camera                *mEyeCameras[2];
@@ -56,6 +59,7 @@ namespace esvr2
         std::string mStrDisplay;
         std::string mDeviceModelNumber;
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
+        PoseState *mCameraPoseState;
 
         VideoLoader *mVideoSource;
         VideoRenderTarget mVideoTarget;
@@ -124,8 +128,8 @@ namespace esvr2
             bool mIsStereo,
             bool showOgreDialog = false,
             bool showVideo = true,
-            esvr2::VideoRenderTarget renderVideoTarget = TO_SQUARE,
-            Ogre::Real camNear = 0.05f, Ogre::Real camFar = 200.0f);
+            esvr2::VideoRenderTarget renderVideoTarget = VRT_TO_SQUARE,
+            Ogre::Real camNear = 0.005f, Ogre::Real camFar = 200.0f);
         virtual void deinitialize(void);
 
         // we are overwriting initialize
@@ -143,6 +147,11 @@ namespace esvr2
         void _notifyVideoSource( VideoLoader *videoSource )
         {
             mVideoSource = videoSource;
+        };
+
+        void _notifyPoseSource( PoseState *poseState )
+        {
+            mCameraPoseState = poseState;
         };
     };
 }

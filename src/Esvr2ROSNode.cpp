@@ -4,6 +4,7 @@
 
 #include "Esvr2StereoRendering.h"
 
+#include "Esvr2PoseState.h"
 #include "Esvr2VideoLoader.h"
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2GameState.h"
@@ -12,7 +13,7 @@
 
 #include <cv_bridge/cv_bridge.h>
 #include <ros/ros.h>
-
+#include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <message_filters/subscriber.h>
@@ -30,16 +31,20 @@ namespace esvr2
             GraphicsSystem *graphicsSystem,
             StereoCameraConfig *cameraConfig, std::mutex *cameraConfigLock,
             int argc, char *argv[],
-            RosInputType rosInputType ):
+            RosInputType rosInputType,
+            std::string rosNamespace):
         VideoLoader( graphicsSystem ),
+        PoseState(),
         mNh( nullptr ),
         mSubImageLeft( nullptr ),
         mSubImageRight( nullptr ),
         mApproximateSync( nullptr ),
         mRosInputType( rosInputType ),
+        mRosNamespace( rosNamespace ),
         mCameraConfig( cameraConfig ),
         mCameraConfigLock( cameraConfigLock ),
-        mIsCameraInfoInit{ false, false }
+        mIsCameraInfoInit{ false, false },
+        mSubscribePose(true)
     {
         ros::init(argc, argv, "esvr2");
         mNh = new ros::NodeHandle();
@@ -51,26 +56,26 @@ namespace esvr2
     {
         switch (mRosInputType)
         {
-            case ROS_NONE:
+            case RIT_NONE:
                 quit();
                 break;
-            case ROS_MONO:
+            case RIT_MONO:
                 mSubImage = mNh->subscribe(
-                    "/stereo/camera_driver/image_raw", 1,
+                    mRosNamespace + "image_raw", 1,
                     &VideoROSNode::newROSImageMono, this);
                 break;
-            case ROS_STEREO_SLICED:
+            case RIT_STEREO_SLICED:
                 mSubImage = mNh->subscribe(
-                    "/stereo/camera_driver/image", 1,
+                    mRosNamespace + "image", 1,
                     &VideoROSNode::newROSImageStereoSliced, this);
                 break;
-            case ROS_STEREO_SPLIT:
+            case RIT_STEREO_SPLIT:
                 mSubImageLeft = new
                     message_filters::Subscriber<sensor_msgs::Image> (
-                        *mNh, "/stereo/left/image", 20);
+                        *mNh, mRosNamespace + "left/image_raw", 20);
                 mSubImageRight = new
                     message_filters::Subscriber<sensor_msgs::Image> (
-                        *mNh, "/stereo/right/image", 20);
+                        *mNh, mRosNamespace + "right/image_raw", 20);
                 mApproximateSync.reset(
                     new ApproximateSync(
                         ApproximatePolicy(20),
@@ -80,13 +85,21 @@ namespace esvr2
                 if (mCameraConfig && mCameraConfigLock)
                 {
                     mSubCamInfoLeft = mNh->subscribe(
-                        "/stereo/left/camera_info", 1,
+                        mRosNamespace + "left/camera_info", 1,
                         &VideoROSNode::newROSCameraInfoCallback<LEFT>, this);
                     mSubCamInfoRight = mNh->subscribe(
-                        "/stereo/right/camera_info", 1,
+                        mRosNamespace + "right/camera_info", 1,
                         &VideoROSNode::newROSCameraInfoCallback<RIGHT>, this);
                 }
                 break;
+        }
+
+        if(mSubscribePose)
+        {
+            //TODO: It get's simply not called
+            mSubPose = mNh->subscribe(
+                    "/tf", 1,
+                    &VideoROSNode::newROSPose, this);
         }
         if( mCameraConfigLock && mCameraConfig )
         {
@@ -99,6 +112,17 @@ namespace esvr2
             mIsCameraInfoInit[LEFT] = true;
             mIsCameraInfoInit[RIGHT] = true;
         }
+    }
+
+    void VideoROSNode::newROSPose(
+        const geometry_msgs::TransformStamped pose)
+    {
+        Ogre::Vector3 trans(
+            pose.transform.translation.x, pose.transform.translation.y, pose.transform.translation.z);
+        Ogre::Quaternion rotation(
+            pose.transform.rotation.x, pose.transform.rotation.y,
+            pose.transform.rotation.z, pose.transform.rotation.w);
+        setPose( trans, rotation );
     }
 
     void VideoROSNode::newROSImageStereoSliced(

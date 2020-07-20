@@ -19,32 +19,34 @@
 
 namespace esvr2 {
     typedef enum {
-        NONE,
-        ROS,
-        VIDEO,
-        LOW_LATENCY_VIDEO
+        IT_NONE,
+        IT_ROS,
+        IT_VIDEO_LOW_LATENCY,
+        IT_VIDEO_OPENCV,
+        IT_VIDEO_BLACKMAGIC
     } InputType;
     typedef enum {
-        TO_BACKGROUND,
-        TO_SQUARE
+        VRT_TO_BACKGROUND,
+        VRT_TO_SQUARE,
+        VRT_TO_2D_RECTANGLE
     } VideoRenderTarget;
     typedef enum {
-        VIDEO_NONE,
-        VIDEO_MONO,
-        VIDEO_STEREO_SLICED,
-        VIDEO_STEREO_VERTICAL_SPLIT,
-        VIDEO_STEREO_HORIZONTAL_SPLIT
+        VIT_NONE,
+        VIT_MONO,
+        VIT_STEREO_SLICED,
+        VIT_STEREO_VERTICAL_SPLIT,
+        VIT_STEREO_HORIZONTAL_SPLIT
     } VideoInputType;
     typedef enum {
-        ROS_NONE,
-        ROS_MONO,
-        ROS_STEREO_SLICED,
-        ROS_STEREO_SPLIT
+        RIT_NONE,
+        RIT_MONO,
+        RIT_STEREO_SLICED,
+        RIT_STEREO_SPLIT
     } RosInputType;
     typedef enum {
-        RAW,
-        UNDISTORT,
-        UNDISTORT_RECTIFY
+        DIST_RAW,
+        DIST_UNDISTORT,
+        DIST_UNDISTORT_RECTIFY
     } Distortion;
     typedef struct {
         std::string path;

@@ -4,6 +4,7 @@
 #include "Esvr2GameState.h"
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2OpenCvVideoLoader.h"
+#include "Esvr2BlackMagicVideoLoader.h"
 #include "Esvr2VideoLoader.h"
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2ROSNode.h"
@@ -63,49 +64,51 @@ THREAD_DECLARE( logicThread1 );
 
 VideoInputType getVideoInputType(std::string input_str)
 {
-    VideoInputType input = VIDEO_NONE;
+    VideoInputType input = VIT_NONE;
     if (input_str.compare("MONO") == 0)
-        input = VIDEO_MONO;
+        input = VIT_MONO;
     if (input_str.compare("STEREO_SLICED") == 0)
-        input = VIDEO_STEREO_SLICED;
+        input = VIT_STEREO_SLICED;
     if (input_str.compare("STEREO_VERTICAL_SPLIT") == 0)
-        input = VIDEO_STEREO_VERTICAL_SPLIT;
+        input = VIT_STEREO_VERTICAL_SPLIT;
     if (input_str.compare("STEREO_HORIZONTAL_SPLIT") == 0)
-        input = VIDEO_STEREO_HORIZONTAL_SPLIT;
+        input = VIT_STEREO_HORIZONTAL_SPLIT;
     return input;
 }
 
 RosInputType getRosInputType(std::string input_str)
 {
-    RosInputType input = ROS_NONE;
+    RosInputType input = RIT_NONE;
     if (input_str.compare("MONO") == 0)
-        input = ROS_MONO;
+        input = RIT_MONO;
     if (input_str.compare("STEREO_SLICED") == 0)
-        input = ROS_STEREO_SLICED;
+        input = RIT_STEREO_SLICED;
     if (input_str.compare("STEREO_SPLIT") == 0)
-        input = ROS_STEREO_SPLIT;
+        input = RIT_STEREO_SPLIT;
     return input;
 }
 
 InputType getInputType(std::string input_str)
 {
-    InputType input = NONE;
-    if (input_str.compare("VIDEO") == 0)
-        input = VIDEO;
-    if (input_str.compare("LOW_LATENCY_VIDEO") == 0)
-        input = LOW_LATENCY_VIDEO;
+    InputType input = IT_NONE;
+    if (input_str.compare("VIDEO_OPENCV") == 0)
+        input = IT_VIDEO_OPENCV;
+    if (input_str.compare("VIDEO_LOW_LATENCY") == 0)
+        input = IT_VIDEO_LOW_LATENCY;
+    if (input_str.compare("VIDEO_BLACKMAGIC") == 0)
+        input = IT_VIDEO_BLACKMAGIC;
     if (input_str.compare("ROS") == 0)
-        input = ROS;
+        input = IT_ROS;
     return input;
 }
 
 VideoRenderTarget getRenderVideoTarget(std::string input_str)
 {
-    VideoRenderTarget input = TO_SQUARE;
+    VideoRenderTarget input = VRT_TO_SQUARE;
     if (input_str.compare("TO_SQUARE") == 0)
-        input = TO_SQUARE;
+        input = VRT_TO_SQUARE;
     if (input_str.compare("TO_BACKGROUND") == 0)
-        input = TO_BACKGROUND;
+        input = VRT_TO_BACKGROUND;
     return input;
 }
 
@@ -128,8 +131,8 @@ int main( int argc, char *argv[] )
     int screen = 0;
     bool isStereo = false;
     WorkspaceType workspace = WS_TWO_CAMERAS_STEREO;
-    InputType input = NONE;
-    VideoRenderTarget renderVideoTarget = TO_SQUARE;
+    InputType input = IT_NONE;
+    VideoRenderTarget renderVideoTarget = VRT_TO_SQUARE;
     size_t config_files_end = 0, config_files_begin = 0;
     StereoCameraConfig *cameraConfig = new StereoCameraConfig();
 
@@ -144,10 +147,10 @@ int main( int argc, char *argv[] )
     Ogre::VrData *vrData = new Ogre::VrData();
     vrData->set(id, id);
     VideoInput videoInput;
-    videoInput.videoInputType = VIDEO_NONE;
+    videoInput.videoInputType = VIT_NONE;
     videoInput.path = "";
-    RosInputType rosInputType = ROS_NONE;
-
+    RosInputType rosInputType = RIT_NONE;
+    std::string rosNamespace = "";
     for (int i = 1; i < argc; i++)
     {
         if ( std::strcmp(argv[i], "--config") == 0 && i+1 < argc )
@@ -170,7 +173,7 @@ int main( int argc, char *argv[] )
         if ( std::strcmp(argv[i], "--video-path") == 0 && i+1 < argc )
         {
             videoInput.path = std::string(argv[i+1]);
-            input = VIDEO;
+            input = IT_VIDEO_OPENCV;
         }
         if ( std::strcmp(argv[i], "--show-ogre-dialog") == 0 )
             show_ogre_dialog = true;
@@ -234,8 +237,8 @@ int main( int argc, char *argv[] )
             //VIDEO
             if ( cfg.exists("video") )
             {
-                if ( input == NONE && input == NONE )
-                    input = VIDEO;
+                if ( input == IT_NONE )
+                    input = IT_VIDEO_OPENCV;
                 Setting& vs = cfg.lookup("video");
                 if (vs.exists("path"))
                     videoInput.path = vs["path"].c_str();
@@ -245,15 +248,29 @@ int main( int argc, char *argv[] )
                     video_input_str = vs["input_type"].c_str();
                     videoInput.videoInputType =
                         getVideoInputType(video_input_str);
-                    isStereo = videoInput.videoInputType > VIDEO_MONO;
+                    isStereo = videoInput.videoInputType > VIT_MONO;
                 }
             }
-
+            //BLACKMAGIC
+            if ( cfg.exists("blackmagic") )
+            {
+                if ( input == IT_NONE )
+                    input = IT_VIDEO_BLACKMAGIC;
+                Setting& vs = cfg.lookup("blackmagic");
+                if (vs.exists("input_type"))
+                {
+                    std::string video_input_str;
+                    video_input_str = vs["input_type"].c_str();
+                    videoInput.videoInputType =
+                    getVideoInputType(video_input_str);
+                    isStereo = videoInput.videoInputType > VIT_MONO;
+                }
+            }
             //ROS
             if ( cfg.exists("ros"))
             {
-                if ( input == NONE )
-                    input = ROS;
+                if ( input == IT_NONE )
+                    input = IT_ROS;
                 Setting& vs = cfg.lookup("ros");
                 if (vs.exists("input_type"))
                 {
@@ -261,7 +278,11 @@ int main( int argc, char *argv[] )
                     ros_input_str = vs["input_type"].c_str();
                     rosInputType =
                         getRosInputType(ros_input_str);
-                    isStereo = rosInputType > ROS_MONO;
+                    isStereo = rosInputType > RIT_MONO;
+                }
+                if (vs.exists("namespace"))
+                {
+                    rosNamespace = vs["namespace"].c_str();
                 }
             }
 
@@ -427,14 +448,14 @@ int main( int argc, char *argv[] )
         return(EXIT_FAILURE);
     }
 
-    bool validCameraConfig = cameraConfig->leftToRight != 0 &&
+    bool validCameraConfig = /*cameraConfig->leftToRight != 0 &&*/
         cameraConfig->cfg[LEFT].width != 0 &&
         cameraConfig->cfg[LEFT].height != 0 &&
         ( !isStereo ||
             ( isStereo &&
             cameraConfig->cfg[RIGHT].width != 0 &&
             cameraConfig->cfg[RIGHT].height != 0));
-    if ( !validCameraConfig && input != ROS )
+    if ( !validCameraConfig && input != IT_ROS )
     {
         LOG << "no valid cameraConfig quit" << LOGEND;
         delete cameraConfig;
@@ -448,46 +469,55 @@ int main( int argc, char *argv[] )
 
     GraphicsSystem *graphicsSystem = new GraphicsSystem(
             graphicsGameState, workspace, vrData,
-            hmdConfig, screen, RAW, isStereo, show_ogre_dialog,
+            hmdConfig, screen, DIST_UNDISTORT_RECTIFY, isStereo, show_ogre_dialog,
             show_video, renderVideoTarget );
 
     graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );
 
     VideoLoader *videoLoader = nullptr;
+    PoseState *poseState = nullptr;
 
     std::mutex *cameraConfigLock = new std::mutex();
     switch(input)
     {
-        case LOW_LATENCY_VIDEO:
+        case IT_VIDEO_LOW_LATENCY:
             videoLoader = new LowLatencyVideoLoader(
                 graphicsSystem,
                 videoInput, false);
             break;
-        case VIDEO:
+        case IT_VIDEO_OPENCV:
             videoLoader = new OpenCvVideoLoader( graphicsSystem, videoInput );
             graphicsSystem->_notifyVideoSource( videoLoader );
             break;
-        case ROS:
+        case IT_VIDEO_BLACKMAGIC:
+            videoLoader = new BlackMagicVideoLoader( graphicsSystem, videoInput );
+            graphicsSystem->_notifyVideoSource( videoLoader );
+            break;
+        case IT_ROS:
 #ifdef USE_ROS
+            VideoROSNode *rosNode;
             if ( !validCameraConfig )
             {
                 cameraConfigLock->lock();
-                videoLoader = new VideoROSNode(
+                 rosNode = new VideoROSNode(
                     graphicsSystem,
                     cameraConfig, cameraConfigLock,
-                    argc, argv, rosInputType );
+                    argc, argv, rosInputType, rosNamespace );
             }
             else
             {
-                videoLoader = new VideoROSNode(
+                rosNode = new VideoROSNode(
                     graphicsSystem,
                     nullptr, nullptr,
-                    argc, argv, rosInputType );
+                    argc, argv, rosInputType, rosNamespace );
             }
+            videoLoader = rosNode;
+            poseState = rosNode;
             graphicsSystem->_notifyVideoSource( videoLoader );
+            graphicsSystem->_notifyPoseSource( poseState );
             break;
 #endif
-        case NONE:
+        case IT_NONE:
             delete graphicsGameState;
             delete graphicsSystem;
             delete videoLoader;

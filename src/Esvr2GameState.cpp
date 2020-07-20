@@ -9,9 +9,11 @@
 
 #include "OgreSceneManager.h"
 #include "OgreItem.h"
+#include "OgreMaterialManager.h"
 #include "OgreHlmsManager.h"
 #include "OgreHlmsUnlit.h"
 #include "OgreHlmsUnlitDatablock.h"
+#include "OgreRectangle2D2.h"
 #include "OgreManualObject2.h"
 #include "OgreBillboard.h"
 #include "OgreBillboardSet.h"
@@ -26,12 +28,12 @@ namespace esvr2
         TutorialGameState( helpDescription ),
         mStereoGraphicsSystem( nullptr ),
         mVideoDatablock{ nullptr, nullptr },
-        mProjectionRectangle{ nullptr, nullptr },
+        mProjectionRectangle{ nullptr, nullptr, nullptr, nullptr },
+        mAxis( nullptr ),
         mTooltips( nullptr ),
         mPointCloud( nullptr ),
         mSceneNodeLight( nullptr ),
-        mSceneNodeCamera( nullptr ),
-        mSceneNodeProjPlane{nullptr, nullptr},
+        mSceneNodeCamera{ nullptr, nullptr },
         mSceneNodePointCloud( nullptr ),
         mSceneNodeTooltips( nullptr ),
         mSceneNodeMesh( nullptr ),
@@ -78,20 +80,20 @@ namespace esvr2
             {
                 f_x = cfg.K[0];
                 f_y = cfg.K[4];
-                c_x = width/2;
-                c_y = height/2;
-//                 c_x = cfg.K[2];
-//                 c_y = cfg.K[5];
+//                 c_x = width/2;
+//                 c_y = height/2;
+                c_x = cfg.K[2];
+                c_y = cfg.K[5];
                 mProjPlaneDistance[eye] = projPlaneDistance;
             }
             else
             {
                 f_x = cfg.P[0];
                 f_y = cfg.P[5];
-                c_x = width/2;
-                c_y = height/2;
-//                 c_x = cfg.P[2];
-//                 c_y = cfg.P[6];
+//                 c_x = width/2;
+//                 c_y = height/2;
+                c_x = cfg.P[2];
+                c_y = cfg.P[6];
 
                 mProjPlaneDistance[eye] =
                     mVrData->mLeftToRight.length() * f_x /
@@ -100,9 +102,57 @@ namespace esvr2
 
             //in xy left is negativ
             mLeft[eye] = -c_x * mProjPlaneDistance[eye] / f_x;
-            mRight[eye] = -( c_x - width ) * mProjPlaneDistance[eye] / f_x;
+            mRight[eye] = ( width -c_x  ) * mProjPlaneDistance[eye] / f_x;
             mTop[eye] = c_y * mProjPlaneDistance[eye] / f_y;
-            mBottom[eye] = ( c_y - height ) * mProjPlaneDistance[eye] / f_y;
+            mBottom[eye] = ( c_y - height  ) * mProjPlaneDistance[eye] / f_y;
+            LOG << "mLeft: " << mLeft[eye] <<
+                "mRight: " << mRight[eye] <<
+                "mTop: " << mTop[eye] <<
+                "mBottom: " << mBottom[eye] << LOGEND;
+        }
+    }
+
+    //TODO: compiles but doesn't work
+    void GameState::createProjectionRectangle2D()
+    {
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
+        mProjectionRectangle2D = sceneManager->createRectangle2D(Ogre::SCENE_DYNAMIC);
+        mProjectionRectangle2D->setName("Rectangle2D");
+        mProjectionRectangle2D->initialize(
+            Ogre::BT_DEFAULT,
+            Ogre::Rectangle2D::GeometryFlagQuad | Ogre::Rectangle2D::GeometryFlagNormals);
+
+        // There's just simply no documentation
+        mProjectionRectangle2D->setGeometry(
+            Ogre::Vector2(-1.0f, -1.0f),
+            Ogre::Vector2(2.0f,2.0f)
+        );
+        mProjectionRectangle2D->setDatablock(mDatablockName[LEFT]);
+        mProjectionRectangle2D->setRenderQueueGroup( 212u );
+        sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )
+            ->attachObject(mProjectionRectangle2D);
+
+        Ogre::MaterialManager &materialManager =
+            Ogre::MaterialManager::getSingleton();
+
+        Ogre::MaterialPtr material =
+            materialManager.getByName( "SkyPostprocess", "Popular" );
+        if( material )
+        {
+            LOG << "Could set material" << LOGEND;
+            mProjectionRectangle2D->setMaterial(material);
+        }
+        else
+        {
+            LOG << "Error" << LOGEND;
+            Ogre::ResourceManager::ResourceMapIterator it = materialManager.getResourceIterator();
+            Ogre::ResourcePtr res;
+            for(auto i = it.begin();
+                i != it.end(); i++)
+            {
+                res = i->second;
+                LOG << res->getName() << LOGEND;
+            }
         }
     }
 
@@ -125,19 +175,19 @@ namespace esvr2
         //we need to create two planes for raw and recitified
         for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
         {
-            Ogre::Matrix4 eyeToHead =
-                mVrData->mHeadToEye[eye %2]/*.inverse()*/;
-            Ogre::Vector4 camPos = eyeToHead *
-                Ogre::Vector4( 0, 0, 0, 1.0 );
-            // Look back along -Z
-            //TODO: make focus dependend from scale is so we are focusing at about 10 cm.
-            // scale is about 10 so 10cm ~ 1m
-            Ogre::Vector4 focusPoint = eyeToHead * Ogre::Vector4( 0.0, 0.0, -1.0, 1.0 );
-            mSceneNodeProjPlane[eye] = mSceneNodeCamera->createChildSceneNode(
-                Ogre::SCENE_DYNAMIC );
-            mSceneNodeProjPlane[eye]->setPosition(camPos.xyz());
-
-            mSceneNodeProjPlane[eye]->lookAt(focusPoint.xyz(), Ogre::Node::TS_PARENT);
+//             Ogre::Matrix4 eyeToHead =
+//                 mVrData->mHeadToEye[eye %2]/*.inverse()*/;
+//             Ogre::Vector4 camPos = eyeToHead *
+//                 Ogre::Vector4( 0, 0, 0, 1.0 );
+//             // Look back along -Z
+//             //TODO: make focus dependend from scale is so we are focusing at about 10 cm.
+//             // scale is about 10 so 10cm ~ 1m
+// //             Ogre::Vector4 focusPoint = eyeToHead * Ogre::Vector4( 0.0, 0.0, -1.0, 1.0 );
+//             mSceneNodeProjPlane[eye] = mSceneNodeCamera->createChildSceneNode(
+//                 Ogre::SCENE_DYNAMIC );
+//             mSceneNodeProjPlane[eye]->setPosition(camPos.xyz());
+// 
+//             mSceneNodeProjPlane[eye]->lookAt(focusPoint.xyz(), Ogre::Node::TS_PARENT);
 
             mProjectionRectangle[eye] = sceneManager->createManualObject();
 
@@ -166,9 +216,31 @@ namespace esvr2
 
             mProjectionRectangle[eye]->end();
 
-            mSceneNodeProjPlane[eye]->attachObject(mProjectionRectangle[eye]);
+            mSceneNodeCamera[eye%2]->attachObject(mProjectionRectangle[eye]);
             mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
         }
+    }
+
+    void GameState::createAxis( void )
+    {
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
+        mAxis = sceneManager->createManualObject();
+        mAxis->begin("BaseWhite", Ogre::OT_LINE_LIST);
+        mAxis->position( 0.0f, 0.0f, 0.0f );
+        mAxis->position( 1.0f, 0.0f, 0.0f );
+        mAxis->line(0, 1);
+        mAxis->position( 0.0f, 0.0f, 0.0f );
+        mAxis->position( 0.0f, 1.0f, 0.0f );
+        mAxis->line(2, 3);
+        mAxis->position( 0.0f, 0.0f, 0.0f );
+        mAxis->position( 0.0f, 0.0f, 1.0f );
+        mAxis->line(4, 5);
+        mAxis->end();
+        mAxis->setVisibilityFlags( 0xFFFF );
+        Ogre::SceneNode *sceneNodeAxis = sceneManager->getRootSceneNode(
+                Ogre::SCENE_DYNAMIC )->
+                    createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        sceneNodeAxis->attachObject(mAxis);
     }
 
     void GameState::createTooltips( void )
@@ -177,12 +249,12 @@ namespace esvr2
         mSceneNodeTooltips = sceneManager->getRootSceneNode(
                 Ogre::SCENE_DYNAMIC )->
                     createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        mSceneNodeTooltips->setPosition( 0, 0, -0.1 * mScale );
+        mSceneNodeTooltips->setPosition( 0.0, 0.0, 0.0 );
         mTooltips = sceneManager->createBillboardSet();
         mTooltips->beginBillboards(1);
         Ogre::v1::Billboard* b = mTooltips->createBillboard(
             0.0, 0.0, 0.0);
-        b->setDimensions(0.0005 * mScale, 0.0005 * mScale);
+        b->setDimensions(0.001 /** mScale*/, 0.001 /** mScale*/);
         b->setColour(Ogre::ColourValue::Red);
         mTooltips->endBillboards();
         mTooltips->setVisibilityFlags( 0x1 );
@@ -254,22 +326,24 @@ namespace esvr2
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->getRoot()->getHlmsManager();
         Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>( hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
 
-        Ogre::SceneManager::SceneNodeList scnlist =
-            sceneManager->findSceneNodes("Cameras Node");
-        if( !scnlist.empty() )
-        {
-            mSceneNodeCamera = scnlist.at(0);
-        }
-        else
-        {
-            mSceneNodeCamera = sceneManager->getRootSceneNode(
-                Ogre::SCENE_DYNAMIC )->
-                    createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        }
-
+        Ogre::String cameraNodeNames[2] =
+            {"Left Camera Node", "Right Camera Node"};
 
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
+            Ogre::SceneManager::SceneNodeList scnlist =
+                sceneManager->findSceneNodes(cameraNodeNames[eye]);
+            if( !scnlist.empty() )
+            {
+                mSceneNodeCamera[eye] = scnlist.at(0);
+            }
+            else
+            {
+                mSceneNodeCamera[eye] = sceneManager->getRootSceneNode(
+                    Ogre::SCENE_DYNAMIC )->
+                        createChildSceneNode( Ogre::SCENE_DYNAMIC );
+            }
+
             mVideoDatablock[eye] = static_cast<Ogre::HlmsUnlitDatablock*>(
                 hlmsUnlit->createDatablock(
                     mDatablockName[eye],
@@ -281,7 +355,9 @@ namespace esvr2
             mVideoDatablock[eye]->setTexture( 0, mTextureName[eye] );
         }
 
+        createProjectionRectangle2D();
         createProjectionPlanes();
+        createAxis();
         createTooltips();
         createPointCloud();
         createMesh();
@@ -317,26 +393,14 @@ namespace esvr2
         Ogre::uint32 setMask = 0x0;
         Ogre::uint32 unsetMask = 0x0;
 
-        //strg + 1 projectionplanes
 
-        if( arg.keysym.scancode == SDL_SCANCODE_C )
-        {
-            //TODO: maybe scale
-            mSceneNodeProjPlane[RIGHT]->translate(Ogre::Vector3(-0.1,0,0));
-        }
-        if( arg.keysym.scancode == SDL_SCANCODE_V )
-        {
-            //TODO: maybe scale
-            mSceneNodeProjPlane[RIGHT]->translate(Ogre::Vector3(0.1,0,0));
-            LOG << "translate" << mSceneNodeProjPlane[RIGHT]->getPosition() << LOGEND;
-        }
 
         // stop Video
         if( arg.keysym.scancode == SDL_SCANCODE_X )
         {
             mStereoGraphicsSystem->itterateDistortion();
             Distortion dist = mStereoGraphicsSystem->getDistortion();
-            if (dist == UNDISTORT_RECTIFY)
+            if (dist == DIST_UNDISTORT_RECTIFY)
             {
                 setMask = 0x40 | 0x80;
                 unsetMask = 0x10 | 0x20;
@@ -356,7 +420,7 @@ namespace esvr2
             else
             {
                 Distortion dist = mStereoGraphicsSystem->getDistortion();
-                if (dist == UNDISTORT_RECTIFY)
+                if (dist == DIST_UNDISTORT_RECTIFY)
                 {
                     setMask = 0x40 | 0x80;
                     unsetMask = 0x10 | 0x20;

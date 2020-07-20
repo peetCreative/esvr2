@@ -11,6 +11,7 @@
 #include "OgreCamera.h"
 #include "OgreHlmsUnlitDatablock.h"
 #include "OgreManualObject2.h"
+#include "OgreRectangle2D2.h"
 
 namespace esvr2
 {
@@ -19,12 +20,13 @@ namespace esvr2
         GraphicsSystem *mStereoGraphicsSystem;
 
         Ogre::HlmsUnlitDatablock *mVideoDatablock[2];
+        Ogre::Rectangle2D        *mProjectionRectangle2D;
         Ogre::ManualObject       *mProjectionRectangle[4];
+        Ogre::ManualObject       *mAxis;
         Ogre::v1::BillboardSet   *mTooltips;
         PointCloud               *mPointCloud;
         Ogre::SceneNode          *mSceneNodeLight;
-        Ogre::SceneNode          *mSceneNodeCamera;
-        Ogre::SceneNode          *mSceneNodeProjPlane[2];
+        Ogre::SceneNode          *mSceneNodeCamera[2];
         Ogre::SceneNode          *mSceneNodePointCloud;
         Ogre::SceneNode          *mSceneNodeTooltips;
         Ogre::SceneNode          *mSceneNodeMesh;
@@ -36,7 +38,9 @@ namespace esvr2
             mLeft[4], mRight[4], mTop[4], mBottom[4];
         Ogre::Real mScale;
         Ogre::String mTextureName[2], mDatablockName[2];
+        void createProjectionRectangle2D();
         void createProjectionPlanes();
+        void createAxis( void );
         void createTooltips();
         void createPointCloud();
         void createMesh();

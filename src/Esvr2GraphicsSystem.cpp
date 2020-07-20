@@ -12,6 +12,8 @@
 #include "OgreRoot.h"
 #include "OgreWindow.h"
 // #include "Compositor/OgreCompositorManager2.h"
+#include "Compositor/OgreCompositorNode.h"
+#include "Compositor/OgreCompositorWorkspace.h"
 
 #include "OgreTextureGpuManager.h"
 #include "OgrePixelFormatGpuUtils.h"
@@ -35,12 +37,38 @@ namespace esvr2
     //-------------------------------------------------------------------------------
     void GraphicsSystem::createCamera(void)
     {
+        //Bsp:
+        Ogre::Quaternion orientation(
+            0.9643017554756692,
+            -0.2318762303487807,
+             0.03921201399563528,
+            0.12172902753323941
+            );
+        Ogre::Vector3 pos(
+            -0.0021337842567392606,
+            -0.04217856914381894,
+            0.14701543794086538);
+
         //Use one node to control both cameras
-        mCamerasNode = mSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
+        mCamerasNodeTrans = mSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
+                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mCamerasNodeTrans->setName( "Cameras Node Trans" );
+//         mCamerasNodeTrans->setPosition( pos );
+        mCamerasNodeTrans->setOrientation( orientation );
+        mCamerasNode = mCamerasNodeTrans->
                 createChildSceneNode( Ogre::SCENE_DYNAMIC );
         mCamerasNode->setName( "Cameras Node" );
+        mCamerasNode->setPosition( pos );
+//         mCamerasNode->setOrientation( orientation );
 
-        mCamerasNode->setPosition( 0, 0, 0 );
+        mCameraNode[LEFT] = mCamerasNode->
+                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mCameraNode[LEFT]->setName( "Left Camera Node" );
+
+        mCameraNode[RIGHT] = mCamerasNode->
+                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mCameraNode[RIGHT]->setName( "Right Camera Node" );
+
         mVrCullCamera = mSceneManager->createCamera( "VrCullCamera" );
         mVrCullCamera->detachFromParent();
         mCamerasNode->attachObject( mVrCullCamera );
@@ -57,7 +85,13 @@ namespace esvr2
 //             const Ogre::Real eyeFocusDistance   = 0.06f;
 
             alignCameras();
-            mCamera = mEyeCameras[LEFT];
+            //By default cameras are attached to the Root Scene Node.
+            mEyeCameras[LEFT]->detachFromParent();
+            mCameraNode[LEFT]->attachObject( mEyeCameras[LEFT] );
+            mEyeCameras[RIGHT]->detachFromParent();
+            mCameraNode[RIGHT]->attachObject( mEyeCameras[RIGHT] );
+
+            mCamera = mEyeCameras[RIGHT];
         }
         if (mWorkSpaceType == WS_INSTANCED_STEREO)
         {
@@ -114,21 +148,17 @@ namespace esvr2
             Ogre::Vector3 focusPoint = Ogre::Vector3( 0.0, 0.0, -1.0 );
 
             focusPoint = eyeToHead * focusPoint;
-            mEyeCameras[eye]->setPosition( camPos.xyz() );
+            mCameraNode[eye]->setPosition( camPos.xyz() );
 
     //                 Ogre::Vector3 lookAt( eyeFocusDistance * (eye * 2 - 1), 0, -1 );
             //Ogre::Vector3 lookAt( 0, 0, 0 );
 
-            mEyeCameras[eye]->lookAt( focusPoint );
+            mCameraNode[eye]->lookAt( focusPoint, Ogre::Node::TS_LOCAL );
             mEyeCameras[eye]->setNearClipDistance( mCamNear );
             mEyeCameras[eye]->setFarClipDistance( mCamFar );
             //maybe we have to use here the custom one from rviz
             mEyeCameras[eye]->setCustomProjectionMatrix( true, mVrData->mProjectionMatrix[eye] );
             mEyeCameras[eye]->setAutoAspectRatio( true );
-
-            //By default cameras are attached to the Root Scene Node.
-            mEyeCameras[eye]->detachFromParent();
-            mCamerasNode->attachObject( mEyeCameras[eye] );
         }
     }
     //-------------------------------------------------------------------------
@@ -157,6 +187,10 @@ namespace esvr2
                         &eyeFrustumExtents[i].x, &eyeFrustumExtents[i].y,
                         &eyeFrustumExtents[i].z, &eyeFrustumExtents[i].w );
                 }
+//                 else if()
+//                 {
+//                      // TODO we are creating our own eyeToHead Matrix and projectionMatrix
+//                 }
                 else
                 {
                     projectionMatrix[i] = mHmdConfig.projectionMatrix[i];
@@ -206,16 +240,26 @@ namespace esvr2
 
     void GraphicsSystem::itterateDistortion()
     {
-        if (mInputDistortion != RAW )
+        if (mInputDistortion != DIST_RAW )
             return;
-        if( mOutputDistortion == RAW )
-            mOutputDistortion = UNDISTORT;
+        if( mOutputDistortion == DIST_RAW )
+        {
+            mOutputDistortion = DIST_UNDISTORT;
+            LOG << "UNDISTORT" << LOGEND;
+        }
         else
-        if( mOutputDistortion == UNDISTORT )
-            mOutputDistortion = UNDISTORT_RECTIFY;
+        if( mOutputDistortion == DIST_UNDISTORT )
+        {
+            mOutputDistortion = DIST_UNDISTORT_RECTIFY;
+            LOG << "UNDISTORT_RECTIFY" << LOGEND;
+        }
         else
-        if ( mOutputDistortion == UNDISTORT_RECTIFY)
-            mOutputDistortion = RAW;
+        if ( mOutputDistortion == DIST_UNDISTORT_RECTIFY)
+        {
+            mOutputDistortion = DIST_RAW;
+            LOG << "RAW" << LOGEND;
+
+        }
     }
 
     bool GraphicsSystem::calcAlign(StereoCameraConfig &cameraConfig)
@@ -227,46 +271,6 @@ namespace esvr2
         //which is limited by this function
         mUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
 
-        for ( size_t eye = 0; eye < mEyeNum; eye++)
-        {
-            mCameraWidth[eye] = cameraConfig.cfg[eye].width;
-            mCameraHeight[eye] = cameraConfig.cfg[eye].height;
-
-            if ( mVideoTarget == TO_SQUARE )
-            {
-                mVideoTexture[eye]->setResolution(
-                    mCameraWidth[eye], mCameraHeight[eye] );
-                mVideoTexture[eye]->setPixelFormat( Ogre::PFG_RGBA8_UNORM );
-            }
-
-            const Ogre::uint32 rowAlignment = 4u;
-            mImageDataSize[eye] =
-                Ogre::PixelFormatGpuUtils::getSizeBytes(
-                    mVideoTexture[eye]->getWidth(),
-                    mVideoTexture[eye]->getHeight(),
-                    mVideoTexture[eye]->getDepth(),
-                    mVideoTexture[eye]->getNumSlices(),
-                    mVideoTexture[eye]->getPixelFormat(),
-                    rowAlignment );
-
-            mImageData[eye] = reinterpret_cast<Ogre::uint8*>(
-                OGRE_MALLOC_SIMD( mImageDataSize[eye],
-                Ogre::MEMCATEGORY_RESOURCE ) );
-            memset(mImageData[eye], 0, mImageDataSize[eye]);
-
-            if ( mVideoTarget == TO_SQUARE )
-            {
-                mVideoTexture[eye]->scheduleTransitionTo( Ogre::GpuResidency::Resident );
-            }
-
-            mStagingTexture[eye] =
-                textureManager->getStagingTexture(
-                    mVideoTexture[eye]->getWidth(),
-                    mVideoTexture[eye]->getHeight(),
-                    mVideoTexture[eye]->getDepth(),
-                    mVideoTexture[eye]->getNumSlices(),
-                    mVideoTexture[eye]->getPixelFormat() );
-        }
 
         //now we have to know
         if (!mImageRenderConfig)
@@ -311,6 +315,9 @@ namespace esvr2
 
         for (size_t eye = 0; eye < mEyeNum; eye++)
         {
+            mCameraWidth[eye] = cameraConfig.cfg[eye].width;
+            mCameraHeight[eye] = cameraConfig.cfg[eye].height;
+
             float f_x, f_y, c_x, c_y;
             if (false)
             {
@@ -329,14 +336,36 @@ namespace esvr2
                 float near_plane = 0.001;
                 float img_width = cameraConfig.cfg[eye].width;
                 float img_height = cameraConfig.cfg[eye].height;
-                proj_matrix[eye] = Ogre::Matrix4::IDENTITY;
+
+                float win_width = mHmdConfig.width;
+                float win_height = mHmdConfig.height;
+                float zoom_x = 1.0f;
+                float zoom_y = zoom_x;
+
+                // Preserve aspect ratio
+                if (win_width != 0 && win_height != 0)
+                {
+                    float img_aspect = (img_width / f_x) / (img_height / f_y);
+                    float win_aspect = win_width / win_height;
+
+                    if (img_aspect > win_aspect)
+                    {
+                        zoom_y = zoom_y / img_aspect * win_aspect;
+                    }
+                    else
+                    {
+                        zoom_x = zoom_x / win_aspect * img_aspect;
+                    }
+                }
+
+                proj_matrix[eye] = Ogre::Matrix4::ZERO;
                 eyeToHead[eye] = Ogre::Matrix4::IDENTITY;
 
-                proj_matrix[eye][0][0] = 2.0 * f_x / img_width;
-                proj_matrix[eye][1][1] = 2.0 * f_y / img_height;
+                proj_matrix[eye][0][0] = 2.0 * f_x / img_width * zoom_x;
+                proj_matrix[eye][1][1] = 2.0 * f_y / img_height * zoom_y;
 
-                proj_matrix[eye][0][2] = 2.0 * (0.5 - c_x / img_width);
-                proj_matrix[eye][1][2] = 2.0 * (c_y / img_height - 0.5);
+                proj_matrix[eye][0][2] = 2.0 * (0.5 - c_x / img_width) * zoom_x;
+                proj_matrix[eye][1][2] = 2.0 * (c_y / img_height - 0.5) * zoom_y;
 
                 proj_matrix[eye][2][2] = -(far_plane + near_plane) / (far_plane - near_plane);
                 proj_matrix[eye][2][3] = -2.0 * far_plane * near_plane / (far_plane - near_plane);
@@ -412,7 +441,10 @@ namespace esvr2
         if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
         {
             if (! mVrWorkspaces[LEFT] && !mVrWorkspaces[RIGHT] )
+            {
                 createTwoWorkspaces();
+                setupImageData();
+            }
         }
         return true;
     }
@@ -422,8 +454,8 @@ namespace esvr2
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
 
         initOpenVR();
-
         setupImageData();
+
 
         syncCameraProjection( true );
 
@@ -555,7 +587,7 @@ namespace esvr2
             new OpenVRCompositorListener(
                 mHMD, mVRCompositor, mVrTexture,
                 mRoot, mVrWorkspaces,
-                mCamerasNode
+                mCamerasNode, mCameraPoseState
             );
     }
 
@@ -581,6 +613,7 @@ namespace esvr2
         float sizeheight = mImageRenderConfig->size[LEFT].height / (float) textureheight;
 
         vpOffsetScale   = Ogre::Vector4( width, height, sizewidth, sizeheight  );
+//         vpOffsetScale   = Ogre::Vector4( 0.25f, 0.25f, 0.5f, 1.0f );
         mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
             mSceneManager,
             mVrTexture,
@@ -600,7 +633,9 @@ namespace esvr2
         vpModifierMask  = 0x02;
         executionMask   = 0x02;
         vpOffsetScale   = Ogre::Vector4( width, height,
-                                         sizewidth, sizeheight );
+                                          sizewidth, sizeheight );
+//         vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f,
+//                                          0.5f, 1.0f );
         mVrWorkspaces[RIGHT] = compositorManager->addWorkspace(
             mSceneManager,
             mVrTexture,
@@ -612,34 +647,25 @@ namespace esvr2
             vpModifierMask,
             executionMask);
     }
-    
+
     void GraphicsSystem::setupImageData()
     {
+        if (!mVrWorkspaces[LEFT])
+            return;
         Ogre::TextureGpuManager *textureManager =
             mRoot->getRenderSystem()->getTextureGpuManager();
 
-        if ( mVideoTarget == TO_BACKGROUND )
+        if ( mVideoTarget == VRT_TO_BACKGROUND )
         {
             mVideoTexture[LEFT] = mVrTexture;
         }
-        else if ( mVideoTarget == TO_SQUARE )
+        else if ( mVideoTarget == VRT_TO_SQUARE )
         {
             if ( mIsStereo )
             {
-                mVideoTexture[LEFT] = textureManager->createTexture(
-                    "VideoTextureLeft",
-                    Ogre::GpuPageOutStrategy::Discard,
-                    Ogre::TextureFlags::AutomaticBatching |
-                    Ogre::TextureFlags::ManualTexture |
-                    Ogre::TextureFlags::Reinterpretable,
-                    Ogre::TextureTypes::Type2D );
-                mVideoTexture[RIGHT] = textureManager->createTexture(
-                    "VideoTextureRight",
-                    Ogre::GpuPageOutStrategy::Discard,
-                    Ogre::TextureFlags::AutomaticBatching |
-                    Ogre::TextureFlags::ManualTexture |
-                    Ogre::TextureFlags::Reinterpretable,
-                    Ogre::TextureTypes::Type2D );
+                LOG << "setup Video Texture Left" << LOGEND;
+                mVideoTexture[LEFT] = mVrWorkspaces[LEFT]->findNode("TwoCamerasNode")->getLocalTextures()[0];
+                mVideoTexture[RIGHT] = mVrWorkspaces[RIGHT]->findNode("TwoCamerasNode")->getLocalTextures()[0];
             }
             else
             {
@@ -651,6 +677,29 @@ namespace esvr2
                     Ogre::TextureFlags::Reinterpretable,
                     Ogre::TextureTypes::Type2D );
             }
+        }
+        for ( size_t eye = 0; eye < mEyeNum; eye++)
+        {
+            const Ogre::uint32 rowAlignment = 4u;
+            mImageDataSize[eye] =
+            Ogre::PixelFormatGpuUtils::getSizeBytes(
+                mVideoTexture[eye]->getWidth(),
+                mVideoTexture[eye]->getHeight(),
+                mVideoTexture[eye]->getDepth(),
+                mVideoTexture[eye]->getNumSlices(),
+                mVideoTexture[eye]->getPixelFormat(),
+                rowAlignment );
+            mImageData[eye] = reinterpret_cast<Ogre::uint8*>(
+                OGRE_MALLOC_SIMD( mImageDataSize[eye],
+                                  Ogre::MEMCATEGORY_RESOURCE ) );
+            memset(mImageData[eye], 0, mImageDataSize[eye]);
+            mStagingTexture[eye] =
+            textureManager->getStagingTexture(
+                mVideoTexture[eye]->getWidth(),
+                mVideoTexture[eye]->getHeight(),
+                mVideoTexture[eye]->getDepth(),
+                mVideoTexture[eye]->getNumSlices(),
+                mVideoTexture[eye]->getPixelFormat() );
         }
     }
 
@@ -731,7 +780,10 @@ namespace esvr2
         Demo::GraphicsSystem( gameState, showOgreConfigDialog,
                         RESOURCE_FOLDER, PLUGIN_FOLDER ),
         mWorkSpaceType( wsType ),
+        mCamerasNodeTrans( nullptr ),
         mCamerasNode( nullptr ),
+        mCameraNode{ nullptr, nullptr },
+        mCameraPoseState( nullptr ),
         mEyeCameras{ nullptr, nullptr },
         mCamNear( camNear ),
         mCamFar( camFar ),
@@ -765,7 +817,7 @@ namespace esvr2
         mEyeNum( isStereo ? 2 : 1 ),
         mShowVideo(showVideo),
         mInputDistortion ( inputDistortion ),
-        mOutputDistortion ( RAW ),
+        mOutputDistortion ( DIST_UNDISTORT_RECTIFY ),
         mLastFrameUpdate(0),
         mUpdateFrames(2)
     {
@@ -1049,7 +1101,7 @@ namespace esvr2
         // maybe we have to look this also applies to Hlms
         if ( !img_ptr[RIGHT] )
             img_ptr[RIGHT] = img_ptr[LEFT];
-        if ( mVideoTarget == TO_BACKGROUND  && mImageRenderConfig )
+        if ( mVideoTarget == VRT_TO_BACKGROUND  && mImageRenderConfig )
         {
             //why don't we just fire images to the lens as we have them
             resize(*img_ptr[LEFT], mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
@@ -1068,10 +1120,20 @@ namespace esvr2
             fillTexture();
             mMtxImageResize.unlock();
         }
-        else if ( mVideoTarget == TO_SQUARE )
+        else if ( mVideoTarget == VRT_TO_SQUARE )
         {
             //TODO:probably not the most efficient methode
             const cv::Mat *img_in_ptr[2] = {left, right};
+            int itr = 0;
+            if ( left->type() == CV_8UC4)
+                itr = 4;
+            else if (left->type() == CV_8UC3)
+                itr = 3;
+            else
+            {
+                LOG << "don't know the cv" << LOGEND;
+                return;
+            }
 
             mMtxImageResize.lock();
             for (size_t eye = 0; eye < mEyeNum; eye++ )
@@ -1084,36 +1146,57 @@ namespace esvr2
                 }
                 switch( mOutputDistortion )
                 {
-                    case RAW:
+                    case DIST_RAW:
                         break;
-                    case UNDISTORT:
+                    case DIST_UNDISTORT:
                         cv::remap(
                             *(img_in_ptr[eye]), mImageResize[eye],
                             mUndistortMap1[eye], mUndistortMap2[eye],
                             cv::INTER_LINEAR );
                         img_in_ptr[eye] = &mImageResize[eye];
+//                         mask_in_ptr = &mMaskUndist[eye];
                         break;
-                    case UNDISTORT_RECTIFY:
+                    case DIST_UNDISTORT_RECTIFY:
                         cv::remap(
                             *(img_in_ptr[eye]), mImageResize[eye],
                             mUndistortRectifyMap1[eye],
                             mUndistortRectifyMap2[eye],
                             cv::INTER_LINEAR );
                         img_in_ptr[eye] = &mImageResize[eye];
+//                         mask_in_ptr = &mMaskUndistRect[eye];
                         break;
+                }
+                if ( static_cast<size_t>( img_ptr[eye]->cols ) != mVideoTexture[eye]->getWidth() ||
+                    static_cast<size_t>(  img_ptr[eye]->rows ) != mVideoTexture[eye]->getHeight() )
+                {
+                    resize(*(img_in_ptr[eye]), mImageResize[eye], cv::Size(mVideoTexture[eye]->getWidth(), mVideoTexture[eye]->getHeight()));
+                    img_in_ptr[eye] = &mImageResize[eye];
                 }
                 const size_t bytesPerRow =
                     mVideoTexture[eye]->_getSysRamCopyBytesPerRow( 0 );
                 size_t row_cnt = 0;
-                for (size_t y = 0; y < mCameraHeight[eye]; y++) {
+                for (size_t y = 0; y < img_in_ptr[eye]->rows; y++) {
                     size_t cnt = row_cnt;
                     const uint8_t* img_row_ptr = img_in_ptr[eye]->ptr<const uint8_t>(y);
-                    for (size_t x = 0; x < mCameraWidth[eye]; x++) {
-                        mImageData[eye][cnt++] = *(img_row_ptr+2);
-                        mImageData[eye][cnt++] = *(img_row_ptr+1);
-                        mImageData[eye][cnt++] = *img_row_ptr;
-                        img_row_ptr += 3;
-                        mImageData[eye][cnt++] = 0;
+//                     const uint8_t* mask_row_ptr = mask_in_ptr[eye]->ptr<const uint8_t>(y);
+                    for (size_t x = 0; x < img_in_ptr[eye]->cols; x++) {
+//                         if (mask_row_ptr++)
+//                         {
+                        //FROM BGRA to RGBA
+                            mImageData[eye][cnt++] = *(img_row_ptr+2);
+                            mImageData[eye][cnt++] = *(img_row_ptr+1);
+                            mImageData[eye][cnt++] = *img_row_ptr;
+                            mImageData[eye][cnt++] = 0;
+                            img_row_ptr += itr;
+//                         }
+//                         else
+//                         {
+//                             mImageData[eye][cnt++] = 0;
+//                             mImageData[eye][cnt++] = 0;
+//                             mImageData[eye][cnt++] = 0;
+//                             img_row_ptr += 3;
+//                             mImageData[eye][cnt++] = 255;
+//                         }
                     }
                     row_cnt += bytesPerRow;
                 }

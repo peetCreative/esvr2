@@ -72,10 +72,10 @@ namespace esvr2
         cv::Mat *imageOrigRightPtr  = nullptr;
         switch ( mVideoInput.videoInputType )
         {
-        case VIDEO_MONO:
+        case VIT_MONO:
             imageOrigLeftPtr = &mMat;
             break;
-        case VIDEO_STEREO_SLICED:
+        case VIT_STEREO_SLICED:
         {
             size_t outputRows = mCaptureFrameHeight/2;
 
@@ -108,9 +108,11 @@ namespace esvr2
                     memcpy( imageOrigRight.data + destPos, mMat.data + srcPos, sizeof(unsigned char)*3*mCaptureFrameWidth );
                 }
             }
+            imageOrigLeftPtr = &imageOrigLeft;
+            imageOrigRightPtr = &imageOrigRight;
         }
             break;
-        case VIDEO_STEREO_VERTICAL_SPLIT:
+        case VIT_STEREO_VERTICAL_SPLIT:
             lrect = cv::Rect(0, 0,
                            mCaptureFrameWidth/2, mCaptureFrameHeight);
             rrect = cv::Rect( mCaptureFrameWidth/2, 0,
@@ -120,7 +122,7 @@ namespace esvr2
             imageOrigRight = mMat(rrect);
             imageOrigRightPtr = &imageOrigRight;
             break;
-        case VIDEO_STEREO_HORIZONTAL_SPLIT:
+        case VIT_STEREO_HORIZONTAL_SPLIT:
             // left is below
             // right is above
             lrect = cv::Rect(0, mCaptureFrameHeight/2,

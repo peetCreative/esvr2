@@ -3,11 +3,13 @@
 #define _Esvr2_ROSNode_H_
 
 #include "Esvr2VideoLoader.h"
+#include "Esvr2PoseState.h"
 #include "Esvr2StereoRendering.h"
 
 #include <cv_bridge/cv_bridge.h>
 #include <ros/ros.h>
 
+#include <geometry_msgs/TransformStamped.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/CameraInfo.h>
 #include <message_filters/subscriber.h>
@@ -26,10 +28,11 @@ namespace esvr2
 {
     class VideoLoader;
 
-    class VideoROSNode : public VideoLoader
+    class VideoROSNode : public VideoLoader, public PoseState
     {
     private:
         ros::NodeHandle *mNh;
+        ros::Subscriber mSubPose;
         ros::Subscriber mSubImage;
         message_filters::Subscriber<sensor_msgs::Image>* mSubImageLeft;
         message_filters::Subscriber<sensor_msgs::Image>* mSubImageRight;
@@ -37,10 +40,12 @@ namespace esvr2
         ros::Subscriber mSubCamInfoRight;
         std::shared_ptr<ApproximateSync> mApproximateSync;
         RosInputType mRosInputType;
+        std::string mRosNamespace;
         //Not the most beautifault solution
         StereoCameraConfig *mCameraConfig;
         std::mutex *mCameraConfigLock;
         bool mIsCameraInfoInit[2];
+        bool mSubscribePose;
         bool mQuit;
 
         void newROSCameraInfoCallback();
@@ -50,9 +55,11 @@ namespace esvr2
             GraphicsSystem *graphicsSystem,
             StereoCameraConfig *cameraConfig, std::mutex *cameraConfigLock,
             int argc, char *argv[],
-            RosInputType rosInputType );
+            RosInputType rosInputType,
+            std::string rosNamespace);
         ~VideoROSNode();
 
+        void newROSPose(const geometry_msgs::TransformStamped pose);
         void newROSImageStereoSliced( const sensor_msgs::Image::ConstPtr& img );
         void newROSImageMono( const sensor_msgs::Image::ConstPtr& img );
         void newROSImageCallback (

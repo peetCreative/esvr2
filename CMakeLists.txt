@@ -16,6 +16,7 @@ if (BUILD_ROS)
         cv_bridge
         roscpp
         sensor_msgs
+        geometry_msgs
         message_filters
         pluginlib)
     MESSAGE("build ROS")
@@ -25,11 +26,15 @@ if (BUILD_ROS)
     add_definitions(-DPLUGIN_FOLDER="${CMAKE_CURRENT_BIN_DIR}/${CMAKE_BUILD_TYPE}/" )
     add_definitions(-DRESOURCE_FOLDER="${CMAKE_CURRENT_BIN_DIR}/Data/")
     add_definitions(-DUSE_ROS)
+#     generate_messages(DEPENDENCIES geometry_msgs std_msgs std_srvs)
+
+#     catkin_package(CATKIN_DEPENDS geometry_msgs message_runtime std_msgs std_srvs)
 else()
     set( CMAKE_CURRENT_BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin" )
     set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}" )
 endif()
 
+set(CMAKE_CXX_FLAGS "-Wno-class-memaccess")
 setupOgre( OGRE_SOURCE, OGRE_BINARIES, OGRE_LIBRARIES, FALSE )
 
 find_package(PkgConfig)
