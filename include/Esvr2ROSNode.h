@@ -34,11 +34,17 @@ namespace esvr2
         ros::NodeHandle *mNh;
         ros::Subscriber mSubPose;
         ros::Subscriber mSubImage;
-        message_filters::Subscriber<sensor_msgs::Image>* mSubImageLeft;
-        message_filters::Subscriber<sensor_msgs::Image>* mSubImageRight;
+        message_filters::Subscriber<sensor_msgs::Image>* mSubImageLeftRaw;
+        message_filters::Subscriber<sensor_msgs::Image>* mSubImageRightRaw;
+        std::shared_ptr<ApproximateSync> mApproximateSyncRaw;
+        message_filters::Subscriber<sensor_msgs::Image>* mSubImageLeftUndist;
+        message_filters::Subscriber<sensor_msgs::Image>* mSubImageRightUndist;
+        std::shared_ptr<ApproximateSync> mApproximateSyncUndist;
+        message_filters::Subscriber<sensor_msgs::Image>* mSubImageLeftUndistRect;
+        message_filters::Subscriber<sensor_msgs::Image>* mSubImageRightUndistRect;
+        std::shared_ptr<ApproximateSync> mApproximateSyncUndistRect;
         ros::Subscriber mSubCamInfoLeft;
         ros::Subscriber mSubCamInfoRight;
-        std::shared_ptr<ApproximateSync> mApproximateSync;
         RosInputType mRosInputType;
         std::string mRosNamespace;
         //Not the most beautifault solution

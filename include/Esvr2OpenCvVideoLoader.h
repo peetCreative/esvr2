@@ -18,7 +18,6 @@ namespace esvr2 {
         cv::VideoCapture mCapture;
         int mCaptureFrameWidth;
         int mCaptureFrameHeight;
-        int mCaptureFramePixelFormat;
 
     public:
         OpenCvVideoLoader(
@@ -26,12 +25,10 @@ namespace esvr2 {
             VideoInput vInput );
         ~OpenCvVideoLoader();
 
-        void initialize(void);
+        bool initialize(void);
         void deinitialize(void);
         void update( float timeSinceLast );
 
-        void processIncomingMessage(
-            Demo::Mq::MessageId messageId, const void *data );
     };
 }
 

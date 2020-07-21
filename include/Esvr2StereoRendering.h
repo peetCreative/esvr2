@@ -48,6 +48,10 @@ namespace esvr2 {
         DIST_UNDISTORT,
         DIST_UNDISTORT_RECTIFY
     } Distortion;
+    typedef enum {
+        ORIENTATION_VERTICAL,
+        ORIENTATION_HORIZONTAL
+    } Orientation;
     typedef struct {
         std::string path;
         VideoInputType videoInputType;
@@ -71,10 +75,34 @@ namespace esvr2 {
         std::vector<float> R = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         std::vector<float> P = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     } CameraConfig;
+    bool valid(CameraConfig cc)
+    {
+        //TODO: check maybe also the other parameters
+        return cc.width != 0 && cc.height != 0;
+    };
     typedef struct {
         CameraConfig cfg[2];
         float leftToRight = 0;
     } StereoCameraConfig;
+    //similar implementation to cv::Mat*
+    typedef struct {
+        //-1 invalid frame
+        int frameId = -1;
+        size_t length = 0;
+        size_t rows = 0;
+        size_t cols = 0;
+        size_t depth = 0;
+        Ogre::uint8 *data = nullptr;
+    } ImageData;
+    bool valid(ImageData id)
+    {
+        return id.id != 0 && id.length != 0 &&
+            id.length == id.rows * id.cols * id.depth &&
+            data != nullptr;
+    };
+    typedef struct {
+        ImageData img[2];
+    } StereoImageData;
 
     Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose );
     Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix44_t matPose );

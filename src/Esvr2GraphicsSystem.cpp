@@ -73,6 +73,8 @@ namespace esvr2
         mVrCullCamera->detachFromParent();
         mCamerasNode->attachObject( mVrCullCamera );
 
+//         mCamerasNode->setPosition(pos);
+
         //setup mVrData und mVrCullCamera using the mHmdConfig
         syncCameraProjection( true );
 
@@ -207,7 +209,7 @@ namespace esvr2
                 LOG<< "projectionMatrixRS"<< LOGEND;
                 printMatrix4(projectionMatrixRS[i]);
             }
-
+//             mVrData->set( eyeToHead, projectionMatrixRS );
             mVrData->set( eyeToHead, projectionMatrixRS );
 
             Ogre::Vector4 cameraCullFrustumExtents;
@@ -417,23 +419,7 @@ namespace esvr2
             mImgMiddleResize[eye][1] = static_cast<size_t>(
                 std::round(img_middle_resize_v));
 
-            //NODELET_INFO( "New Camera Info received." );
-            cv::Mat intrinsics = cv::Mat::zeros(3, 3, CV_64FC1);
-            for( int y = 0; y < 3; y++ )
-                    for( int x = 0; x < 3; x++ )
-                            intrinsics.at<double>(x,y) = cameraConfig.cfg[eye].K[x*3+y];
-            cv::Size size( cameraConfig.cfg[eye].width, cameraConfig.cfg[eye].height );
-            cv::initUndistortRectifyMap( intrinsics, cameraConfig.cfg[eye].D,
-                            cv::_InputArray(), cv::_InputArray(), size,
-                            CV_32FC1, mUndistortMap1[eye], mUndistortMap2[eye] );
 
-            cv::Mat rectify = cv::Mat::zeros(3, 3, CV_64FC1);
-            for( int y = 0; y < 3; y++ )
-                    for( int x = 0; x < 3; x++ )
-                            rectify.at<double>(x,y) = cameraConfig.cfg[eye].R[x*3+y];
-            cv::initUndistortRectifyMap( intrinsics, cameraConfig.cfg[eye].D,
-                            rectify, cv::_InputArray(), size,
-                            CV_32FC1, mUndistortRectifyMap1[eye], mUndistortRectifyMap2[eye] );
         }
         // now as we have camera config we use it.
         mVrData->set( eyeToHead, proj_matrix);
@@ -614,6 +600,9 @@ namespace esvr2
 
         vpOffsetScale   = Ogre::Vector4( width, height, sizewidth, sizeheight  );
 //         vpOffsetScale   = Ogre::Vector4( 0.25f, 0.25f, 0.5f, 1.0f );
+        Ogre::CompositorChannelVec channelsLeft( 2u );
+        channelsLeft[1] = mVrTexture;
+        channelsLeft[0] = mVideoTexture[LEFT];
         mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
             mSceneManager,
             mVrTexture,
@@ -636,6 +625,9 @@ namespace esvr2
                                           sizewidth, sizeheight );
 //         vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f,
 //                                          0.5f, 1.0f );
+        Ogre::CompositorChannelVec channelsRight( 2u );
+        channelsRight[1] = mVrTexture;
+        channelsRight[0] = mVideoTexture[RIGHT];
         mVrWorkspaces[RIGHT] = compositorManager->addWorkspace(
             mSceneManager,
             mVrTexture,
@@ -663,6 +655,7 @@ namespace esvr2
         {
             if ( mIsStereo )
             {
+                //TODO: guard if we don't find it.
                 LOG << "setup Video Texture Left" << LOGEND;
                 mVideoTexture[LEFT] = mVrWorkspaces[LEFT]->findNode("TwoCamerasNode")->getLocalTextures()[0];
                 mVideoTexture[RIGHT] = mVrWorkspaces[RIGHT]->findNode("TwoCamerasNode")->getLocalTextures()[0];
@@ -1094,6 +1087,7 @@ namespace esvr2
     void GraphicsSystem::setImgPtr(
         const cv::Mat *left, const cv::Mat *right)
     {
+        //TODO: adapt bgr rgb and so on
         const cv::Mat *img_ptr[2] = { left, right };
         if( !mShowVideo )
             return;
@@ -1136,71 +1130,6 @@ namespace esvr2
             }
 
             mMtxImageResize.lock();
-            for (size_t eye = 0; eye < mEyeNum; eye++ )
-            {
-                if ( static_cast<size_t>( img_ptr[eye]->cols ) != mCameraWidth[eye] ||
-                    static_cast<size_t>(  img_ptr[eye]->rows ) != mCameraHeight[eye] )
-                {
-                    resize(*(img_in_ptr[eye]), mImageResize[eye], cv::Size(mCameraWidth[eye], mCameraHeight[eye]));
-                    img_in_ptr[eye] = &mImageResize[eye];
-                }
-                switch( mOutputDistortion )
-                {
-                    case DIST_RAW:
-                        break;
-                    case DIST_UNDISTORT:
-                        cv::remap(
-                            *(img_in_ptr[eye]), mImageResize[eye],
-                            mUndistortMap1[eye], mUndistortMap2[eye],
-                            cv::INTER_LINEAR );
-                        img_in_ptr[eye] = &mImageResize[eye];
-//                         mask_in_ptr = &mMaskUndist[eye];
-                        break;
-                    case DIST_UNDISTORT_RECTIFY:
-                        cv::remap(
-                            *(img_in_ptr[eye]), mImageResize[eye],
-                            mUndistortRectifyMap1[eye],
-                            mUndistortRectifyMap2[eye],
-                            cv::INTER_LINEAR );
-                        img_in_ptr[eye] = &mImageResize[eye];
-//                         mask_in_ptr = &mMaskUndistRect[eye];
-                        break;
-                }
-                if ( static_cast<size_t>( img_ptr[eye]->cols ) != mVideoTexture[eye]->getWidth() ||
-                    static_cast<size_t>(  img_ptr[eye]->rows ) != mVideoTexture[eye]->getHeight() )
-                {
-                    resize(*(img_in_ptr[eye]), mImageResize[eye], cv::Size(mVideoTexture[eye]->getWidth(), mVideoTexture[eye]->getHeight()));
-                    img_in_ptr[eye] = &mImageResize[eye];
-                }
-                const size_t bytesPerRow =
-                    mVideoTexture[eye]->_getSysRamCopyBytesPerRow( 0 );
-                size_t row_cnt = 0;
-                for (size_t y = 0; y < img_in_ptr[eye]->rows; y++) {
-                    size_t cnt = row_cnt;
-                    const uint8_t* img_row_ptr = img_in_ptr[eye]->ptr<const uint8_t>(y);
-//                     const uint8_t* mask_row_ptr = mask_in_ptr[eye]->ptr<const uint8_t>(y);
-                    for (size_t x = 0; x < img_in_ptr[eye]->cols; x++) {
-//                         if (mask_row_ptr++)
-//                         {
-                        //FROM BGRA to RGBA
-                            mImageData[eye][cnt++] = *(img_row_ptr+2);
-                            mImageData[eye][cnt++] = *(img_row_ptr+1);
-                            mImageData[eye][cnt++] = *img_row_ptr;
-                            mImageData[eye][cnt++] = 0;
-                            img_row_ptr += itr;
-//                         }
-//                         else
-//                         {
-//                             mImageData[eye][cnt++] = 0;
-//                             mImageData[eye][cnt++] = 0;
-//                             mImageData[eye][cnt++] = 0;
-//                             img_row_ptr += 3;
-//                             mImageData[eye][cnt++] = 255;
-//                         }
-                    }
-                    row_cnt += bytesPerRow;
-                }
-            }
             mMtxImageResize.unlock();
         }
     }

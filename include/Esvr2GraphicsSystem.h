@@ -77,9 +77,6 @@ namespace esvr2
         size_t mImageDataSize[2];
         Ogre::StagingTexture *mStagingTexture[2];
 
-        cv::Mat mUndistortMap1[2], mUndistortMap2[2];
-        cv::Mat mUndistortRectifyMap1[2], mUndistortRectifyMap2[2];
-
         //used for mDrawHelpers
         bool mDrawHelpers;
         int mCVr[2][2];

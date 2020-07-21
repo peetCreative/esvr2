@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Esvr2VideoLoader.h"
+#include "Esvr2StereoRendering.h"
 #include "v4l2/v4l2_interface.h"
 #include <boost/thread.hpp>
 #include <fstream>
@@ -11,13 +12,14 @@ namespace esvr2 {
     {
         public:
             LowLatencyVideoLoader(
-                GraphicsSystem *graphicsSystem,
-                VideoInput videoInput, bool profilingEnabled );
+                VideoInput videoInput, bool profilingEnabled,
+                StereoCameraConfig cameraConfig,
+                Distortion distortion);
             ~LowLatencyVideoLoader();
 
-            virtual void initialize( void );
-            virtual void deinitialize(void);
-            virtual void update( float timeSinceLast );
+            bool initialize( void );
+            void deinitialize(void);
+            void update( float timeSinceLast );
 
         private:
             v4l2::V4L2Interface videoInterface;

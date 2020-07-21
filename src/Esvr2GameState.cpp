@@ -355,7 +355,7 @@ namespace esvr2
             mVideoDatablock[eye]->setTexture( 0, mTextureName[eye] );
         }
 
-        createProjectionRectangle2D();
+//         createProjectionRectangle2D();
         createProjectionPlanes();
         createAxis();
         createTooltips();

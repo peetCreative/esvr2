@@ -19,20 +19,17 @@ namespace esvr2 {
         CBlackMagicCapture mCapture;
         int mCaptureFrameWidth;
         int mCaptureFrameHeight;
-        int mCaptureFramePixelFormat;
 
     public:
         BlackMagicVideoLoader(
-            GraphicsSystem *graphicsSystem,
-            VideoInput vInput );
+            VideoInput vInput,
+            StereoCameraConfig cameraConfig,
+            bool stereo);
         ~BlackMagicVideoLoader();
 
         void initialize(void);
         void deinitialize(void);
         void update( float timeSinceLast );
-
-        void processIncomingMessage(
-            Demo::Mq::MessageId messageId, const void *data );
     };
 }
 

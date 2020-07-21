@@ -53,11 +53,21 @@ include_directories(${YAML_CPP_INCLUDE_DIRS})
 # find_package( OpenVR REQUIRED )
 if (NOT OpenVR_FOUND)
 	message("no openvr")
-	set(OpenVR_INCLUDE_DIRS /home/peetcreative/workspace/openvr/headers)
-	set(OpenVR_LIBRARIES /home/peetcreative/workspace/openvr/samples/bin/linux64/libopenvr_api.so
-)
+	set(OpenVR_INCLUDE_DIRS /path/to/openvr/headers)
+	set(OpenVR_LIBRARIES /path/to/openvr/lib/linux64/libopenvr_api.so)
 endif()
 
+option(USE_BLACKMAGICCAMERA "Use the blackmagic Camera driver" ON)
+
+
+if (USE_BLACKMAGICCAMERA)
+    #TODO: find BlackMagic
+    set(BLACKMAGIC_INCLUDE_DIRS /home/klausinpe/workspace/RealTimeCamera)
+    set(BLACKMAGIC_LIBRARIES /home/klausinpe/workspace/RealTimeCamera/build/libblackmagic.so )
+#     set(BLACKMAGIC_INCLUDE_DIRS /usr/local/include/blackmagic/)
+#     set(BLACKMAGIC_LIBRARIES /usr/local/lib/libblackmagic.so )
+    add_definitions(-DUSE_BLACKMAGICCAMERA)
+endif()
 # Setup our application
 if( MSVC )
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
@@ -71,7 +81,7 @@ macro( add_recursive dir retVal )
     file( GLOB_RECURSE ${retVal} ${dir}/*.h ${dir}/*.cpp ${dir}/*.c )
 endmacro()
 
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/include" ${OpenVR_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} )
+include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/include" ${OpenVR_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${BLACKMAGIC_INCLUDE_DIRS} )
 
 link_libraries(stdc++fs)
 
@@ -84,8 +94,8 @@ if (BUILD_ROS)
         ${SOURCES} ${SOURCES_ROS} ${HEADERS} ${RESOURCES} )
     target_link_libraries( ${PROJECT_NAME}Node
         ${catkin_LIBRARIES} ${OGRE_LIBRARIES}
-        ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++ ${YAML_CPP_LIBRARIES})
+        ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++ ${YAML_CPP_LIBRARIES} ${BLACKMAGIC_LIBRARIES})
 else()
     add_executable( ${PROJECT_NAME} ${SOURCES} ${HEADERS} ${RESOURCES} )
-    target_link_libraries( ${PROJECT_NAME} ${OGRE_LIBRARIES} ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++ ${YAML_CPP_LIBRARIES})
+    target_link_libraries( ${PROJECT_NAME} ${OGRE_LIBRARIES} ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++ ${YAML_CPP_LIBRARIES} ${BLACKMAGIC_LIBRARIES})
 endif()

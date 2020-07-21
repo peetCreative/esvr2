@@ -463,20 +463,9 @@ int main( int argc, char *argv[] )
         return 1;
     }
 
-    GameState *graphicsGameState =
-        new GameState(
-            "Description of what we are doing", isStereo, vrData );
-
-    GraphicsSystem *graphicsSystem = new GraphicsSystem(
-            graphicsGameState, workspace, vrData,
-            hmdConfig, screen, DIST_UNDISTORT_RECTIFY, isStereo, show_ogre_dialog,
-            show_video, renderVideoTarget );
-
-    graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );
-
+    //create and initialize the videoLoader
     VideoLoader *videoLoader = nullptr;
     PoseState *poseState = nullptr;
-
     std::mutex *cameraConfigLock = new std::mutex();
     switch(input)
     {
@@ -489,17 +478,17 @@ int main( int argc, char *argv[] )
             videoLoader = new OpenCvVideoLoader( graphicsSystem, videoInput );
             break;
         case IT_VIDEO_BLACKMAGIC:
-#ifdef USE_BLACKMAGIC
+            #ifdef USE_BLACKMAGIC
             videoLoader = new BlackMagicVideoLoader( graphicsSystem, videoInput );
-#endif
+            #endif
             break;
         case IT_ROS:
-#ifdef USE_ROS
+            #ifdef USE_ROS
             VideoROSNode *rosNode;
             if ( !validCameraConfig )
             {
                 cameraConfigLock->lock();
-                 rosNode = new VideoROSNode(
+                rosNode = new VideoROSNode(
                     graphicsSystem,
                     cameraConfig, cameraConfigLock,
                     argc, argv, rosInputType, rosNamespace );
@@ -514,7 +503,7 @@ int main( int argc, char *argv[] )
             videoLoader = rosNode;
             poseState = rosNode;
             break;
-#endif
+            #endif
         case IT_NONE:
             delete graphicsGameState;
             delete graphicsSystem;
@@ -522,7 +511,6 @@ int main( int argc, char *argv[] )
             LOG << "no input: shutdown" << LOGEND;
             return 1;
     }
-
     if ( poseState )
     {
         graphicsSystem->_notifyPoseSource(poseState);
@@ -531,7 +519,6 @@ int main( int argc, char *argv[] )
     {
         LOG << "no PoseState, do not move camera" << LOGEND;
     }
-
     if ( videoLoader )
     {
         graphicsSystem->_notifyVideoSource(videoLoader);
@@ -543,6 +530,18 @@ int main( int argc, char *argv[] )
         delete graphicsSystem;
         return 1;
     }
+
+    GameState *graphicsGameState =
+        new GameState(
+            "Description of what we are doing", isStereo, vrData );
+
+    GraphicsSystem *graphicsSystem = new GraphicsSystem(
+            graphicsGameState, workspace, vrData,
+            hmdConfig, screen, DIST_UNDISTORT_RECTIFY, isStereo, show_ogre_dialog,
+            show_video, renderVideoTarget );
+
+    graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );
+
     if ( multiThreading )
     {
         LOG << "multiThreading" << LOGEND;

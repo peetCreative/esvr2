@@ -10,9 +10,11 @@
 namespace esvr2 {
 
 LowLatencyVideoLoader::LowLatencyVideoLoader(
-        GraphicsSystem *graphicsSystem,
-        VideoInput videoInput, bool profilingEnabled ):
-    VideoLoader(graphicsSystem),
+        VideoInput videoInput, bool profilingEnabled,
+        StereoCameraConfig cameraConfig,
+        Distortion distortion):
+    VideoLoader(distortion, true),
+    mCameraConfig( cameraConfig ),
     mVideoInput(videoInput),
     mProfilingEnabled(profilingEnabled)
 {
@@ -36,7 +38,7 @@ inline uint64_t rdtsc() {
     return (uint64_t)hi << 32 | lo;
 }
 
-void LowLatencyVideoLoader::initialize()
+bool LowLatencyVideoLoader::initialize()
 {
     // open video interface
     try {
@@ -45,7 +47,7 @@ void LowLatencyVideoLoader::initialize()
     } catch(v4l2::V4L2Interface::IOError &e) {
         LOG << "V4L2Interface::IOError: " <<  e.what() << LOGEND;
         quit();
-        return;
+        return false;
     }
 
     if(mProfilingEnabled) {
@@ -57,12 +59,24 @@ void LowLatencyVideoLoader::initialize()
                 cols            = videoInterface.getWidth(),
                 outputRows      = inputRows / 2;
 
+    if ( cols == 0 || outputRows == 0 )
+    {
+        return false;
+    }
     mImageLeft = cv::Mat(cv::Size(cols, outputRows), CV_8UC3, cv::Scalar(0,0,0));
     mImageRight = cv::Mat(cv::Size(cols, outputRows), CV_8UC3, cv::Scalar(0,0,0));
+
+    updateDestinationSize(
+        mCameraConfig.cfg[LEFT].width, mCameraConfig.cfg[LEFT].height, 4u,
+        mCameraConfig.cfg[LEFT].width* mCameraConfig.cfg[LEFT].height* 4u );
+    updateMaps();
+    mReady = true;
+    return true;
 }
 
 void LowLatencyVideoLoader::deinitialize()
 {
+    videoInterface.close();
 }
 
 enum cv::ColorConversionCodes getColorConversion(const uint32_t &pixel_format) {
@@ -96,9 +110,6 @@ void LowLatencyVideoLoader::update(float timeSinceLast) {
     v4l2::V4L2Interface::Buffer buffer;
 
     cv::Mat conversionMatrix;
-
-    //TODO: if sth goes wrong with frame_encoding
-//      std::string frame_encoding = getTargetEncoding(videoInterface.getColorFormat());
 
     enum cv::ColorConversionCodes conversion = getColorConversion(videoInterface.getColorFormat());
 
@@ -170,7 +181,7 @@ void LowLatencyVideoLoader::update(float timeSinceLast) {
 
     send_time = rdtsc();
 
-    mGraphicsSystem->setImgPtr(&mImageLeft, &mImageRight);
+    setImageDataFromRaw(&mImageLeft, &mImageRight);
 
     // release the image buffer
     try {
