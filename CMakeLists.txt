@@ -53,8 +53,9 @@ include_directories(${YAML_CPP_INCLUDE_DIRS})
 # find_package( OpenVR REQUIRED )
 if (NOT OpenVR_FOUND)
 	message("no openvr")
-	set(OpenVR_INCLUDE_DIRS /usr/local/include/openvr/)
-	set(OpenVR_LIBRARIES /usr/local/lib/libopenvr_api.so)
+	set(OpenVR_INCLUDE_DIRS /home/peetcreative/workspace/openvr/headers)
+	set(OpenVR_LIBRARIES /home/peetcreative/workspace/openvr/samples/bin/linux64/libopenvr_api.so
+)
 endif()
 
 # Setup our application

@@ -487,11 +487,11 @@ int main( int argc, char *argv[] )
             break;
         case IT_VIDEO_OPENCV:
             videoLoader = new OpenCvVideoLoader( graphicsSystem, videoInput );
-            graphicsSystem->_notifyVideoSource( videoLoader );
             break;
         case IT_VIDEO_BLACKMAGIC:
+#ifdef USE_BLACKMAGIC
             videoLoader = new BlackMagicVideoLoader( graphicsSystem, videoInput );
-            graphicsSystem->_notifyVideoSource( videoLoader );
+#endif
             break;
         case IT_ROS:
 #ifdef USE_ROS
@@ -513,8 +513,6 @@ int main( int argc, char *argv[] )
             }
             videoLoader = rosNode;
             poseState = rosNode;
-            graphicsSystem->_notifyVideoSource( videoLoader );
-            graphicsSystem->_notifyPoseSource( poseState );
             break;
 #endif
         case IT_NONE:
@@ -525,6 +523,26 @@ int main( int argc, char *argv[] )
             return 1;
     }
 
+    if ( poseState )
+    {
+        graphicsSystem->_notifyPoseSource(poseState);
+    }
+    else
+    {
+        LOG << "no PoseState, do not move camera" << LOGEND;
+    }
+
+    if ( videoLoader )
+    {
+        graphicsSystem->_notifyVideoSource(videoLoader);
+    }
+    else
+    {
+        LOG << "no videoloader, Quitting" << LOGEND;
+        delete graphicsGameState;
+        delete graphicsSystem;
+        return 1;
+    }
     if ( multiThreading )
     {
         LOG << "multiThreading" << LOGEND;
