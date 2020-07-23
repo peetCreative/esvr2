@@ -14,11 +14,12 @@ namespace esvr2
             StereoCameraConfig cameraConfig,
             Distortion distortion, bool stereo):
         VideoLoader( distortion, stereo ),
-        mCameraConfig( cameraConfig ),
         mVideoInput( vInput ),
         mCapture(),
         mCaptureFrameWidth( 0 ), mCaptureFrameHeight( 0 )
-    {}
+    {
+        mCameraConfig = cameraConfig;
+    }
 
     OpenCvVideoLoader::~OpenCvVideoLoader() {}
 
@@ -41,7 +42,7 @@ namespace esvr2
         }
 
         //we cannot be stereo if we only capture mono
-        if (stereo && mVideoInput.videoInputType == VIT_MONO)
+        if (mStereo && mVideoInput.videoInputType == VIT_MONO)
             return false;
         updateDestinationSize(
             mCameraConfig.cfg[LEFT].width, mCameraConfig.cfg[LEFT].height, 4u,
@@ -56,7 +57,7 @@ namespace esvr2
         mCapture.release();
     }
 
-    void OpenCvVideoLoader::update( float timeSinceLast )
+    void OpenCvVideoLoader::update( )
     {
         cv::Mat mMat;
 
@@ -67,12 +68,13 @@ namespace esvr2
 //             Ogre::LogManager::getSingleton().logMessage("mMat empty");
             return;
         }
+        mSeq++;
         cv::Rect lrect, rrect;
         cv::Mat imageOrigLeft, imageOrigRight;
         switch ( mVideoInput.videoInputType )
         {
         case VIT_MONO:
-            setImageDataFromRaw(mMat, nullptr);
+            setImageDataFromRaw(&mMat, nullptr);
             break;
         case VIT_STEREO_SLICED:
             setImageDataFromSplitSliced(&mMat);

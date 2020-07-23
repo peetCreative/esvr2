@@ -11,7 +11,6 @@
 #include "OgreCamera.h"
 #include "OgreRoot.h"
 #include "OgreWindow.h"
-// #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorNode.h"
 #include "Compositor/OgreCompositorWorkspace.h"
 
@@ -242,29 +241,28 @@ namespace esvr2
 
     void GraphicsSystem::itterateDistortion()
     {
-        if (mInputDistortion != DIST_RAW )
-            return;
-        if( mOutputDistortion == DIST_RAW )
+        Distortion distortion = mVideoLoader->getDistortion();
+        if( distortion == DIST_RAW )
         {
-            mOutputDistortion = DIST_UNDISTORT;
+            distortion = DIST_UNDISTORT;
             LOG << "UNDISTORT" << LOGEND;
         }
         else
-        if( mOutputDistortion == DIST_UNDISTORT )
+        if( distortion == DIST_UNDISTORT )
         {
-            mOutputDistortion = DIST_UNDISTORT_RECTIFY;
+            distortion = DIST_UNDISTORT_RECTIFY;
             LOG << "UNDISTORT_RECTIFY" << LOGEND;
         }
         else
-        if ( mOutputDistortion == DIST_UNDISTORT_RECTIFY)
+        if ( distortion == DIST_UNDISTORT_RECTIFY)
         {
-            mOutputDistortion = DIST_RAW;
+            distortion = DIST_RAW;
             LOG << "RAW" << LOGEND;
-
         }
+        mVideoLoader->setDistortion(distortion);
     }
 
-    bool GraphicsSystem::calcAlign(StereoCameraConfig &cameraConfig)
+    bool GraphicsSystem::calcAlign()
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
         Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
@@ -273,6 +271,7 @@ namespace esvr2
         //which is limited by this function
         mUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
 
+        StereoCameraConfig cameraConfig = mVideoLoader->getStereoCameraConfig();
 
         //now we have to know
         if (!mImageRenderConfig)
@@ -317,9 +316,6 @@ namespace esvr2
 
         for (size_t eye = 0; eye < mEyeNum; eye++)
         {
-            mCameraWidth[eye] = cameraConfig.cfg[eye].width;
-            mCameraHeight[eye] = cameraConfig.cfg[eye].height;
-
             float f_x, f_y, c_x, c_y;
             if (false)
             {
@@ -441,7 +437,6 @@ namespace esvr2
 
         initOpenVR();
         setupImageData();
-
 
         syncCameraProjection( true );
 
@@ -647,11 +642,7 @@ namespace esvr2
         Ogre::TextureGpuManager *textureManager =
             mRoot->getRenderSystem()->getTextureGpuManager();
 
-        if ( mVideoTarget == VRT_TO_BACKGROUND )
-        {
-            mVideoTexture[LEFT] = mVrTexture;
-        }
-        else if ( mVideoTarget == VRT_TO_SQUARE )
+        if ( mVideoTarget == VRT_TO_SQUARE )
         {
             if ( mIsStereo )
             {
@@ -674,7 +665,7 @@ namespace esvr2
         for ( size_t eye = 0; eye < mEyeNum; eye++)
         {
             const Ogre::uint32 rowAlignment = 4u;
-            mImageDataSize[eye] =
+            size_t imageDataSize =
             Ogre::PixelFormatGpuUtils::getSizeBytes(
                 mVideoTexture[eye]->getWidth(),
                 mVideoTexture[eye]->getHeight(),
@@ -682,10 +673,14 @@ namespace esvr2
                 mVideoTexture[eye]->getNumSlices(),
                 mVideoTexture[eye]->getPixelFormat(),
                 rowAlignment );
-            mImageData[eye] = reinterpret_cast<Ogre::uint8*>(
-                OGRE_MALLOC_SIMD( mImageDataSize[eye],
-                                  Ogre::MEMCATEGORY_RESOURCE ) );
-            memset(mImageData[eye], 0, mImageDataSize[eye]);
+            if(!mVideoLoader->updateDestinationSize(
+                mVideoTexture[eye]->getWidth(),
+                mVideoTexture[eye]->getHeight(),
+                mVideoTexture[eye]->getDepth(),
+                imageDataSize ) )
+            {
+                mQuit = true;
+            }
             mStagingTexture[eye] =
             textureManager->getStagingTexture(
                 mVideoTexture[eye]->getWidth(),
@@ -695,76 +690,76 @@ namespace esvr2
                 mVideoTexture[eye]->getPixelFormat() );
         }
     }
-
-    bool GraphicsSystem::fillTexture(void)
-    {
-        const size_t bytesPerPixel = 4u;
-        const size_t bytesPerRow =
-            mVrTexture->_getSysRamCopyBytesPerRow( 0 );
-
-//         LOG << mVideoTexture->getWidth() << LOGEND;
-//         LOG << mVideoTexture->getHeight() << LOGEND;
-//         LOG << width_resize << LOGEND;
-//         LOG << "height_resize1 " << height_resize << LOGEND;
-//         LOG << height_resize << LOGEND;
-
-//         LOG << "width_resize " << width_resize << LOGEND;
-//         LOG << "height_resize " << height_resize << LOGEND;
-//         LOG << "ldst.cols " << ldst.cols << LOGEND;
-//         LOG << "ldst.rows " << ldst.rows << LOGEND;
-
-        if ( mImageResize[LEFT].empty() || mImageResize[RIGHT].empty() ||
-            !mImageRenderConfig)
-        {
-            return false;
-        }
-        size_t align_left;
-        size_t align_top;
-        cv::Mat* dst;
-        for(size_t eye = 0; eye < 2u; eye++) {
-            align_left = mImageRenderConfig->leftAlign[eye];
-            align_top = mImageRenderConfig->topAlign[eye];
-            dst = &mImageResize[eye];
-            size_t row_cnt = align_top * bytesPerRow;
-            for (int y = 0; y < mImageRenderConfig->size[eye].height; y++) {
-                size_t cnt = row_cnt + (align_left * bytesPerPixel);
-                uint8_t* img_row_ptr = dst->ptr<uint8_t>(y);
-                for (int x = 0; x < mImageRenderConfig->size[eye].width; x++) {
-                    mImageData[0][cnt++] = *(img_row_ptr+2);
-                    mImageData[0][cnt++] = *(img_row_ptr+1);
-                    mImageData[0][cnt++] = *img_row_ptr;
-                    img_row_ptr += 3;
-                    mImageData[0][cnt++] = 0;
-                }
-                row_cnt += bytesPerRow;
-            }
-        }
-
-        if (mDrawHelpers)
-        {
-            //redline for eye pupilar middle
-            for (size_t i = 0; i < mVrTexture->getHeight(); i++)
-            {
-                mImageData[0][(bytesPerRow*i) + (mCVr[LEFT][0] * bytesPerPixel)] = 255;
-                mImageData[0][(bytesPerRow*i) + (bytesPerRow/2) + (mCVr[RIGHT][0] * bytesPerPixel)+4] = 255;
-            }
-
-            //green line for middle
-            for (size_t i = 0; i < mVrTexture->getHeight()*4; i++)
-            {
-                mImageData[0][(bytesPerRow/4*i)+1] = 255;
-            }
-        }
-        return true;
-    }
+// for directly write to background
+//     bool GraphicsSystem::fillTexture(void)
+//     {
+//         const size_t bytesPerPixel = 4u;
+//         const size_t bytesPerRow =
+//             mVrTexture->_getSysRamCopyBytesPerRow( 0 );
+// 
+// //         LOG << mVideoTexture->getWidth() << LOGEND;
+// //         LOG << mVideoTexture->getHeight() << LOGEND;
+// //         LOG << width_resize << LOGEND;
+// //         LOG << "height_resize1 " << height_resize << LOGEND;
+// //         LOG << height_resize << LOGEND;
+// 
+// //         LOG << "width_resize " << width_resize << LOGEND;
+// //         LOG << "height_resize " << height_resize << LOGEND;
+// //         LOG << "ldst.cols " << ldst.cols << LOGEND;
+// //         LOG << "ldst.rows " << ldst.rows << LOGEND;
+// 
+//         if ( mImageResize[LEFT].empty() || mImageResize[RIGHT].empty() ||
+//             !mImageRenderConfig)
+//         {
+//             return false;
+//         }
+//         size_t align_left;
+//         size_t align_top;
+//         cv::Mat* dst;
+//         for(size_t eye = 0; eye < 2u; eye++) {
+//             align_left = mImageRenderConfig->leftAlign[eye];
+//             align_top = mImageRenderConfig->topAlign[eye];
+//             dst = &mImageResize[eye];
+//             size_t row_cnt = align_top * bytesPerRow;
+//             for (int y = 0; y < mImageRenderConfig->size[eye].height; y++) {
+//                 size_t cnt = row_cnt + (align_left * bytesPerPixel);
+//                 uint8_t* img_row_ptr = dst->ptr<uint8_t>(y);
+//                 for (int x = 0; x < mImageRenderConfig->size[eye].width; x++) {
+//                     mImageData[0][cnt++] = *(img_row_ptr+2);
+//                     mImageData[0][cnt++] = *(img_row_ptr+1);
+//                     mImageData[0][cnt++] = *img_row_ptr;
+//                     img_row_ptr += 3;
+//                     mImageData[0][cnt++] = 0;
+//                 }
+//                 row_cnt += bytesPerRow;
+//             }
+//         }
+// 
+//         if (mDrawHelpers)
+//         {
+//             //redline for eye pupilar middle
+//             for (size_t i = 0; i < mVrTexture->getHeight(); i++)
+//             {
+//                 mImageData[0][(bytesPerRow*i) + (mCVr[LEFT][0] * bytesPerPixel)] = 255;
+//                 mImageData[0][(bytesPerRow*i) + (bytesPerRow/2) + (mCVr[RIGHT][0] * bytesPerPixel)+4] = 255;
+//             }
+// 
+//             //green line for middle
+//             for (size_t i = 0; i < mVrTexture->getHeight()*4; i++)
+//             {
+//                 mImageData[0][(bytesPerRow/4*i)+1] = 255;
+//             }
+//         }
+//         return true;
+//     }
 
     GraphicsSystem::GraphicsSystem(
             Demo::GameState* gameState,
             WorkspaceType wsType,
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
+            VideoLoader *videoLoader,
             int screen,
-            Distortion inputDistortion,
             bool isStereo,
             bool showOgreConfigDialog,
             bool showVideo,
@@ -793,14 +788,11 @@ namespace esvr2
         mStrDriver( "" ),
         mStrDisplay( "" ),
         mDeviceModelNumber( "" ),
-        mVideoSource( nullptr ),
+        mVideoLoader( videoLoader ),
         mVideoTarget( renderVideoTarget ),
         mCameraWidth{ 0, 0 },
         mCameraHeight{ 0, 0 },
         mImageRenderConfig( nullptr ),
-        mMtxImageResize(),
-        mImageData{ nullptr, nullptr },
-        mImageDataSize{ 0, 0 },
         mStagingTexture{ nullptr, nullptr },
         mDrawHelpers(true),
         mCVr{{ 0, 0 }, { 0, 0 }},
@@ -809,12 +801,9 @@ namespace esvr2
         mIsStereo( isStereo ),
         mEyeNum( isStereo ? 2 : 1 ),
         mShowVideo(showVideo),
-        mInputDistortion ( inputDistortion ),
-        mOutputDistortion ( DIST_UNDISTORT_RECTIFY ),
         mLastFrameUpdate(0),
         mUpdateFrames(2)
     {
-        mMtxImageResize.lock();
         LOG << "RESOURCE_FOLDER:" << RESOURCE_FOLDER << LOGEND;
         LOG << "PLUGIN_FOLDER:" << PLUGIN_FOLDER << LOGEND;
         memset( mTrackedDevicePose, 0, sizeof (mTrackedDevicePose) );
@@ -1023,7 +1012,6 @@ namespace esvr2
                     mWriteAccessFolder + "ProfileAccum" );
     #endif
 #endif
-    mMtxImageResize.unlock();
     }
 
     void GraphicsSystem::deinitialize(void)
@@ -1056,12 +1044,6 @@ namespace esvr2
                 mVideoTexture[eye] = 0;
             }
 
-            if( mImageData[eye] )
-            {
-                //Do not free the pointer if texture's paging strategy is GpuPageOutStrategy::AlwaysKeepSystemRamCopy
-                OGRE_FREE_SIMD( mImageData[eye], Ogre::MEMCATEGORY_RESOURCE );
-                mImageData[eye] = 0;
-            }
             if( mEyeCameras[eye] )
             {
                 mSceneManager->destroyCamera( mEyeCameras[eye] );
@@ -1084,83 +1066,83 @@ namespace esvr2
         Demo::GraphicsSystem::deinitialize();
     }
 
-    void GraphicsSystem::setImgPtr(
-        const cv::Mat *left, const cv::Mat *right)
-    {
-        //TODO: adapt bgr rgb and so on
-        const cv::Mat *img_ptr[2] = { left, right };
-        if( !mShowVideo )
-            return;
-        //we have to wait some frames after we can send new texture
-        // maybe we have to look this also applies to Hlms
-        if ( !img_ptr[RIGHT] )
-            img_ptr[RIGHT] = img_ptr[LEFT];
-        if ( mVideoTarget == VRT_TO_BACKGROUND  && mImageRenderConfig )
-        {
-            //why don't we just fire images to the lens as we have them
-            resize(*img_ptr[LEFT], mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
-            resize(*img_ptr[RIGHT], mImageResize[RIGHT], mImageRenderConfig->size[RIGHT]);
+//     void GraphicsSystem::setImgPtr(
+//         const cv::Mat *left, const cv::Mat *right)
+//     {
+//         //TODO: adapt bgr rgb and so on
+//         const cv::Mat *img_ptr[2] = { left, right };
+//         if( !mShowVideo )
+//             return;
+//         //we have to wait some frames after we can send new texture
+//         // maybe we have to look this also applies to Hlms
+//         if ( !img_ptr[RIGHT] )
+//             img_ptr[RIGHT] = img_ptr[LEFT];
+//         if ( mVideoTarget == VRT_TO_BACKGROUND  && mImageRenderConfig )
+//         {
+//             //why don't we just fire images to the lens as we have them
+//             resize(*img_ptr[LEFT], mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
+//             resize(*img_ptr[RIGHT], mImageResize[RIGHT], mImageRenderConfig->size[RIGHT]);
+// 
+//             if (mDrawHelpers)
+//             {
+//                 circle( mImageResize[LEFT],
+//                     cv::Point(mImgMiddleResize[LEFT][0],mImgMiddleResize[LEFT][1]),
+//                     5, cv::Scalar( 0, 0, 255 ), -1);
+//                 circle( mImageResize[RIGHT],
+//                     cv::Point(mImgMiddleResize[RIGHT][0],mImgMiddleResize[RIGHT][1]),
+//                     5, cv::Scalar( 0, 0, 255 ), -1);
+//             }
+//             mMtxImageResize.lock();
+//             fillTexture();
+//             mMtxImageResize.unlock();
+//         }
+//         else if ( mVideoTarget == VRT_TO_SQUARE )
+//         {
+//             //TODO:probably not the most efficient methode
+//             const cv::Mat *img_in_ptr[2] = {left, right};
+//             int itr = 0;
+//             if ( left->type() == CV_8UC4)
+//                 itr = 4;
+//             else if (left->type() == CV_8UC3)
+//                 itr = 3;
+//             else
+//             {
+//                 LOG << "don't know the cv" << LOGEND;
+//                 return;
+//             }
+// 
+//             mMtxImageResize.lock();
+//             mMtxImageResize.unlock();
+//         }
+//     }
 
-            if (mDrawHelpers)
-            {
-                circle( mImageResize[LEFT],
-                    cv::Point(mImgMiddleResize[LEFT][0],mImgMiddleResize[LEFT][1]),
-                    5, cv::Scalar( 0, 0, 255 ), -1);
-                circle( mImageResize[RIGHT],
-                    cv::Point(mImgMiddleResize[RIGHT][0],mImgMiddleResize[RIGHT][1]),
-                    5, cv::Scalar( 0, 0, 255 ), -1);
-            }
-            mMtxImageResize.lock();
-            fillTexture();
-            mMtxImageResize.unlock();
-        }
-        else if ( mVideoTarget == VRT_TO_SQUARE )
-        {
-            //TODO:probably not the most efficient methode
-            const cv::Mat *img_in_ptr[2] = {left, right};
-            int itr = 0;
-            if ( left->type() == CV_8UC4)
-                itr = 4;
-            else if (left->type() == CV_8UC3)
-                itr = 3;
-            else
-            {
-                LOG << "don't know the cv" << LOGEND;
-                return;
-            }
-
-            mMtxImageResize.lock();
-            mMtxImageResize.unlock();
-        }
-    }
-
-    //-------------------------------------------------------------------------
-    bool GraphicsSystem::clearTexture(void)
-    {
-        for( size_t eye = 0; eye < mEyeNum; eye++ )
-        {
-            const size_t bytesPerRow =
-                mVideoTexture[eye]->_getSysRamCopyBytesPerRow( 0 );
-
-            memset(mImageData[eye], 0, mImageDataSize[eye]);
-            mStagingTexture[eye]->startMapRegion();
-            Ogre::TextureBox texBox = mStagingTexture[eye]->mapRegion(
-                mVideoTexture[eye]->getWidth(),
-                mVideoTexture[eye]->getHeight(),
-                mVideoTexture[eye]->getDepth(),
-                mVideoTexture[eye]->getNumSlices(),
-                mVideoTexture[eye]->getPixelFormat() );
-            texBox.copyFrom( mImageData,
-                            mVideoTexture[eye]->getWidth(),
-                            mVideoTexture[eye]->getHeight(),
-                            bytesPerRow );
-            mStagingTexture[eye]->stopMapRegion();
-            mStagingTexture[eye]->upload( texBox, mVideoTexture[eye], 0, 0, 0, false );
-
-            mVideoTexture[eye]->notifyDataIsReady();
-        }
-        return true;
-    }
+//     //-------------------------------------------------------------------------
+//     bool GraphicsSystem::clearTexture(void)
+//     {
+//         for( size_t eye = 0; eye < mEyeNum; eye++ )
+//         {
+//             const size_t bytesPerRow =
+//                 mVideoTexture[eye]->_getSysRamCopyBytesPerRow( 0 );
+// 
+//             memset(mImageData[eye], 0, mImageDataSize[eye]);
+//             mStagingTexture[eye]->startMapRegion();
+//             Ogre::TextureBox texBox = mStagingTexture[eye]->mapRegion(
+//                 mVideoTexture[eye]->getWidth(),
+//                 mVideoTexture[eye]->getHeight(),
+//                 mVideoTexture[eye]->getDepth(),
+//                 mVideoTexture[eye]->getNumSlices(),
+//                 mVideoTexture[eye]->getPixelFormat() );
+//             texBox.copyFrom( mImageData,
+//                             mVideoTexture[eye]->getWidth(),
+//                             mVideoTexture[eye]->getHeight(),
+//                             bytesPerRow );
+//             mStagingTexture[eye]->stopMapRegion();
+//             mStagingTexture[eye]->upload( texBox, mVideoTexture[eye], 0, 0, 0, false );
+// 
+//             mVideoTexture[eye]->notifyDataIsReady();
+//         }
+//         return true;
+//     }
 
     void GraphicsSystem::beginFrameParallel(void)
     {
@@ -1171,7 +1153,7 @@ namespace esvr2
         {
             mLastFrameUpdate = mOvrCompositorListener->getFrameCnt();
 //             LOG << "update" << LOGEND;
-            mMtxImageResize.lock();
+            StereoImageData imgData = mVideoLoader->getCurStereoImageData();
             for( size_t eye = 0; eye < mEyeNum; eye++ )
             {
                 const size_t bytesPerRow =
@@ -1184,7 +1166,7 @@ namespace esvr2
                     mVideoTexture[eye]->getDepth(),
                     mVideoTexture[eye]->getNumSlices(),
                     mVideoTexture[eye]->getPixelFormat() );
-                texBox.copyFrom( mImageData[eye],
+                texBox.copyFrom( imgData.img[eye].data,
                                 mVideoTexture[eye]->getWidth(),
                                 mVideoTexture[eye]->getHeight(),
                                 bytesPerRow );
@@ -1194,7 +1176,6 @@ namespace esvr2
 
                 mVideoTexture[eye]->notifyDataIsReady();
             }
-            mMtxImageResize.unlock();
         }
         else
         {

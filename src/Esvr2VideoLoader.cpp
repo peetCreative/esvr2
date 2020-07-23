@@ -10,27 +10,36 @@ namespace esvr2
         mDistortion(distortion),
         mStereo(stereo),
         mCur(0), mLoad(0),
-        mFrameId(-1),
+        mSeq(-1),
         mReady(false), mQuit(false),
         mDestinationWidth(0), mDestinationHeight(0),
         mDestinationDepth(0), mDestinationLength(0),
-        mBuffers{nullptr, nullptr, nullptr, nullptr},
-        {}
+        mBuffers{{nullptr, nullptr},{nullptr, nullptr}}
+    {}
 
     VideoLoader::~VideoLoader()
-    {}
+    {
+        for( int i = 0; i < 2; i++ )
+            for( int j = 0; j < 2; j++ )
+                if( mBuffers[i][j] )
+                {
+                    //Do not free the pointer if texture's paging strategy is GpuPageOutStrategy::AlwaysKeepSystemRamCopy
+                    OGRE_FREE_SIMD( mBuffers[i][j], Ogre::MEMCATEGORY_RESOURCE );
+                }
+    }
 
 
     bool VideoLoader::configValid()
     {
-        return valid(mCameraConfig.cfg[LEFT]) &&
-            (!stereo || (valid(mCameraConfig.data[RIGHT]) ));
+        return mCameraConfig.cfg[LEFT].valid() &&
+            (!mStereo || (mCameraConfig.cfg[RIGHT].valid() ));
     }
 
     bool VideoLoader::buffersValid()
     {
+        //TODO: also check if valid
         return mBuffers[mCur][LEFT] && mBuffers[mLoad][LEFT] &&
-            (!stereo || (mBuffers[mCur][RIGHT] && mBuffers[mLoad][RIGHT]) );
+            (!mStereo || (mBuffers[mCur][RIGHT] && mBuffers[mLoad][RIGHT]) );
     }
 
     bool VideoLoader::isReady()
@@ -42,68 +51,66 @@ namespace esvr2
 
     void VideoLoader::setImageDataFromSplit(const cv::Mat *img, Orientation orientation)
     {
+        cv::Rect lrect, rrect;
         switch (orientation)
         {
             case ORIENTATION_VERTICAL:
-                lrect = cv::Rect(0, 0,
-                                img.cols/2, img.rows);
-                rrect = cv::Rect( img.cols/2, 0,
-                                img.cols/2, img.rows);
-                cv::Mat imageOrigLeft = img(lrect);
-                cv::Mat imageOrigRight = img(rrect);
-                setImageDataFromRaw(&imageOrigLeftPtr, &imageOrigRightPtr);
+                lrect = cv::Rect( 0, 0,
+                                img->cols/2, img->rows);
+                rrect = cv::Rect( img->cols/2, 0,
+                                img->cols/2, img->rows);
                 break;
             case ORIENTATION_HORIZONTAL:
                 // left is below
                 // right is above
-                lrect = cv::Rect(0, img.rows/2,
-                                img.cols, /**/img.rows/2);
-                rrect = cv::Rect(0, 0,
-                                img.cols, img.rows/2);
-                cv::Mat imageOrigLeft = img(lrect);
-                cv::Mat imageOrigRight = img(rrect);
-                setImageDataFromRaw(&imageOrigLeft, &imageOrigRight);
+                lrect = cv::Rect( 0, img->rows/2,
+                                img->cols, img->rows/2);
+                rrect = cv::Rect( 0, 0,
+                                img->cols, img->rows/2);
                 break;
         }
+        cv::Mat imageOrigLeft( *img, lrect );
+        cv::Mat imageOrigRight( *img, rrect );
+        setImageDataFromRaw(&imageOrigLeft, &imageOrigRight);
     }
 
     //split and then apply on demand undistortion and rectification
     void VideoLoader::setImageDataFromSplitSliced(const cv::Mat *img)
     {
-        if (stereo && !isReady())
+        if (mStereo && !isReady())
         {
-            LOG << "video loader is not fully configured"
+            LOG << "video loader is not fully configured" << LOGEND;
             return;
         }
-        int outputRows = img.rows/2;
+        int outputRows = img->rows/2;
         //imageData is always 4 depth
         int depth = 4 * sizeof(Ogre::uint8);
-        if( img.rows % 2 != 0 ) {
-            LOG << "Height of input image must be divisible by 2 (but current height is " << img.rows << ")!";
+        if( img->rows % 2 != 0 ) {
+            LOG << "Height of input image must be divisible by 2 (but current height is " << img->rows << ")!";
             quit();
             return;
         }
-        cv::Mat imgLeft( outputRows,  img.cols, CV_8UC4 );
-        cv::Mat imgRight( outputRows,  img.cols, CV_8UC4 );
+        cv::Mat imgLeft( outputRows,  img->cols, CV_8UC4 );
+        cv::Mat imgRight( outputRows,  img->cols, CV_8UC4 );
         // Split the input image into left and right, line by line.
         //TODO: normally First line is right image,
         //but somehow here it is different
-        size_t rowLength = depth * img.cols;
-        for( int inputRow = 0; inputRow < img.rows; inputRow++ )
+        size_t rowLength = depth * img->cols;
+        for( int inputRow = 0; inputRow < img->rows; inputRow++ )
         {
             if( inputRow % 2 == 0 )
             {
                 size_t outputRow = inputRow/2;
-                size_t srcPos = inputRow * img.cols * depth;
-                size_t destPos = outputRow * img.cols * depth;
-                memcpy( imgLeft.data + destPos, img.data + srcPos, rowLength );
+                size_t srcPos = inputRow * img->cols * depth;
+                size_t destPos = outputRow * img->cols * depth;
+                memcpy( imgLeft.data + destPos, img->data + srcPos, rowLength );
             }
             else
             {
                 size_t outputRow = (inputRow-1)/2;
-                size_t srcPos = inputRow*img.cols*depth;
-                size_t destPos = outputRow * img.cols * depth;
-                memcpy( imgRight.data + destPos, img.data + srcPos, rowLength );
+                size_t srcPos = inputRow*img->cols*depth;
+                size_t destPos = outputRow * img->cols * depth;
+                memcpy( imgRight.data + destPos, img->data + srcPos, rowLength );
             }
         }
         setImageDataFromRaw( &imgLeft, &imgRight);
@@ -113,7 +120,7 @@ namespace esvr2
     {
         if(!isReady())
         {
-            LOG << "video loader is not fully configured"
+            LOG << "video loader is not fully configured" << LOGEND;
             return;
         }
         size_t eyeNum = mStereo ? 2 : 1;
@@ -124,10 +131,9 @@ namespace esvr2
                 static_cast<size_t>(  img[eye]->rows ) != mCameraConfig.cfg[eye].height )
             {
                 resize(*(img[eye]), *(img[eye]),
-                       cv::Size(mCameraConfig[eye].width, mCameraConfig[eye].height));
-                img_in_ptr[eye] = &img[eye];
+                       cv::Size(mCameraConfig.cfg[eye].width, mCameraConfig.cfg[eye].height));
             }
-            switch( mOutputDistortion )
+            switch( mDistortion )
             {
                 case DIST_RAW:
                     break;
@@ -153,7 +159,7 @@ namespace esvr2
     {
         if(!isReady())
         {
-            LOG << "video loader is not fully configured"
+            LOG << "video loader is not fully configured" << LOGEND;
             return;
         }
         size_t eyeNum = mStereo ? 2 : 1;
@@ -171,28 +177,28 @@ namespace esvr2
             if (img[eye]->type() == CV_8UC3 )
             {
                 //Shouldn't matter whether BGR to BGRA or RGB to RGBA
-                cvtColor( *(img[eye]), *(img[eye]), CV_BGR2BGRA );
+                cvtColor( *(img[eye]), *(img[eye]), cv::COLOR_BGR2BGRA );
             }
             if( img[eye]->type() != CV_8UC4 )
             {
                 LOG << "cv::Mat type is wrong" << LOGEND;
                 return;
             }
-            mMtx.lock()
+            mMtx.lock();
             if( mDestinationLength != img[eye]->total() * img[eye]->elemSize() )
             {
                 LOG << "src Mat has different size than destination requires" << LOGEND;
                 return;
             }
-            memcpy(mBuffers[mLoad][eye].data, img[eye]->data, mDestinationLength);
-            mMtx.unlock()
+            memcpy(mBuffers[mLoad][eye], img[eye]->data, mDestinationLength);
+            mMtx.unlock();
             mCur = mLoad;
             // maybe to complicated for toggeling between 0 and 1
             mLoad = (mCur + 1) % 2;
         }
     }
 
-    StereoCameraConfig VideoLoader::getStereoCameraConfig();
+    StereoCameraConfig VideoLoader::getStereoCameraConfig()
     {
         return mCameraConfig;
     }
@@ -205,7 +211,7 @@ namespace esvr2
         size_t eyeNum = mStereo ? 2 : 1;
         for (size_t eye = 0; eye < eyeNum; eye++ )
         {
-            stereoImageData.img[eye].frameId = mFrameId;
+            stereoImageData.img[eye].seq = mSeq;
             stereoImageData.img[eye].width = mDestinationWidth;
             stereoImageData.img[eye].height = mDestinationHeight;
             stereoImageData.img[eye].depth = mDestinationDepth;
@@ -224,18 +230,18 @@ namespace esvr2
         ImageData imageData;
         if(!mReady)
             return imageData;
-        imageData.frameId = mFrameId;
+        imageData.seq = mSeq;
         imageData.width = mDestinationWidth;
         imageData.height = mDestinationHeight;
         imageData.depth = mDestinationDepth;
         imageData.length = mDestinationLength;
-        imageData.data = mBuffers[mCur][eye];
+        imageData.data = mBuffers[mCur][LEFT];
         return imageData;
     }
 
     //COULD BE CALLED AFTER is READY so we maybe should deactivate 
     bool VideoLoader::updateDestinationSize(
-        size_t width, size_t height, size_t depth, size_t length);
+        size_t width, size_t height, size_t depth, size_t length)
     {
         if ( length != width * height * depth ) {
             LOG << "Can only set image dimensions, which align nicely" << LOGEND;
@@ -244,20 +250,26 @@ namespace esvr2
         mMtx.lock();
         if (length != mDestinationLength)
         {
-            for ( int i = 0; i < 4; i++ )
-            {
-                OGRE_FREE_SIMD( mBuffers[i], Ogre::MEMCATEGORY_RESOURCE );
-                mBuffers[i] = reinterpret_cast<Ogre::uint8*>(
-                    OGRE_MALLOC_SIMD( length,
-                                      Ogre::MEMCATEGORY_RESOURCE ) );
-                memset(mBuffers[i], 0, length);
-            }
+            for ( int i = 0; i < 2; i++ )
+                for( int j = 0; j < 2; j++ )
+                {
+                    if (mBuffers[i][j])
+                    {
+                        OGRE_FREE_SIMD(
+                            mBuffers[i][j], Ogre::MEMCATEGORY_RESOURCE );
+                    }
+                    mBuffers[i][j] = reinterpret_cast<Ogre::uint8*>(
+                        OGRE_MALLOC_SIMD( length,
+                                        Ogre::MEMCATEGORY_RESOURCE ) );
+                    memset(mBuffers[i][j], 0, length);
+                }
         }
         mDestinationWidth = width;
         mDestinationHeight = height;
         mDestinationDepth = depth;
         mDestinationLength = length;
         mMtx.unlock();
+        return true;
     }
 
     void VideoLoader::updateMaps()
@@ -291,7 +303,7 @@ namespace esvr2
         }
     }
 
-    void VideoLoader::initialize(void) {}
+    bool VideoLoader::initialize(void) { return false; }
     void VideoLoader::deinitialize(void) {}
-    void VideoLoader::update( float timeSinceLast ) {}
+    void VideoLoader::update( ) {}
 }

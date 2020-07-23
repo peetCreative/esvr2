@@ -21,13 +21,14 @@ namespace esvr2 {
 
     public:
         OpenCvVideoLoader(
-            GraphicsSystem *graphicsSystem,
-            VideoInput vInput );
+            VideoInput vInput,
+            StereoCameraConfig cameraConfig,
+            Distortion distortion, bool stereo);
         ~OpenCvVideoLoader();
 
         bool initialize(void);
         void deinitialize(void);
-        void update( float timeSinceLast );
+        void update( );
 
     };
 }

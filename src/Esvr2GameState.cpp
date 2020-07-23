@@ -63,11 +63,14 @@ namespace esvr2
             mDatablockName[1] = "VideoNone";
         }
 
+
     }
 
-    void GameState::calcAlign(StereoCameraConfig &cameraConfig,
-                                         Ogre::Real projPlaneDistance )
+    void GameState::calcAlign()
     {
+        float projPlaneDistance = 1.0f;
+        StereoCameraConfig cameraConfig =
+            mStereoGraphicsSystem->getVideoLoader()->getStereoCameraConfig();
         if ( cameraConfig.leftToRight )
             mScale = mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
         for( size_t eye = 0; eye < mEyeNum * 2; eye++ )
@@ -322,6 +325,7 @@ namespace esvr2
     {
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
 
+        calcAlign();
 
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->getRoot()->getHlmsManager();
         Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>( hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
@@ -399,7 +403,7 @@ namespace esvr2
         if( arg.keysym.scancode == SDL_SCANCODE_X )
         {
             mStereoGraphicsSystem->itterateDistortion();
-            Distortion dist = mStereoGraphicsSystem->getDistortion();
+            Distortion dist = mStereoGraphicsSystem->getVideoLoader()->getDistortion();
             if (dist == DIST_UNDISTORT_RECTIFY)
             {
                 setMask = 0x40 | 0x80;
@@ -419,7 +423,7 @@ namespace esvr2
                 unsetMask = 0xF0;
             else
             {
-                Distortion dist = mStereoGraphicsSystem->getDistortion();
+                Distortion dist = mStereoGraphicsSystem->getVideoLoader()->getDistortion();
                 if (dist == DIST_UNDISTORT_RECTIFY)
                 {
                     setMask = 0x40 | 0x80;

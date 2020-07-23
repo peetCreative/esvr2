@@ -14,10 +14,10 @@ LowLatencyVideoLoader::LowLatencyVideoLoader(
         StereoCameraConfig cameraConfig,
         Distortion distortion):
     VideoLoader(distortion, true),
-    mCameraConfig( cameraConfig ),
     mVideoInput(videoInput),
     mProfilingEnabled(profilingEnabled)
 {
+    mCameraConfig = cameraConfig;
 }
 
 LowLatencyVideoLoader::~LowLatencyVideoLoader()
@@ -101,7 +101,8 @@ enum cv::ColorConversionCodes getColorConversion(const uint32_t &pixel_format) {
 }
 
 
-void LowLatencyVideoLoader::update(float timeSinceLast) {
+void LowLatencyVideoLoader::update( ) {
+    mSeq++;
     unsigned int inputRows       = videoInterface.getHeight(),
                  cols            = videoInterface.getWidth(),
                  outputRows      = inputRows / 2,

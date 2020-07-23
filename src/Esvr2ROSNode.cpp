@@ -97,7 +97,7 @@ namespace esvr2
                 mApproximateSyncRaw.reset(
                     new ApproximateSync(
                         ApproximatePolicy(20),
-                                        *mSubImageLeftRaw, *mSubImageRightRaw));
+                        *mSubImageLeftRaw, *mSubImageRightRaw));
                 mApproximateSyncRaw->registerCallback(
                     boost::bind( &VideoROSNode::newROSImageCallback<DIST_RAW>, this,_1, _2));
                 mSubImageLeftUndist = new
@@ -109,7 +109,7 @@ namespace esvr2
                 mApproximateSyncUndist.reset(
                     new ApproximateSync(
                         ApproximatePolicy(20),
-                                        *mSubImageLeftUndist, *mSubImageRightUndist));
+                        *mSubImageLeftUndist, *mSubImageRightUndist));
                 mApproximateSyncUndist->registerCallback(
                     boost::bind( &VideoROSNode::newROSImageCallback<DIST_UNDSISTORT>, this,_1, _2));
                 mSubImageLeftUndistRect = new
@@ -121,9 +121,10 @@ namespace esvr2
                 mApproximateSyncUndistRect.reset(
                     new ApproximateSyncUndistRect(
                         ApproximatePolicy(20),
-                                        *mSubImageLeftUndistRect, *mSubImageRightUndistRect));
+                        *mSubImageLeftUndistRect, *mSubImageRightUndistRect));
                 mApproximateSyncUndistRect->registerCallback(
                     boost::bind( &VideoROSNode::newROSImageCallback<DIST_UNDISTORT_RECTIFY>, this,_1, _2));
+                setDistortion( mDistortion );
         }
 
         if (!mIsCameraInfoInit[LEFT] && !mIsCameraInfoInit[RIGHT])
@@ -173,8 +174,41 @@ namespace esvr2
         return true;
     }
 
-    void VideoROSNode::setDisparity( Disparity disparity )
+    void VideoROSNode::setDistortion( Distortion distortion )
     {
+        mDistortion = distortion;
+        if (RIT_STEREO_SPLIT)
+        {
+            switch(mDistortion)
+            {
+                case DIST_RAW:
+                    mSubImageLeftRaw->subscribe();
+                    mSubImageRightRaw->subscribe();
+                    mSubImageLeftUndist->unsubscribe();
+                    mSubImageRightUndist->unsubscribe();
+                    mSubImageLeftUndistRect->unsubscribe();
+                    mSubImageRightUndistRect->unsubscribe();
+                    break;
+                case DIST_UNDSISTORT:
+                    mSubImageLeftRaw->unsubscribe();
+                    mSubImageRightRaw->unsubscribe();
+                    mSubImageLeftUndist->subscribe();
+                    mSubImageRightUndist->subscribe();
+                    mSubImageLeftUndistRect->unsubscribe();
+                    mSubImageRightUndistRect->unsubscribe();
+                    break;
+                case DIST_UNDISTORT_RECTIFY:
+                    mSubImageLeftRaw->unsubscribe();
+                    mSubImageRightRaw->unsubscribe();
+                    mSubImageLeftUndist->unsubscribe();
+                    mSubImageRightUndist->unsubscribe();
+                    mSubImageLeftUndistRect->subscribe();
+                    mSubImageRightUndistRect->subscribe();
+                    break;
+            }
+            mSubImageLeftRaw->subscribe();
+            mSubImageRightRaw
+        }
         //TODO: subscribe to the new correct topic
     }
 
@@ -192,6 +226,7 @@ namespace esvr2
     void VideoROSNode::newROSImageStereoSliced(
         const sensor_msgs::Image::ConstPtr& imgRaw)
     {
+        mSeq = imgLeft->header.seq
         cv_bridge::CvImageConstPtr cv_ptr;
         try
         {
@@ -204,11 +239,13 @@ namespace esvr2
             return;
         }
         setImageDataFromSplitSliced(&(cv_ptr->image));
+
     }
 
     void VideoROSNode::newROSImageMono(
         const sensor_msgs::Image::ConstPtr& imgRaw)
     {
+        mSeq = imgLeft->header.seq
         cv_bridge::CvImageConstPtr cv_ptr;
         try
         {
@@ -235,7 +272,6 @@ namespace esvr2
             quit();
 //             destroySystems( graphicsGameState, graphicsSystem );
         }
-
     }
 
     void VideoROSNode::newROSImageCallback(
@@ -244,6 +280,7 @@ namespace esvr2
     {
         if (!mIsCameraInfoInit[LEFT] || !mIsCameraInfoInit[RIGHT])
             return;
+        mSeq = imgLeft->header.seq
         cv_bridge::CvImageConstPtr cv_ptr_left;
         cv_bridge::CvImageConstPtr cv_ptr_right;
         try
@@ -253,9 +290,18 @@ namespace esvr2
                 imgLeft, sensor_msgs::image_encodings::BGR8 );
             cv_ptr_right = cv_bridge::toCvShare(
                 imgRight, sensor_msgs::image_encodings::BGR8 );
-            //TODO:copy to new mat
-            setImageDataFromRaw(
-                &(cv_ptr_left->image), &(cv_ptr_right->image));
+            //TODO:copy to new mat probably inefficient
+            cv::Mat left = cv_ptr_left->clone();
+            cv::Mat right = cv_ptr_right->clone();
+            if ( mRosInputType == RIT_STEREO_SPLIT_RAW )
+            {
+                setImageDataFromRaw(
+                    &(left), &(right));
+            }
+            else if ( mRosInputType == RIT_STEREO_SPLIT )
+            {
+                setImageData(&(left), &(right));
+            }
         }
         catch (cv_bridge::Exception& e)
         {
@@ -315,7 +361,7 @@ namespace esvr2
         ros::shutdown();
     }
 
-    void VideoROSNode::update( float timeSinceLast )
+    void VideoROSNode::update( )
     {
         ros::spinOnce();
     }

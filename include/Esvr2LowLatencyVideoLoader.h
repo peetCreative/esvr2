@@ -19,7 +19,7 @@ namespace esvr2 {
 
             bool initialize( void );
             void deinitialize(void);
-            void update( float timeSinceLast );
+            void update( );
 
         private:
             v4l2::V4L2Interface videoInterface;

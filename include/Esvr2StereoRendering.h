@@ -26,7 +26,6 @@ namespace esvr2 {
         IT_VIDEO_BLACKMAGIC
     } InputType;
     typedef enum {
-        VRT_TO_BACKGROUND,
         VRT_TO_SQUARE,
         VRT_TO_2D_RECTANGLE
     } VideoRenderTarget;
@@ -74,12 +73,12 @@ namespace esvr2 {
         std::vector<float> K = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         std::vector<float> R = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         std::vector<float> P = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        bool valid()
+        {
+            //TODO: check maybe also the other parameters
+            return width != 0 && height != 0;
+        };
     } CameraConfig;
-    bool valid(CameraConfig cc)
-    {
-        //TODO: check maybe also the other parameters
-        return cc.width != 0 && cc.height != 0;
-    };
     typedef struct {
         CameraConfig cfg[2];
         float leftToRight = 0;
@@ -87,19 +86,19 @@ namespace esvr2 {
     //similar implementation to cv::Mat*
     typedef struct {
         //-1 invalid frame
-        int frameId = -1;
+        int seq = -1;
         size_t length = 0;
-        size_t rows = 0;
-        size_t cols = 0;
+        size_t height = 0;
+        size_t width = 0;
         size_t depth = 0;
         Ogre::uint8 *data = nullptr;
+        bool valid()
+        {
+            return seq != -1 && length != 0 &&
+                length == height * width * depth &&
+                data != nullptr;
+        };
     } ImageData;
-    bool valid(ImageData id)
-    {
-        return id.id != 0 && id.length != 0 &&
-            id.length == id.rows * id.cols * id.depth &&
-            data != nullptr;
-    };
     typedef struct {
         ImageData img[2];
     } StereoImageData;

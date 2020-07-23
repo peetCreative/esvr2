@@ -29,7 +29,7 @@ namespace esvr2 {
 
         void initialize(void);
         void deinitialize(void);
-        void update( float timeSinceLast );
+        void update( );
     };
 }
 

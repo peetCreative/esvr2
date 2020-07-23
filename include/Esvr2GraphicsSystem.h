@@ -20,7 +20,6 @@
 #include "opencv2/opencv.hpp"
 
 #include <experimental/filesystem>
-#include <mutex>
 
 namespace esvr2
 {
@@ -49,6 +48,7 @@ namespace esvr2
         Ogre::TextureGpu            *mVideoTexture[2];
         Ogre::VrData                *mVrData;
         HmdConfig                   mHmdConfig;
+        StereoCameraConfig          mCameraConfig;
 
         OpenVRCompositorListener    *mOvrCompositorListener;
 
@@ -61,7 +61,7 @@ namespace esvr2
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
         PoseState *mCameraPoseState;
 
-        VideoLoader *mVideoSource;
+        VideoLoader *mVideoLoader;
         VideoRenderTarget mVideoTarget;
         size_t mCameraWidth[2], mCameraHeight[2];
         //left_left, left_right right_left right_right
@@ -71,10 +71,6 @@ namespace esvr2
             int topAlign[2];
             cv::Size size[2];
         } *mImageRenderConfig;
-        std::mutex mMtxImageResize;
-        cv::Mat mImageResize[2];
-        Ogre::uint8 *mImageData[2];
-        size_t mImageDataSize[2];
         Ogre::StagingTexture *mStagingTexture[2];
 
         //used for mDrawHelpers
@@ -86,9 +82,6 @@ namespace esvr2
         bool mIsStereo;
         size_t mEyeNum;
         bool mShowVideo;
-
-        Distortion mInputDistortion;
-        Distortion mOutputDistortion;
 
         int mLastFrameUpdate;
         int mUpdateFrames;
@@ -113,6 +106,7 @@ namespace esvr2
         bool fillTexture(void);
         bool clearTexture(void);
 
+        bool calcAlign(void);
 
     public:
         GraphicsSystem(
@@ -120,9 +114,9 @@ namespace esvr2
             WorkspaceType wsType,
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
+            VideoLoader *videoLoader,
             int screen,
-            Distortion inputDistortion,
-            bool mIsStereo,
+            bool isStereo,
             bool showOgreDialog = false,
             bool showVideo = true,
             esvr2::VideoRenderTarget renderVideoTarget = VRT_TO_SQUARE,
@@ -132,19 +126,13 @@ namespace esvr2
         // we are overwriting initialize
         void initialize( const Ogre::String &windowTitle );
 
-        void setImgPtr(const cv::Mat *left, const cv::Mat *right);
         bool getShowVideo( void ) { return mShowVideo; };
         void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
         void itterateDistortion( void );
-        Distortion getDistortion( void ) {return mOutputDistortion;};
-        bool calcAlign(StereoCameraConfig &mCameraConfig);
+
+        VideoLoader *getVideoLoader() { return mVideoLoader; };
 
         virtual void beginFrameParallel(void);
-
-        void _notifyVideoSource( VideoLoader *videoSource )
-        {
-            mVideoSource = videoSource;
-        };
 
         void _notifyPoseSource( PoseState *poseState )
         {

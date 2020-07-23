@@ -18,12 +18,13 @@ namespace esvr2
             StereoCameraConfig cameraConfig,
             Distortion distortion, bool stereo):
         VideoLoader( distortion, stereo ),
-        mCameraConfig( cameraConfig ),
         mVideoInput( vInput ),
         mCapture( 1, CBlackMagicCapture::eHD1080p50, false ),
         mCaptureFrameWidth( 0 ),
         mCaptureFrameHeight( 0 )
-    {}
+    {
+        mCameraConfig = cameraConfig;
+    }
 
     BlackMagicVideoLoader::~BlackMagicVideoLoader() {}
 
@@ -59,7 +60,7 @@ namespace esvr2
         mCapture.CloseCamera();
     }
 
-    void BlackMagicVideoLoader::update( float timeSinceLast )
+    void BlackMagicVideoLoader::update( )
     {
         cv::Mat image(mCaptureFrameHeight, mCaptureFrameWidth, CV_8UC4);
 
@@ -69,6 +70,7 @@ namespace esvr2
         {
             return;
         }
+        mSeq++;
         cv::Rect lrect, rrect;
         cv::Mat imageOrigLeft, imageOrigRight;
         switch ( mVideoInput.videoInputType )

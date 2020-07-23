@@ -48,8 +48,6 @@ struct ThreadData
     GameState  *graphicsGameState;
     VideoLoader     *videoSource;
     InputType       inputType;
-    StereoCameraConfig    *cameraConfig;
-    std::mutex      *cameraConfigLock;
     Ogre::Barrier   *barrier;
 };
 
@@ -106,20 +104,32 @@ VideoRenderTarget getRenderVideoTarget(std::string input_str)
 {
     VideoRenderTarget input = VRT_TO_SQUARE;
     if (input_str.compare("TO_SQUARE") == 0)
-        input = VRT_TO_SQUARE;
-    if (input_str.compare("TO_BACKGROUND") == 0)
-        input = VRT_TO_BACKGROUND;
+        input = VRT_TO_2D_RECTANGLE;
+    if (input_str.compare("TO_2D_RECTANGLE") == 0)
+        input = VRT_TO_2D_RECTANGLE;
     return input;
 }
 
 WorkspaceType getWorkspaceType(std::string workspace_str)
 {
     WorkspaceType workspace = WS_TWO_CAMERAS_STEREO;
-    if( workspace_str.compare( "WS_TWO_CAMERAS_STEREO" ) )
+    if( workspace_str.compare( "TWO_CAMERAS_STEREO" ) )
         workspace = WS_TWO_CAMERAS_STEREO;
-    if( workspace_str.compare( "WS_TWO_CAMERAS_STEREO" ) )
+    if( workspace_str.compare( "INSTANCED_STEREO" ) )
         workspace = WS_INSTANCED_STEREO;
     return workspace;
+}
+
+Distortion getDistortionType( std::string distortion_str )
+{
+    Distortion distortion = DIST_RAW;
+    if( distortion_str.compare( "RAW" ) )
+        distortion = DIST_RAW;
+    if( distortion_str.compare( "UNDISTORT" ) )
+        distortion = DIST_UNDISTORT;
+    if( distortion_str.compare( "UNDISTORT_RECTIFY" ) )
+        distortion = DIST_UNDISTORT_RECTIFY;
+    return distortion;
 }
 
 
@@ -129,6 +139,7 @@ int main( int argc, char *argv[] )
     bool show_video = true;
     bool multiThreading = false;
     int screen = 0;
+    Distortion distortion = DIST_RAW;
     bool isStereo = false;
     WorkspaceType workspace = WS_TWO_CAMERAS_STEREO;
     InputType input = IT_NONE;
@@ -219,6 +230,12 @@ int main( int argc, char *argv[] )
                 std::string workspace_str;
                 cfg.lookupValue("workspace_type", workspace_str);
                 workspace = getWorkspaceType(workspace_str);
+            }
+            if (cfg.exists("distortion"))
+            {
+                std::string distortion_str;
+                cfg.lookupValue("distortion", distortion_str);
+                distortion = getDistortionType(distortion_str);
             }
             if (cfg.exists("render_video_target"))
             {
@@ -449,12 +466,8 @@ int main( int argc, char *argv[] )
     }
 
     bool validCameraConfig = /*cameraConfig->leftToRight != 0 &&*/
-        cameraConfig->cfg[LEFT].width != 0 &&
-        cameraConfig->cfg[LEFT].height != 0 &&
-        ( !isStereo ||
-            ( isStereo &&
-            cameraConfig->cfg[RIGHT].width != 0 &&
-            cameraConfig->cfg[RIGHT].height != 0));
+        cameraConfig->cfg[LEFT].valid() &&
+        ( !isStereo || ( isStereo && cameraConfig->cfg[RIGHT].valid()));
     if ( !validCameraConfig && input != IT_ROS )
     {
         LOG << "no valid cameraConfig quit" << LOGEND;
@@ -466,69 +479,55 @@ int main( int argc, char *argv[] )
     //create and initialize the videoLoader
     VideoLoader *videoLoader = nullptr;
     PoseState *poseState = nullptr;
-    std::mutex *cameraConfigLock = new std::mutex();
     switch(input)
     {
         case IT_VIDEO_LOW_LATENCY:
             videoLoader = new LowLatencyVideoLoader(
-                graphicsSystem,
-                videoInput, false);
+                videoInput, false, *cameraConfig, distortion);
             break;
         case IT_VIDEO_OPENCV:
-            videoLoader = new OpenCvVideoLoader( graphicsSystem, videoInput );
+            videoLoader = new OpenCvVideoLoader(
+                videoInput, *cameraConfig, distortion, isStereo );
             break;
         case IT_VIDEO_BLACKMAGIC:
             #ifdef USE_BLACKMAGIC
-            videoLoader = new BlackMagicVideoLoader( graphicsSystem, videoInput );
+            videoLoader = new BlackMagicVideoLoader(
+                videoInput, *cameraConfig, distortion, isStereo );
             #endif
             break;
         case IT_ROS:
             #ifdef USE_ROS
             VideoROSNode *rosNode;
-            if ( !validCameraConfig )
-            {
-                cameraConfigLock->lock();
-                rosNode = new VideoROSNode(
-                    graphicsSystem,
-                    cameraConfig, cameraConfigLock,
-                    argc, argv, rosInputType, rosNamespace );
-            }
-            else
-            {
-                rosNode = new VideoROSNode(
-                    graphicsSystem,
-                    nullptr, nullptr,
-                    argc, argv, rosInputType, rosNamespace );
-            }
+            rosNode = new VideoROSNode(
+                argc, argv, rosInputType, rosNamespace, cameraConfig, distortion, isStereo );
             videoLoader = rosNode;
             poseState = rosNode;
             break;
             #endif
         case IT_NONE:
-            delete graphicsGameState;
-            delete graphicsSystem;
             delete videoLoader;
             LOG << "no input: shutdown" << LOGEND;
             return 1;
     }
+    if ( !videoLoader || ! videoLoader->initialize() )
+    {
+        LOG << "no videoloader or could not be initialized, Quitting" << LOGEND;
+        return 1;
+    }
     if ( poseState )
     {
-        graphicsSystem->_notifyPoseSource(poseState);
     }
     else
     {
         LOG << "no PoseState, do not move camera" << LOGEND;
     }
-    if ( videoLoader )
+
+    // cycle until videoLoader is finished
+    while( !videoLoader->isReady() )
     {
-        graphicsSystem->_notifyVideoSource(videoLoader);
-    }
-    else
-    {
-        LOG << "no videoloader, Quitting" << LOGEND;
-        delete graphicsGameState;
-        delete graphicsSystem;
-        return 1;
+        //TODO: look we can quit here
+        Ogre::Threads::Sleep( 500 );
+        videoLoader->update();
     }
 
     GameState *graphicsGameState =
@@ -537,10 +536,13 @@ int main( int argc, char *argv[] )
 
     GraphicsSystem *graphicsSystem = new GraphicsSystem(
             graphicsGameState, workspace, vrData,
-            hmdConfig, screen, DIST_UNDISTORT_RECTIFY, isStereo, show_ogre_dialog,
+            hmdConfig, videoLoader, screen, isStereo, show_ogre_dialog,
             show_video, renderVideoTarget );
 
     graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );
+
+    graphicsSystem->initialize( "esvr2" );
+    graphicsSystem->createScene01();
 
     if ( multiThreading )
     {
@@ -551,8 +553,6 @@ int main( int argc, char *argv[] )
         threadData->graphicsGameState = graphicsGameState;
         threadData->videoSource      = videoLoader;
         threadData->inputType        = input;
-        threadData->cameraConfig     = cameraConfig;
-        threadData->cameraConfigLock = cameraConfigLock;
         threadData->barrier          = barrier;
 
         Ogre::ThreadHandlePtr threadHandles[2];
@@ -569,52 +569,35 @@ int main( int argc, char *argv[] )
     else
     {
         LOG << "singleThreading" << LOGEND;
-        graphicsSystem->initialize( "esvr2" );
-        videoLoader->initialize();
-        cameraConfigLock->lock();
-        if ( cameraConfig )
+
+        Ogre::Timer timer;
+
+        Ogre::uint64 startTime = timer.getMicroseconds();
+
+        double timeSinceLast = 1.0 / 60.0;
+
+        while( !graphicsSystem->getQuit() )
         {
-            graphicsSystem->calcAlign( *cameraConfig );
-            graphicsGameState->calcAlign( *cameraConfig, 2.0f );
-        }
+            graphicsSystem->beginFrameParallel();
+            videoLoader->update();
+            graphicsSystem->update( timeSinceLast );
+            graphicsSystem->finishFrameParallel();
 
-        if( !graphicsSystem->getQuit() )
-        {
-            graphicsSystem->createScene01();
-
-            Ogre::Window *renderWindow = graphicsSystem->getRenderWindow();
-
-            Ogre::Timer timer;
-
-            Ogre::uint64 startTime = timer.getMicroseconds();
-
-            double timeSinceLast = 1.0 / 60.0;
-
-            while( !graphicsSystem->getQuit() )
+            if( !graphicsSystem->getRenderWindow()->isVisible() )
             {
-                videoLoader->beginFrameParallel();
-                graphicsSystem->beginFrameParallel();
-                videoLoader->update( timeSinceLast );
-                graphicsSystem->update( timeSinceLast );
-                graphicsSystem->finishFrameParallel();
-                videoLoader->finishFrameParallel();
-
-                if( !renderWindow->isVisible() )
-                {
-                    //Don't burn CPU cycles unnecessary when we're minimized.
-                    Ogre::Threads::Sleep( 500 );
-                }
-
-                Ogre::uint64 endTime = timer.getMicroseconds();
-                timeSinceLast = (endTime - startTime) / 1000000.0;
-                timeSinceLast = std::min( 1.0, timeSinceLast ); //Prevent from going haywire.
-                startTime = endTime;
-
+                //Don't burn CPU cycles unnecessary when we're minimized.
+                Ogre::Threads::Sleep( 500 );
             }
-            LOG << "END GRAPHICS" << LOGEND;
 
-            graphicsSystem->destroyScene();
+            Ogre::uint64 endTime = timer.getMicroseconds();
+            timeSinceLast = (endTime - startTime) / 1000000.0;
+            timeSinceLast = std::min( 1.0, timeSinceLast ); //Prevent from going haywire.
+            startTime = endTime;
+
         }
+        LOG << "END GRAPHICS" << LOGEND;
+
+        graphicsSystem->destroyScene();
         graphicsSystem->deinitialize();
         videoLoader->deinitialize();
     }
@@ -632,28 +615,8 @@ unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
     ThreadData *threadData = reinterpret_cast<ThreadData*>( threadHandle->getUserParam() );
     GraphicsSystem *graphicsSystem  = threadData->graphicsSystem;
     GameState *graphicsGameState  = threadData->graphicsGameState;
+    VideoLoader *videoLoader = threadData->videoSource;
     Ogre::Barrier *barrier          = threadData->barrier;
-    StereoCameraConfig *cameraConfig      = threadData->cameraConfig;
-
-    graphicsSystem->initialize( "esvr2" );
-    threadData->cameraConfigLock->lock();
-    if( cameraConfig )
-    {
-        graphicsSystem->calcAlign( *cameraConfig );
-        graphicsGameState->calcAlign( *cameraConfig, 2.0f );
-    }
-    barrier->sync();
-
-    if( graphicsSystem->getQuit() )
-    {
-        graphicsSystem->deinitialize();
-        return 0; //User cancelled config
-    }
-
-    graphicsSystem->createScene01();
-    barrier->sync();
-
-    Ogre::Window *renderWindow = graphicsSystem->getRenderWindow();
 
     Ogre::Timer timer;
 
@@ -661,13 +624,13 @@ unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
 
     double timeSinceLast = 1.0 / 60.0;
 
-    while( !graphicsSystem->getQuit() )
+    while( !graphicsSystem->getQuit() && !videoLoader->getQuit() )
     {
         graphicsSystem->beginFrameParallel();
         graphicsSystem->update( timeSinceLast );
         graphicsSystem->finishFrameParallel();
 
-        if( !renderWindow->isVisible() )
+        if( !graphicsSystem->getRenderWindow()->isVisible() )
         {
             //Don't burn CPU cycles unnecessary when we're minimized.
             Ogre::Threads::Sleep( 500 );
@@ -679,7 +642,6 @@ unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
         startTime = endTime;
     }
     LOG << "END GRAPHICS" << LOGEND;
-//     barrier->sync();
 
     graphicsSystem->destroyScene();
     barrier->sync();
@@ -691,30 +653,6 @@ unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
 };
 
 
-// unsigned long renderThread1( Ogre::ThreadHandle *threadHandle )
-// {
-//     unsigned long retVal = -1;
-// 
-//     try
-//     {
-//         retVal = renderThread1App( threadHandle );
-//     }
-//     catch( Ogre::Exception& e )
-//     {
-//    #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32
-//         MessageBoxA( NULL, e.getFullDescription().c_str(), "An exception has occured!",
-//                      MB_OK | MB_ICONERROR | MB_TASKMODAL );
-//    #else
-//         std::cerr << "An exception has occured: " <<
-//                      e.getFullDescription().c_str() << std::endl;
-//    #endif
-// 
-//         abort();
-//     }
-// 
-//     return retVal;
-// }
-
 //---------------------------------------------------------------------
 unsigned long logicThread1( Ogre::ThreadHandle *threadHandle )
 {
@@ -723,18 +661,6 @@ unsigned long logicThread1( Ogre::ThreadHandle *threadHandle )
     VideoLoader *videoLoader        = threadData->videoSource;
     Ogre::Barrier *barrier          = threadData->barrier;
 
-    videoLoader->initialize();
-    barrier->sync();
-
-    if( graphicsSystem->getQuit() )
-    {
-        videoLoader->deinitialize();
-        return 0; //Render thread cancelled early
-    }
-
-//     videoLoader->loadVideo();
-    barrier->sync();
-
     Ogre::Window *renderWindow = graphicsSystem->getRenderWindow();
 
     Ogre::Timer timer;
@@ -742,13 +668,9 @@ unsigned long logicThread1( Ogre::ThreadHandle *threadHandle )
 
     Ogre::uint64 startTime = timer.getMicroseconds();
 
-    while( !graphicsSystem->getQuit() )
+    while( !videoLoader->getQuit() && !graphicsSystem->getQuit() )
     {
-        videoLoader->beginFrameParallel();
-        videoLoader->update( static_cast<float>( cFrametime ) );
-        videoLoader->finishFrameParallel();
-
-        videoLoader->finishFrame();
+        videoLoader->update( );
 
         if( !renderWindow->isVisible() )
         {

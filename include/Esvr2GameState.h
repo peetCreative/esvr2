@@ -49,8 +49,7 @@ namespace esvr2
         GameState(
             const Ogre::String &helpDescription,
             bool isStereo, Ogre::VrData *vrData );
-        void calcAlign( StereoCameraConfig &cameraConfig,
-                        Ogre::Real projPlaneDistance = 1.0f);
+        void calcAlign( );
         void createScene01(void);
 
         void update( float timeSinceLast );
