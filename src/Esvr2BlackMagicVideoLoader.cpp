@@ -28,7 +28,7 @@ namespace esvr2
 
     BlackMagicVideoLoader::~BlackMagicVideoLoader() {}
 
-    void BlackMagicVideoLoader::initialize(void)
+    bool BlackMagicVideoLoader::initialize(void)
     {
         //TODO: more configuration for BlackMagicCapture could be available
         if (!mCapture.OpenCamera()) {
@@ -43,7 +43,7 @@ namespace esvr2
         {
             return false;
         }
-        if (stereo && mVideoInput.videoInputType == VIT_MONO)
+        if (mStereo && mVideoInput.videoInputType == VIT_MONO)
         {
             return false;
         }
@@ -52,7 +52,7 @@ namespace esvr2
             mCameraConfig.cfg[LEFT].width* mCameraConfig.cfg[LEFT].height* 4u );
         updateMaps();
         mReady = true;
-        return true
+        return true;
     }
 
     void BlackMagicVideoLoader::deinitialize(void)
@@ -76,16 +76,16 @@ namespace esvr2
         switch ( mVideoInput.videoInputType )
         {
             case VIT_MONO:
-                setImageDataFromRaw(mMat, nullptr);
+                setImageDataFromRaw(&image, nullptr);
                 break;
             case VIT_STEREO_SLICED:
-                setImageDataFromSplitSliced(&mMat);
+                setImageDataFromSplitSliced(&image);
                 break;
             case VIT_STEREO_VERTICAL_SPLIT:
-                setImageDataFromSplit(&mMat, ORIENTATION_VERTICAL);
+                setImageDataFromSplit(&image, ORIENTATION_VERTICAL);
                 break;
             case VIT_STEREO_HORIZONTAL_SPLIT:
-                setImageDataFromSplit(&mMat, ORIENTATION_HORIZONTAL);
+                setImageDataFromSplit(&image, ORIENTATION_HORIZONTAL);
                 break;
             default:
                 break;

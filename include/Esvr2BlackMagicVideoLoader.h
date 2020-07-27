@@ -24,10 +24,11 @@ namespace esvr2 {
         BlackMagicVideoLoader(
             VideoInput vInput,
             StereoCameraConfig cameraConfig,
+            Distortion distortion,
             bool stereo);
         ~BlackMagicVideoLoader();
 
-        void initialize(void);
+        bool initialize(void);
         void deinitialize(void);
         void update( );
     };
