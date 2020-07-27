@@ -47,8 +47,6 @@ namespace esvr2
         ros::Subscriber mSubCamInfoRight;
         RosInputType mRosInputType;
         std::string mRosNamespace;
-        //Not the most beautifault solution
-        StereoCameraConfig *mCameraConfig;
         std::mutex *mCameraConfigLock;
         bool mIsCameraInfoInit[2];
         bool mSubscribePose;
@@ -58,12 +56,14 @@ namespace esvr2
 
     public:
         VideoROSNode(
-            GraphicsSystem *graphicsSystem,
-            StereoCameraConfig *cameraConfig, std::mutex *cameraConfigLock,
             int argc, char *argv[],
             RosInputType rosInputType,
-            std::string rosNamespace);
+            std::string rosNamespace,
+            StereoCameraConfig *cameraConfig,
+            Distortion distortion, bool stereo);
         ~VideoROSNode();
+
+        void setDistortion( Distortion distortion );
 
         void newROSPose(const geometry_msgs::TransformStamped pose);
         void newROSImageStereoSliced( const sensor_msgs::Image::ConstPtr& img );
@@ -75,7 +75,7 @@ namespace esvr2
         void newROSCameraInfoCallback (
             const sensor_msgs::CameraInfo::ConstPtr& camInfo );
 
-        void initialize(void);
+        bool initialize(void);
         void deinitialize(void);
         void update( );
 

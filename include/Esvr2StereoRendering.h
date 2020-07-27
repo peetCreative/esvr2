@@ -40,7 +40,8 @@ namespace esvr2 {
         RIT_NONE,
         RIT_MONO,
         RIT_STEREO_SLICED,
-        RIT_STEREO_SPLIT
+        RIT_STEREO_SPLIT,
+        RIT_STEREO_SPLIT_RAW
     } RosInputType;
     typedef enum {
         DIST_RAW,
