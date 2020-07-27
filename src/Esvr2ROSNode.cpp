@@ -361,7 +361,7 @@ namespace esvr2
 
     bool VideoROSNode::getQuit()
     {
-        return !mNh->ok() || getQuit();
+        return !mNh->ok() || mQuit;
     }
 }
 

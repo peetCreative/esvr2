@@ -277,6 +277,7 @@ namespace esvr2
         if(!configValid())
         {
             LOG << "Cannot update maps invalid config" << LOGEND;
+            quit();
             return;
         }
         size_t eyeNum = mStereo ? 2 : 1;

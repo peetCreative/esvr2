@@ -50,7 +50,6 @@ namespace esvr2
         std::mutex *mCameraConfigLock;
         bool mIsCameraInfoInit[2];
         bool mSubscribePose;
-        bool mQuit;
 
         void newROSCameraInfoCallback();
 

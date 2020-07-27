@@ -522,12 +522,17 @@ int main( int argc, char *argv[] )
         LOG << "no PoseState, do not move camera" << LOGEND;
     }
 
-    // cycle until videoLoader is finished
+    // cycle until videoLoader is finished or quits
     while( !videoLoader->isReady() )
     {
         //TODO: look we can quit here
-        Ogre::Threads::Sleep( 500 );
+        Ogre::Threads::Sleep( 50 );
         videoLoader->update();
+        if (videoLoader->getQuit())
+        {
+            delete videoLoader;
+            return 1;
+        }
     }
 
     GameState *graphicsGameState =
