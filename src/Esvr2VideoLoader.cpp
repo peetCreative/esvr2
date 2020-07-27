@@ -177,7 +177,7 @@ namespace esvr2
             if (img[eye]->type() == CV_8UC3 )
             {
                 //Shouldn't matter whether BGR to BGRA or RGB to RGBA
-                cvtColor( *(img[eye]), *(img[eye]), cv::COLOR_BGR2BGRA );
+                cvtColor( *(img[eye]), *(img[eye]), cv::COLOR_RGB2BGRA );
             }
             if( img[eye]->type() != CV_8UC4 )
             {
@@ -192,10 +192,10 @@ namespace esvr2
             }
             memcpy(mBuffers[mLoad][eye], img[eye]->data, mDestinationLength);
             mMtx.unlock();
-            mCur = mLoad;
-            // maybe to complicated for toggeling between 0 and 1
-            mLoad = (mCur + 1) % 2;
         }
+        mCur = mLoad;
+        // maybe to complicated for toggeling between 0 and 1
+        mLoad = (mCur + 1) % 2;
     }
 
     StereoCameraConfig VideoLoader::getStereoCameraConfig()

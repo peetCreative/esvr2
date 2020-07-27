@@ -420,14 +420,6 @@ namespace esvr2
         // now as we have camera config we use it.
         mVrData->set( eyeToHead, proj_matrix);
         alignCameras();
-        if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
-        {
-            if (! mVrWorkspaces[LEFT] && !mVrWorkspaces[RIGHT] )
-            {
-                createTwoWorkspaces();
-                setupImageData();
-            }
-        }
         return true;
     }
 
@@ -436,6 +428,25 @@ namespace esvr2
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
 
         initOpenVR();
+        calcAlign();
+        //create Workspaces
+        if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
+        {
+            createTwoWorkspaces();
+        }
+        else if (mWorkSpaceType == WS_INSTANCED_STEREO)
+        {
+            mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
+                mSceneManager, mVrTexture,
+                mCamera, "InstancedStereoWorkspace", true, 0 );
+        }
+
+        mOvrCompositorListener =
+            new OpenVRCompositorListener(
+                mHMD, mVRCompositor, mVrTexture,
+                mRoot, mVrWorkspaces,
+                mCamerasNode, mCameraPoseState
+            );
         setupImageData();
 
         syncCameraProjection( true );
@@ -553,23 +564,6 @@ namespace esvr2
         Ogre::CompositorManager2 *compositorManager =
             mRoot->getCompositorManager2();
 
-        if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
-        {
-            createTwoWorkspaces();
-        }
-        else if (mWorkSpaceType == WS_INSTANCED_STEREO)
-        {
-            mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
-                mSceneManager, mVrTexture,
-                mCamera, "InstancedStereoWorkspace", true, 0 );
-        }
-
-        mOvrCompositorListener =
-            new OpenVRCompositorListener(
-                mHMD, mVRCompositor, mVrTexture,
-                mRoot, mVrWorkspaces,
-                mCamerasNode, mCameraPoseState
-            );
     }
 
     void GraphicsSystem::createTwoWorkspaces()
@@ -595,9 +589,6 @@ namespace esvr2
 
         vpOffsetScale   = Ogre::Vector4( width, height, sizewidth, sizeheight  );
 //         vpOffsetScale   = Ogre::Vector4( 0.25f, 0.25f, 0.5f, 1.0f );
-        Ogre::CompositorChannelVec channelsLeft( 2u );
-        channelsLeft[1] = mVrTexture;
-        channelsLeft[0] = mVideoTexture[LEFT];
         mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
             mSceneManager,
             mVrTexture,
@@ -620,9 +611,6 @@ namespace esvr2
                                           sizewidth, sizeheight );
 //         vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f,
 //                                          0.5f, 1.0f );
-        Ogre::CompositorChannelVec channelsRight( 2u );
-        channelsRight[1] = mVrTexture;
-        channelsRight[0] = mVideoTexture[RIGHT];
         mVrWorkspaces[RIGHT] = compositorManager->addWorkspace(
             mSceneManager,
             mVrTexture,
@@ -642,14 +630,14 @@ namespace esvr2
         Ogre::TextureGpuManager *textureManager =
             mRoot->getRenderSystem()->getTextureGpuManager();
 
-        if ( mVideoTarget == VRT_TO_SQUARE )
+        if ( mVideoTarget == VRT_TO_2D_RECTANGLE )
         {
             if ( mIsStereo )
             {
                 //TODO: guard if we don't find it.
                 LOG << "setup Video Texture Left" << LOGEND;
                 mVideoTexture[LEFT] = mVrWorkspaces[LEFT]->findNode("TwoCamerasNode")->getLocalTextures()[0];
-                mVideoTexture[RIGHT] = mVrWorkspaces[RIGHT]->findNode("TwoCamerasNode")->getLocalTextures()[0];
+                mVideoTexture[RIGHT] = mVrWorkspaces[RIGHT]->findNode("TwoCamerasNode")->getLocalTextures()[1];
             }
             else
             {
@@ -665,21 +653,23 @@ namespace esvr2
         for ( size_t eye = 0; eye < mEyeNum; eye++)
         {
             const Ogre::uint32 rowAlignment = 4u;
+            Ogre::PixelFormatGpu format = mVideoTexture[eye]->getPixelFormat();
             size_t imageDataSize =
             Ogre::PixelFormatGpuUtils::getSizeBytes(
                 mVideoTexture[eye]->getWidth(),
                 mVideoTexture[eye]->getHeight(),
                 mVideoTexture[eye]->getDepth(),
                 mVideoTexture[eye]->getNumSlices(),
-                mVideoTexture[eye]->getPixelFormat(),
+                format,
                 rowAlignment );
-            if(!mVideoLoader->updateDestinationSize(
-                mVideoTexture[eye]->getWidth(),
-                mVideoTexture[eye]->getHeight(),
-                mVideoTexture[eye]->getDepth(),
-                imageDataSize ) )
+            if(!Ogre::PixelFormatGpuUtils::isCompressed(format) &&
+                !mVideoLoader->updateDestinationSize(
+                    mVideoTexture[eye]->getWidth(),
+                    mVideoTexture[eye]->getHeight(),
+                    Ogre::PixelFormatGpuUtils::getBytesPerPixel( format ),
+                    imageDataSize ) )
             {
-                mQuit = true;
+                setQuit();
             }
             mStagingTexture[eye] =
             textureManager->getStagingTexture(
@@ -855,7 +845,7 @@ namespace esvr2
         {
             if( !mRoot->showConfigDialog() )
             {
-                mQuit = true;
+                setQuit();
                 return;
             }
         }
