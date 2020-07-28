@@ -1171,6 +1171,11 @@ namespace esvr2
         {
 //             LOG << "wait" << LOGEND;
         }
-
+        if ( mCameraPoseState && mCameraPoseState->validPose() )
+        {
+            LOG << "update position" << LOGEND;
+            mCamerasNodeTrans->setOrientation( mCameraPoseState->getRotation() );
+            mCamerasNode->setPosition(mCameraPoseState->getPosition() );
+        }
     }
 }

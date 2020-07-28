@@ -23,6 +23,8 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 
+#include <tf2_ros/transform_listener.h>
+
 #include <mutex>
 
 namespace esvr2
@@ -48,7 +50,9 @@ namespace esvr2
         mRosInputType( rosInputType ),
         mRosNamespace( rosNamespace ),
         mIsCameraInfoInit{ false, false },
-        mSubscribePose(true)
+        mSubscribePose(true),
+        mTfBuffer(nullptr),
+        mTfListener(nullptr)
     {
         if (cameraConfig)
         {
@@ -64,28 +68,40 @@ namespace esvr2
 
     bool VideoROSNode::initialize(void)
     {
+        std::string topic;
         switch (mRosInputType)
         {
             case RIT_NONE:
                 quit();
                 return false;
             case RIT_MONO:
+                LOG << "RIT_MONO" << LOGEND;
+                topic = mRosNamespace + "image_raw";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImage = mNh->subscribe(
-                    mRosNamespace + "image_raw", 1,
+                    topic, 1,
                     &VideoROSNode::newROSImageMono, this);
                 break;
             case RIT_STEREO_SLICED:
+                LOG << "RIT_STEREO_SLICED" << LOGEND;
+                topic = mRosNamespace + "image";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImage = mNh->subscribe(
-                    mRosNamespace + "image", 1,
+                    topic, 1,
                     &VideoROSNode::newROSImageStereoSliced, this);
                 break;
             case RIT_STEREO_SPLIT_RAW:
+                LOG << "RIT_STEREO_SPLIT_RAW" << LOGEND;
+                topic = mRosNamespace + "left/image_raw";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImageLeftRaw= new
                     message_filters::Subscriber<sensor_msgs::Image> (
-                        *mNh, mRosNamespace + "left/image_raw", 20);
+                        *mNh, topic, 20);
+                topic = mRosNamespace + "right/image_raw";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImageRightRaw = new
                     message_filters::Subscriber<sensor_msgs::Image> (
-                        *mNh, mRosNamespace + "right/image_raw", 20);
+                        *mNh, topic, 20);
                 mApproximateSyncRaw.reset(
                     new ApproximateSync(
                         ApproximatePolicy(20),
@@ -94,36 +110,49 @@ namespace esvr2
                     boost::bind( &VideoROSNode::newROSImageCallback, this,_1, _2));
                 break;
             case RIT_STEREO_SPLIT:
+                LOG << "RIT_STEREO_SPLIT" << LOGEND;
+                topic = mRosNamespace + "left/image_raw";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImageLeftRaw = new
                 message_filters::Subscriber<sensor_msgs::Image> (
-                    *mNh, mRosNamespace + "left/image_raw", 20);
+                    *mNh, topic, 20);
+                topic = mRosNamespace + "right/image_raw";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImageRightRaw = new
                 message_filters::Subscriber<sensor_msgs::Image> (
-                    *mNh, mRosNamespace + "right/image_raw", 20);
+                    *mNh, topic, 20);
                 mApproximateSyncRaw.reset(
                     new ApproximateSync(
                         ApproximatePolicy(20),
                         *mSubImageLeftRaw, *mSubImageRightRaw));
                 mApproximateSyncRaw->registerCallback(
                     boost::bind( &VideoROSNode::newROSImageCallback, this,_1, _2));
+                topic = mRosNamespace + "left/image_undist";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImageLeftUndist = new
                 message_filters::Subscriber<sensor_msgs::Image> (
-                    *mNh, mRosNamespace + "left/image_undist", 20);
+                    *mNh, topic, 20);
+                topic = mRosNamespace + "right/image_undist";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImageRightUndist = new
                 message_filters::Subscriber<sensor_msgs::Image> (
-                    *mNh, mRosNamespace + "right/image_undist", 20);
+                    *mNh, topic, 20);
                 mApproximateSyncUndist.reset(
                     new ApproximateSync(
                         ApproximatePolicy(20),
                         *mSubImageLeftUndist, *mSubImageRightUndist));
                 mApproximateSyncUndist->registerCallback(
                     boost::bind( &VideoROSNode::newROSImageCallback, this,_1, _2));
+                topic = mRosNamespace + "left/image_undist_rect";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImageLeftUndistRect = new
                 message_filters::Subscriber<sensor_msgs::Image> (
-                    *mNh, mRosNamespace + "left/image_undist_rect", 20);
+                    *mNh, topic, 20);
+                topic = mRosNamespace + "right/image_undist_rect";
+                LOG << "Subscribe to " << topic << LOGEND;
                 mSubImageRightUndistRect = new
                 message_filters::Subscriber<sensor_msgs::Image> (
-                    *mNh, mRosNamespace + "right/image_undist_rect", 20);
+                    *mNh, topic, 20);
                 mApproximateSyncUndistRect.reset(
                     new ApproximateSync(
                         ApproximatePolicy(20),
@@ -135,18 +164,22 @@ namespace esvr2
 
         if (!mIsCameraInfoInit[LEFT] && !mIsCameraInfoInit[RIGHT])
         {
+            topic = mRosNamespace + "left/camera_info";
+            LOG << "Subscribe to " << topic << LOGEND;
             mSubCamInfoLeft = mNh->subscribe(
-                mRosNamespace + "left/camera_info", 1,
+                topic, 1,
                 &VideoROSNode::newROSCameraInfoCallback<LEFT>, this);
+            topic = mRosNamespace + "right/camera_info";
+            LOG << "Subscribe to " << topic << LOGEND;
             mSubCamInfoRight = mNh->subscribe(
-                mRosNamespace + "right/camera_info", 1,
+                topic, 1,
                 &VideoROSNode::newROSCameraInfoCallback<RIGHT>, this);
-            if( mSubCamInfoLeft.getNumPublishers() == 0 ||
-                mSubCamInfoRight.getNumPublishers() == 0 )
-            {
-                LOG << "no Publisher for camera_info" << LOGEND;
-                return false;
-            }
+//             if( mSubCamInfoLeft.getNumPublishers() == 0 ||
+//                 mSubCamInfoRight.getNumPublishers() == 0 )
+//             {
+//                 LOG << "no Publisher for camera_info" << LOGEND;
+//                 return false;
+//             }
             // we have to wait until cameraconfig has been read from messages
             mReady = false;
         }
@@ -161,10 +194,14 @@ namespace esvr2
 
         if(mSubscribePose)
         {
+            mTfBuffer = new tf2_ros::Buffer();
+            mTfListener = new tf2_ros::TransformListener(*mTfBuffer, mNh);
+//             topic = "/tf";
+//             LOG << "Subscribe to " << topic << LOGEND;
             //TODO: It get's simply not called
-            mSubPose = mNh->subscribe(
-                    "/tf", 1,
-                    &VideoROSNode::newROSPose, this);
+//             mSubPose = mNh->subscribe(
+//                     topic, 1,
+//                     &VideoROSNode::newROSPose, this);
         }
         return true;
     }
@@ -208,6 +245,7 @@ namespace esvr2
     void VideoROSNode::newROSPose(
         const geometry_msgs::TransformStamped pose)
     {
+        LOG << "getNewPose" << LOGEND;
         Ogre::Vector3 trans(
             pose.transform.translation.x, pose.transform.translation.y, pose.transform.translation.z);
         Ogre::Quaternion rotation(
@@ -346,17 +384,37 @@ namespace esvr2
                 mCameraConfig.cfg[LEFT].width, mCameraConfig.cfg[LEFT].height, 4u,
                 mCameraConfig.cfg[LEFT].width* mCameraConfig.cfg[LEFT].height* 4u );
             updateMaps();
+            mReady = true;
         }
     }
 
     void VideoROSNode::deinitialize(void)
     {
+        //TODO: delete all the other things
         ros::shutdown();
     }
 
     void VideoROSNode::update( )
     {
         ros::spinOnce();
+        geometry_msgs::TransformStamped pose;
+        bool isTransform = true;
+        try{
+            pose = mTfBuffer->lookupTransform("camera", "checkerboard", ros::Time(0));
+        }
+        catch (tf2::TransformException &ex) {
+            ROS_WARN("%s",ex.what());
+            isTransform = false;
+        }
+        if(isTransform)
+        {
+            Ogre::Vector3 trans(
+                pose.transform.translation.x, pose.transform.translation.y, pose.transform.translation.z);
+            Ogre::Quaternion rotation(
+                pose.transform.rotation.x, pose.transform.rotation.y,
+                pose.transform.rotation.z, pose.transform.rotation.w);
+            setPose( trans, rotation );
+        }
     }
 
     bool VideoROSNode::getQuit()

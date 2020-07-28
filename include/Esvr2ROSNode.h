@@ -19,6 +19,7 @@
 #include <message_filters/subscriber.h>
 #include <message_filters/synchronizer.h>
 
+#include <tf2_ros/transform_listener.h>
 #include <mutex>
 
 typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image, sensor_msgs::Image> ApproximatePolicy;
@@ -32,7 +33,6 @@ namespace esvr2
     {
     private:
         ros::NodeHandle *mNh;
-        ros::Subscriber mSubPose;
         ros::Subscriber mSubImage;
         message_filters::Subscriber<sensor_msgs::Image>* mSubImageLeftRaw;
         message_filters::Subscriber<sensor_msgs::Image>* mSubImageRightRaw;
@@ -50,6 +50,9 @@ namespace esvr2
         std::mutex *mCameraConfigLock;
         bool mIsCameraInfoInit[2];
         bool mSubscribePose;
+
+        tf2_ros::Buffer *mTfBuffer;
+        tf2_ros::TransformListener *mTfListener;
 
         void newROSCameraInfoCallback();
 

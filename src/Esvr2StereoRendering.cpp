@@ -83,6 +83,8 @@ RosInputType getRosInputType(std::string input_str)
         input = RIT_STEREO_SLICED;
     if (input_str.compare("STEREO_SPLIT") == 0)
         input = RIT_STEREO_SPLIT;
+    if (input_str.compare("STEREO_SPLIT_RAW") == 0)
+        input = RIT_STEREO_SPLIT_RAW;
     return input;
 }
 
@@ -145,7 +147,7 @@ int main( int argc, char *argv[] )
     InputType input = IT_NONE;
     VideoRenderTarget renderVideoTarget = VRT_TO_SQUARE;
     size_t config_files_end = 0, config_files_begin = 0;
-    StereoCameraConfig *cameraConfig = new StereoCameraConfig();
+    StereoCameraConfig *cameraConfig = nullptr;
 
     HmdConfig hmdConfig{
         { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
@@ -308,6 +310,8 @@ int main( int argc, char *argv[] )
             if (cfg.exists("camera_info.left") &&
                 cfg.exists("camera_info.right"))
             {
+                if(!cameraConfig)
+                    cameraConfig = new StereoCameraConfig();
                 const Setting& cis = cfg.lookup("camera_info");
                 if (cis.exists("left_to_right"))
                 {
@@ -466,8 +470,8 @@ int main( int argc, char *argv[] )
     }
 
     bool validCameraConfig = /*cameraConfig->leftToRight != 0 &&*/
-        cameraConfig->cfg[LEFT].valid() &&
-        ( !isStereo || ( isStereo && cameraConfig->cfg[RIGHT].valid()));
+        cameraConfig && cameraConfig->cfg[LEFT].valid() &&
+        ( !isStereo || ( isStereo && cameraConfig && cameraConfig->cfg[RIGHT].valid()));
     if ( !validCameraConfig && input != IT_ROS )
     {
         LOG << "no valid cameraConfig quit" << LOGEND;

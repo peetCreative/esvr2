@@ -77,7 +77,7 @@ namespace esvr2
     //split and then apply on demand undistortion and rectification
     void VideoLoader::setImageDataFromSplitSliced(const cv::Mat *img)
     {
-        if (mStereo && !isReady())
+        if ( !isReady() )
         {
             LOG << "video loader is not fully configured" << LOGEND;
             return;
