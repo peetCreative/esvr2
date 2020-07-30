@@ -23,6 +23,7 @@ namespace esvr2
         Ogre::Rectangle2D        *mProjectionRectangle2D;
         Ogre::ManualObject       *mProjectionRectangle[4];
         Ogre::ManualObject       *mAxis;
+        Ogre::ManualObject       *mAxisCameras;
         Ogre::v1::BillboardSet   *mTooltips;
         PointCloud               *mPointCloud;
         Ogre::SceneNode          *mSceneNodeLight;
@@ -40,6 +41,7 @@ namespace esvr2
         Ogre::String mTextureName[2], mDatablockName[2];
         void createProjectionRectangle2D();
         void createProjectionPlanes();
+        Ogre::ManualObject *createAxisIntern( void );
         void createAxis( void );
         void createTooltips();
         void createPointCloud();

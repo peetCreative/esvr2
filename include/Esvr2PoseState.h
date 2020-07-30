@@ -9,8 +9,8 @@ namespace esvr2 {
         Ogre::Matrix4 mPose;
 
         Ogre::Vector3 mPosition;
-        Ogre::Quaternion mRotation;
-        void setPose(Ogre::Vector3 position, Ogre::Quaternion rotation);
+        Ogre::Quaternion mOrientation;
+        void setPose(Ogre::Vector3 position, Ogre::Quaternion orientation);
 
         bool mValidPose;
 
@@ -21,7 +21,7 @@ namespace esvr2 {
         Ogre::Matrix4 getPose(void);
         //relativ to parent
         Ogre::Vector3 getPosition(void);
-        Ogre::Quaternion getRotation(void);
+        Ogre::Quaternion getOrientation(void);
         bool validPose();
 
     };

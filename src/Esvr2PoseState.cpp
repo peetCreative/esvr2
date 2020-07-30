@@ -7,7 +7,7 @@
 namespace esvr2 {
     PoseState::PoseState():
         mPose( Ogre::Matrix4::IDENTITY ),
-        mRotation (Ogre::Quaternion::IDENTITY),
+        mOrientation (Ogre::Quaternion::IDENTITY),
         mPosition (Ogre::Vector3::ZERO),
         mValidPose(false){}
 
@@ -23,18 +23,19 @@ namespace esvr2 {
         return mPosition;
     }
 
-    Ogre::Quaternion PoseState::getRotation()
+    Ogre::Quaternion PoseState::getOrientation()
     {
-        return mRotation;
+        return mOrientation;
     }
 
     void PoseState::setPose(
-        Ogre::Vector3 position, Ogre::Quaternion rotation )
+        Ogre::Vector3 position, Ogre::Quaternion orientation )
     {
         mPosition = position;
-        mRotation = rotation;
-        mPose = Ogre::Matrix4(rotation);
+        mOrientation = orientation;
+        mPose = Ogre::Matrix4(orientation);
         mPose.setTrans(position);
+        mValidPose = true;
     }
 
     bool PoseState::validPose()

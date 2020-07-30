@@ -36,28 +36,12 @@ namespace esvr2
     //-------------------------------------------------------------------------------
     void GraphicsSystem::createCamera(void)
     {
-        //Bsp:
-        Ogre::Quaternion orientation(
-            0.9643017554756692,
-            -0.2318762303487807,
-             0.03921201399563528,
-            0.12172902753323941
-            );
-        Ogre::Vector3 pos(
-            -0.0021337842567392606,
-            -0.04217856914381894,
-            0.14701543794086538);
-
         //Use one node to control both cameras
-        mCamerasNodeTrans = mSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
-                createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        mCamerasNodeTrans->setName( "Cameras Node Trans" );
-//         mCamerasNodeTrans->setPosition( pos );
-        mCamerasNodeTrans->setOrientation( orientation );
-        mCamerasNode = mCamerasNodeTrans->
+//         mCamerasNode->setOrientation( orientation );
+        mCamerasNode = mSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
                 createChildSceneNode( Ogre::SCENE_DYNAMIC );
         mCamerasNode->setName( "Cameras Node" );
-        mCamerasNode->setPosition( pos );
+//         mCamerasNode->setPosition( pos );
 //         mCamerasNode->setOrientation( orientation );
 
         mCameraNode[LEFT] = mCamerasNode->
@@ -69,8 +53,8 @@ namespace esvr2
         mCameraNode[RIGHT]->setName( "Right Camera Node" );
 
         mVrCullCamera = mSceneManager->createCamera( "VrCullCamera" );
-        mVrCullCamera->detachFromParent();
-        mCamerasNode->attachObject( mVrCullCamera );
+//         mVrCullCamera->detachFromParent();
+//         mCamerasNode->attachObject( mVrCullCamera );
 
 //         mCamerasNode->setPosition(pos);
 
@@ -85,10 +69,9 @@ namespace esvr2
 //             const Ogre::Real eyeDistance        = 0.06f;
 //             const Ogre::Real eyeFocusDistance   = 0.06f;
 
-            alignCameras();
             //By default cameras are attached to the Root Scene Node.
-            mEyeCameras[LEFT]->detachFromParent();
-            mCameraNode[LEFT]->attachObject( mEyeCameras[LEFT] );
+//             mEyeCameras[LEFT]->detachFromParent();
+//             mCamerasNode->attachObject( mEyeCameras[LEFT] );
             mEyeCameras[RIGHT]->detachFromParent();
             mCameraNode[RIGHT]->attachObject( mEyeCameras[RIGHT] );
 
@@ -101,7 +84,7 @@ namespace esvr2
             // Position it at 500 in Z direction
             mCamera->setPosition( Ogre::Vector3( 0.0, 0.0, 0.0 ) );
             // Look back along -Z
-            mCamera->lookAt( Ogre::Vector3( 0, 0, -1.0 ) );
+            mCamera->lookAt( Ogre::Vector3( 0, 0, 1.0 ) );
             mCamera->setNearClipDistance( mCamNear );
             mCamera->setFarClipDistance( mCamFar );
             mCamera->setAutoAspectRatio( true );
@@ -137,30 +120,7 @@ namespace esvr2
     {
         //                 const Ogre::Vector3 camPos( eyeDistance * (leftOrRight * 2 - 1), 0, 0 );
 
-        for (size_t eye = 0; eye < mEyeNum; eye++)
-        {
-            Ogre::Matrix4 eyeToHead =
-                mVrData->mHeadToEye[eye]/*.inverse()*/;
-            Ogre::Vector4 camPos = eyeToHead *
-                Ogre::Vector4( 0, 0, 0, 1.0 );
-            // Look back along -Z
-            //TODO: make focus dependend from scale is so we are focusing at about 10 cm.
-            // scale is about 10 so 10cm ~ 1m
-            Ogre::Vector3 focusPoint = Ogre::Vector3( 0.0, 0.0, -1.0 );
 
-            focusPoint = eyeToHead * focusPoint;
-            mCameraNode[eye]->setPosition( camPos.xyz() );
-
-    //                 Ogre::Vector3 lookAt( eyeFocusDistance * (eye * 2 - 1), 0, -1 );
-            //Ogre::Vector3 lookAt( 0, 0, 0 );
-
-            mCameraNode[eye]->lookAt( focusPoint, Ogre::Node::TS_LOCAL );
-            mEyeCameras[eye]->setNearClipDistance( mCamNear );
-            mEyeCameras[eye]->setFarClipDistance( mCamFar );
-            //maybe we have to use here the custom one from rviz
-            mEyeCameras[eye]->setCustomProjectionMatrix( true, mVrData->mProjectionMatrix[eye] );
-            mEyeCameras[eye]->setAutoAspectRatio( true );
-        }
     }
     //-------------------------------------------------------------------------
     void GraphicsSystem::syncCameraProjection( bool bForceUpdate )
@@ -237,29 +197,6 @@ namespace esvr2
             mVrCullCamera->setNearClipDistance( mCamNear + offset );
             mVrCullCamera->setFarClipDistance( mCamFar + offset );
         }
-    }
-
-    void GraphicsSystem::itterateDistortion()
-    {
-        Distortion distortion = mVideoLoader->getDistortion();
-        if( distortion == DIST_RAW )
-        {
-            distortion = DIST_UNDISTORT;
-            LOG << "UNDISTORT" << LOGEND;
-        }
-        else
-        if( distortion == DIST_UNDISTORT )
-        {
-            distortion = DIST_UNDISTORT_RECTIFY;
-            LOG << "UNDISTORT_RECTIFY" << LOGEND;
-        }
-        else
-        if ( distortion == DIST_UNDISTORT_RECTIFY)
-        {
-            distortion = DIST_RAW;
-            LOG << "RAW" << LOGEND;
-        }
-        mVideoLoader->setDistortion(distortion);
     }
 
     bool GraphicsSystem::calcAlign()
@@ -341,23 +278,23 @@ namespace esvr2
                 float zoom_y = zoom_x;
 
                 // Preserve aspect ratio
-                if (win_width != 0 && win_height != 0)
-                {
-                    float img_aspect = (img_width / f_x) / (img_height / f_y);
-                    float win_aspect = win_width / win_height;
+//                 if (win_width != 0 && win_height != 0)
+//                 {
+//                     float img_aspect = (img_width / f_x) / (img_height / f_y);
+//                     float win_aspect = win_width / win_height;
+// 
+//                     if (img_aspect > win_aspect)
+//                     {
+//                         zoom_y = zoom_y / img_aspect * win_aspect;
+//                     }
+//                     else
+//                     {
+//                         zoom_x = zoom_x / win_aspect * img_aspect;
+//                     }
+//                 }
 
-                    if (img_aspect > win_aspect)
-                    {
-                        zoom_y = zoom_y / img_aspect * win_aspect;
-                    }
-                    else
-                    {
-                        zoom_x = zoom_x / win_aspect * img_aspect;
-                    }
-                }
-
-                proj_matrix[eye] = Ogre::Matrix4::ZERO;
                 eyeToHead[eye] = Ogre::Matrix4::IDENTITY;
+                proj_matrix[eye] = Ogre::Matrix4::ZERO;
 
                 proj_matrix[eye][0][0] = 2.0 * f_x / img_width * zoom_x;
                 proj_matrix[eye][1][1] = 2.0 * f_y / img_height * zoom_y;
@@ -375,7 +312,22 @@ namespace esvr2
                 // x   ~= cameraConfig.cfg[eye].P[3]
                 eyeToHead[eye][0][3] = cameraConfig.cfg[eye].P[3] *2.0f / cameraConfig.cfg[eye].P[0];
 //                 mEyeCameras[eye]->setPosition(position );
+//                 Ogre::Vector3 focusPoint = Ogre::Vector3( 0.0f, 0.0f, -1.0f );
+//                 mCameraNode[eye]->lookAt( focusPoint, Ogre::Node::TS_LOCAL );
+                Ogre::Matrix4 proj_matrix_rs;
+                mRoot->getRenderSystem()->_convertOpenVrProjectionMatrix(
+                    proj_matrix[eye], proj_matrix_rs );
+
+                mEyeCameras[eye]->setCustomProjectionMatrix( true, proj_matrix[eye] );
+                mEyeCameras[eye]->setAutoAspectRatio( true );
+                mEyeCameras[eye]->setNearClipDistance( mCamNear );
+                mEyeCameras[eye]->setFarClipDistance( mCamFar );
             }
+            //For Debugging
+            mEyeCameras[LEFT]->setPosition( 0,0,0 );
+            mEyeCameras[LEFT]->lookAt(0,0,1);
+            mEyeCameras[RIGHT]->setPosition(1,0,0);
+            mEyeCameras[RIGHT]->lookAt(0,0,0);
 
             float c_vr_h = -mHmdConfig.tan[eye][0] * vr_width_half /
                 (-mHmdConfig.tan[eye][0] + mHmdConfig.tan[eye][1]);
@@ -419,7 +371,6 @@ namespace esvr2
         }
         // now as we have camera config we use it.
         mVrData->set( eyeToHead, proj_matrix);
-        alignCameras();
         return true;
     }
 
@@ -749,6 +700,7 @@ namespace esvr2
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
             VideoLoader *videoLoader,
+            PoseState *poseState,
             int screen,
             bool isStereo,
             bool showOgreConfigDialog,
@@ -761,7 +713,7 @@ namespace esvr2
         mCamerasNodeTrans( nullptr ),
         mCamerasNode( nullptr ),
         mCameraNode{ nullptr, nullptr },
-        mCameraPoseState( nullptr ),
+        mCameraPoseState( poseState ),
         mEyeCameras{ nullptr, nullptr },
         mCamNear( camNear ),
         mCamFar( camFar ),
@@ -1173,9 +1125,21 @@ namespace esvr2
         }
         if ( mCameraPoseState && mCameraPoseState->validPose() )
         {
-            LOG << "update position" << LOGEND;
-            mCamerasNodeTrans->setOrientation( mCameraPoseState->getRotation() );
-            mCamerasNode->setPosition(mCameraPoseState->getPosition() );
+            Ogre::Quaternion prev_orientation = mCamerasNode->getOrientation();
+            Ogre::Vector3 prev_position = mCamerasNode->getPosition();
+            Ogre::Quaternion orientation = mCameraPoseState->getOrientation();
+            orientation = orientation * Ogre::Quaternion(Ogre::Degree(180), Ogre::Vector3::UNIT_Y);
+            Ogre::Vector3 position = mCameraPoseState->getPosition();
+            if ( !prev_orientation.orientationEquals(orientation) 
+                || prev_position != position )
+            {
+                LOG << "update orientation and position" << mOvrCompositorListener->getFrameCnt();
+                LOG << "Pos: " << position.x << " " << position.y << " " <<position.z;
+                LOG << "Orientation: " << orientation.w << " "<< orientation.x << " " << orientation.y << " " <<orientation.z<<LOGEND;
+                mCamerasNode->setPosition( position );
+                mCamerasNode->setOrientation( orientation );
+                //                 mEyeCameras[LEFT]->lookAt(0,0,0);
+            }
         }
     }
 }

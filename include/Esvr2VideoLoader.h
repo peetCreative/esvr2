@@ -13,6 +13,7 @@ namespace esvr2 {
     {
     protected:
         Distortion mDistortion;
+//         std::vector<Distortion> mAvailableDistortions;
         bool mStereo;
         int mCur, mLoad;
         int mSeq;

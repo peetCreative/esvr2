@@ -115,6 +115,7 @@ namespace esvr2
             Ogre::VrData *vrData,
             HmdConfig hmdConfig,
             VideoLoader *videoLoader,
+            PoseState *poseState,
             int screen,
             bool isStereo,
             bool showOgreDialog = false,
@@ -128,16 +129,10 @@ namespace esvr2
 
         bool getShowVideo( void ) { return mShowVideo; };
         void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
-        void itterateDistortion( void );
 
         VideoLoader *getVideoLoader() { return mVideoLoader; };
 
         virtual void beginFrameParallel(void);
-
-        void _notifyPoseSource( PoseState *poseState )
-        {
-            mCameraPoseState = poseState;
-        };
     };
 }
 

@@ -9,6 +9,7 @@
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2ROSNode.h"
 #include "Esvr2ParseYml.h"
+#include "Esvr2TestPose.h"
 
 #include "GraphicsSystem.h"
 #include "GameState.h"
@@ -163,7 +164,10 @@ int main( int argc, char *argv[] )
     videoInput.videoInputType = VIT_NONE;
     videoInput.path = "";
     RosInputType rosInputType = RIT_NONE;
-    std::string rosNamespace = "";
+    std::string rosNamespace = "",
+        rosTopicNameRaw = "",
+        rosTopicNameUndist = "",
+        rosTopicNameUndistRect = "";
     for (int i = 1; i < argc; i++)
     {
         if ( std::strcmp(argv[i], "--config") == 0 && i+1 < argc )
@@ -302,6 +306,18 @@ int main( int argc, char *argv[] )
                 if (vs.exists("namespace"))
                 {
                     rosNamespace = vs["namespace"].c_str();
+                }
+                if (vs.exists("topic_name_raw"))
+                {
+                    rosTopicNameRaw = vs["topic_name_raw"].c_str();
+                }
+                if (vs.exists("topic_name_undist"))
+                {
+                    rosTopicNameUndist = vs["topic_name_undist"].c_str();
+                }
+                if (vs.exists("topic_name_undist_rect"))
+                {
+                    rosTopicNameUndistRect = vs["topic_name_undist_rect"].c_str();
                 }
             }
 
@@ -503,7 +519,9 @@ int main( int argc, char *argv[] )
             #ifdef USE_ROS
             VideoROSNode *rosNode;
             rosNode = new VideoROSNode(
-                argc, argv, rosInputType, rosNamespace, cameraConfig, distortion, isStereo );
+                argc, argv, rosInputType, cameraConfig, distortion, isStereo,
+                rosNamespace, rosTopicNameRaw,
+                rosTopicNameUndist, rosTopicNameUndistRect );
             videoLoader = rosNode;
             poseState = rosNode;
             break;
@@ -518,12 +536,10 @@ int main( int argc, char *argv[] )
         LOG << "no videoloader or could not be initialized, Quitting" << LOGEND;
         return 1;
     }
-    if ( poseState )
+    if ( !poseState )
     {
-    }
-    else
-    {
-        LOG << "no PoseState, do not move camera" << LOGEND;
+        poseState = new TestPose();
+        LOG << "no PoseState, using TestPose" << LOGEND;
     }
 
     // cycle until videoLoader is finished or quits
@@ -545,7 +561,7 @@ int main( int argc, char *argv[] )
 
     GraphicsSystem *graphicsSystem = new GraphicsSystem(
             graphicsGameState, workspace, vrData,
-            hmdConfig, videoLoader, screen, isStereo, show_ogre_dialog,
+            hmdConfig, videoLoader, poseState, screen, isStereo, show_ogre_dialog,
             show_video, renderVideoTarget );
 
     graphicsGameState->_notifyStereoGraphicsSystem( graphicsSystem );

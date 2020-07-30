@@ -30,6 +30,7 @@ namespace esvr2
         mVideoDatablock{ nullptr, nullptr },
         mProjectionRectangle{ nullptr, nullptr, nullptr, nullptr },
         mAxis( nullptr ),
+        mAxisCameras( nullptr ),
         mTooltips( nullptr ),
         mPointCloud( nullptr ),
         mSceneNodeLight( nullptr ),
@@ -224,26 +225,69 @@ namespace esvr2
         }
     }
 
-    void GameState::createAxis( void )
+    Ogre::ManualObject *GameState::createAxisIntern( void )
     {
         Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-        mAxis = sceneManager->createManualObject();
-        mAxis->begin("BaseWhite", Ogre::OT_LINE_LIST);
-        mAxis->position( 0.0f, 0.0f, 0.0f );
-        mAxis->position( 1.0f, 0.0f, 0.0f );
-        mAxis->line(0, 1);
-        mAxis->position( 0.0f, 0.0f, 0.0f );
-        mAxis->position( 0.0f, 1.0f, 0.0f );
-        mAxis->line(2, 3);
-        mAxis->position( 0.0f, 0.0f, 0.0f );
-        mAxis->position( 0.0f, 0.0f, 1.0f );
-        mAxis->line(4, 5);
-        mAxis->end();
-        mAxis->setVisibilityFlags( 0xFFFF );
-        Ogre::SceneNode *sceneNodeAxis = sceneManager->getRootSceneNode(
-                Ogre::SCENE_DYNAMIC )->
-                    createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        sceneNodeAxis->attachObject(mAxis);
+        Ogre::ManualObject *axis = sceneManager->createManualObject();
+        axis->begin("Red", Ogre::OT_TRIANGLE_LIST);
+        axis->position( 0.0f, 0.01f, 0.0f );
+        axis->position( 0.0f, -0.01f, 0.0f );
+        axis->position( 0.1f, -0.01f, 0.0f );
+        axis->position( 0.1f, 0.01f, 0.0f );
+        axis->quad(0, 1, 2, 3);
+        axis->quad(3, 2, 1, 0);
+        axis->position( 0.0f, 0.0f, 0.01f );
+        axis->position( 0.0f, 0.0f, -0.01f );
+        axis->position( 0.1f, 0.0f, -0.01f );
+        axis->position( 0.1f, 0.0f, 0.01f );
+        axis->quad(4, 5, 6, 7);
+        axis->quad(7, 6, 5, 4);
+        axis->end();
+        axis->begin("Green", Ogre::OT_TRIANGLE_LIST);
+        axis->position(  0.01f, 0.0f, 0.0f );
+        axis->position( -0.01f, 0.0f, 0.0f );
+        axis->position( -0.01f, 0.1f, 0.0f );
+        axis->position(  0.01f, 0.1f, 0.0f );
+        axis->quad(0, 1, 2, 3);
+        axis->quad(3, 2, 1, 0);
+        axis->position( 0.0f, 0.0f, 0.01f );
+        axis->position( 0.0f, 0.0f, -0.01f );
+        axis->position( 0.0f, 0.1f, -0.01f );
+        axis->position( 0.0f, 0.1f, 0.01f );
+        axis->quad(4, 5, 6, 7);
+        axis->quad(7, 6, 5, 4);
+        axis->end();
+        axis->begin("Blue", Ogre::OT_TRIANGLE_LIST);
+        axis->position(  0.01f, 0.0f, 0.0f );
+        axis->position( -0.01f, 0.0f, 0.0f );
+        axis->position( -0.01f, 0.0f, 0.1f);
+        axis->position( 0.01f, 0.0f, 0.1f);
+        axis->quad(0, 1, 2, 3);
+        axis->quad(3, 2, 1, 0);
+        axis->position( 0.0f, 0.01f, 0.0f );
+        axis->position( 0.0f, -0.01f, 0.0f );
+        axis->position( 0.0f, -0.01f, 0.1f );
+        axis->position( 0.0f, 0.01f, 0.1f);
+        axis->quad(4, 5, 6, 7);
+        axis->quad(7, 6, 5, 4);
+        axis->end();
+
+        return axis;
+    }
+
+    void GameState::createAxis(void)
+    {
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
+        mAxis = createAxisIntern();
+        mAxis->setName("AxisOrigin");
+        mAxis->setVisibilityFlags( 0x1 );
+        sceneManager->getRootSceneNode(
+            Ogre::SCENE_DYNAMIC )->attachObject(mAxis);
+        mAxisCameras = createAxisIntern();
+        mAxisCameras->setName("AxisCamera");
+        mAxisCameras->setVisibilityFlags( 0x1 << 1 );
+        Ogre::SceneNode *camerasNode = sceneManager->findSceneNodes ("Cameras Node")[0];
+        camerasNode->attachObject(mAxisCameras);
     }
 
     void GameState::createTooltips( void )
@@ -358,12 +402,46 @@ namespace esvr2
 
             mVideoDatablock[eye]->setTexture( 0, mTextureName[eye] );
         }
-
+        Ogre::HlmsUnlitDatablock* colourdatablock =
+            static_cast<Ogre::HlmsUnlitDatablock*>(
+                hlmsUnlit->createDatablock(
+                    "Red",
+                    "Red",
+                    Ogre::HlmsMacroblock(),
+                    Ogre::HlmsBlendblock(),
+                    Ogre::HlmsParamVec() ) );
+        colourdatablock->setUseColour(true);
+        colourdatablock->setColour( Ogre::ColourValue(1,0,0,1));
+        colourdatablock =
+            static_cast<Ogre::HlmsUnlitDatablock*>(
+                hlmsUnlit->createDatablock(
+                    "Green",
+                    "Green",
+                    Ogre::HlmsMacroblock(),
+                    Ogre::HlmsBlendblock(),
+                    Ogre::HlmsParamVec() ) );
+        colourdatablock->setUseColour(true);
+        colourdatablock->setColour( Ogre::ColourValue(0,1,0,1));
+        colourdatablock =
+            static_cast<Ogre::HlmsUnlitDatablock*>(
+                hlmsUnlit->createDatablock(
+                    "Blue",
+                    "Blue",
+                    Ogre::HlmsMacroblock(),
+                    Ogre::HlmsBlendblock(),
+                    Ogre::HlmsParamVec() ) );
+        colourdatablock->setUseColour(true);
+        colourdatablock->setColour( Ogre::ColourValue(0,0,1,1));
+        const Ogre::HlmsManager::HlmsDatablockMap datablocks = hlmsManager->getDatablocks();
+        for(auto d = datablocks.begin(); d != datablocks.end(); d++ )
+        {
+            LOG << "HlmsDatablock: " << d->second->getName().getFriendlyText() << LOGEND;
+        }
 //         createProjectionRectangle2D();
-        createProjectionPlanes();
+//         createProjectionPlanes();
         createAxis();
-        createTooltips();
-        createPointCloud();
+//         createTooltips();
+//         createPointCloud();
         createMesh();
 
         Ogre::Light *light = sceneManager->createLight();
@@ -397,23 +475,17 @@ namespace esvr2
         Ogre::uint32 setMask = 0x0;
         Ogre::uint32 unsetMask = 0x0;
 
-
-
-        // stop Video
+        if( arg.keysym.scancode == SDL_SCANCODE_Y )
+        {
+            mStereoGraphicsSystem->getVideoLoader()->setDistortion(DIST_RAW);
+        }
         if( arg.keysym.scancode == SDL_SCANCODE_X )
         {
-            mStereoGraphicsSystem->itterateDistortion();
-            Distortion dist = mStereoGraphicsSystem->getVideoLoader()->getDistortion();
-            if (dist == DIST_UNDISTORT_RECTIFY)
-            {
-                setMask = 0x40 | 0x80;
-                unsetMask = 0x10 | 0x20;
-            }
-            else
-            {
-                setMask = 0x10 | 0x20;
-                unsetMask = 0x40 | 0x80;
-            }
+            mStereoGraphicsSystem->getVideoLoader()->setDistortion(DIST_UNDISTORT);
+        }
+        if( arg.keysym.scancode == SDL_SCANCODE_C )
+        {
+            mStereoGraphicsSystem->getVideoLoader()->setDistortion(DIST_UNDISTORT_RECTIFY);
         }
         if( arg.keysym.scancode == SDL_SCANCODE_1 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
@@ -436,7 +508,7 @@ namespace esvr2
                 }
             }
         }
-        //strg + 2 tool tip
+        //strg + 2 axis
         if( arg.keysym.scancode == SDL_SCANCODE_2 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
         {
