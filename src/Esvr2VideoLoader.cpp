@@ -103,14 +103,14 @@ namespace esvr2
                 size_t outputRow = inputRow/2;
                 size_t srcPos = inputRow * img->cols * depth;
                 size_t destPos = outputRow * img->cols * depth;
-                memcpy( imgLeft.data + destPos, img->data + srcPos, rowLength );
+                memcpy( imgRight.data + destPos, img->data + srcPos, rowLength );
             }
             else
             {
                 size_t outputRow = (inputRow-1)/2;
                 size_t srcPos = inputRow*img->cols*depth;
                 size_t destPos = outputRow * img->cols * depth;
-                memcpy( imgRight.data + destPos, img->data + srcPos, rowLength );
+                memcpy( imgLeft.data + destPos, img->data + srcPos, rowLength );
             }
         }
         setImageDataFromRaw( &imgLeft, &imgRight);
@@ -178,6 +178,11 @@ namespace esvr2
             {
                 //Shouldn't matter whether BGR to BGRA or RGB to RGBA
                 cvtColor( *(img[eye]), *(img[eye]), cv::COLOR_RGB2BGRA );
+            }
+            else if (img[eye]->type() == CV_8UC4 )
+            {
+                //Shouldn't matter whether BGR to BGRA or RGB to RGBA
+                cvtColor( *(img[eye]), *(img[eye]), cv::COLOR_RGBA2BGRA );
             }
             if( img[eye]->type() != CV_8UC4 )
             {
