@@ -510,7 +510,7 @@ int main( int argc, char *argv[] )
                 videoInput, *cameraConfig, distortion, isStereo );
             break;
         case IT_VIDEO_BLACKMAGIC:
-            #ifdef USE_BLACKMAGIC
+            #ifdef USE_BLACKMAGICCAMERA
             videoLoader = new BlackMagicVideoLoader(
                 videoInput, *cameraConfig, distortion, isStereo );
             #endif

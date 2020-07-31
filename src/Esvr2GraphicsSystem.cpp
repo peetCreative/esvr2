@@ -70,10 +70,11 @@ namespace esvr2
 //             const Ogre::Real eyeFocusDistance   = 0.06f;
 
             //By default cameras are attached to the Root Scene Node.
-//             mEyeCameras[LEFT]->detachFromParent();
-//             mCamerasNode->attachObject( mEyeCameras[LEFT] );
+            mEyeCameras[LEFT]->detachFromParent();
+            mCamerasNode->attachObject( mEyeCameras[LEFT] );
             mEyeCameras[RIGHT]->detachFromParent();
-            mCameraNode[RIGHT]->attachObject( mEyeCameras[RIGHT] );
+            mCamerasNode->attachObject( mEyeCameras[RIGHT] );
+//             mCameraNode[RIGHT]->attachObject( mEyeCameras[RIGHT] );
 
             mCamera = mEyeCameras[RIGHT];
         }
@@ -319,15 +320,15 @@ namespace esvr2
                     proj_matrix[eye], proj_matrix_rs );
 
                 mEyeCameras[eye]->setCustomProjectionMatrix( true, proj_matrix[eye] );
-                mEyeCameras[eye]->setAutoAspectRatio( true );
-                mEyeCameras[eye]->setNearClipDistance( mCamNear );
+//                 mEyeCameras[eye]->setAutoAspectRatio( true );
+                mEyeCameras[eye]->setNearClipDistance( 0.0001 );
                 mEyeCameras[eye]->setFarClipDistance( mCamFar );
+                double tx = (cameraConfig.cfg[eye].P[3] / f_x);
+                Ogre::Vector3 position = Ogre::Vector3::UNIT_X * tx;
+                LOG << "Pos "<< cameraConfig.cfg[eye].eye_str << eye << ": " << position.x << " " << position.y << " " <<position.z <<LOGEND;
+                mEyeCameras[eye]->setPosition( position );
+                mEyeCameras[eye]->lookAt(0,0,1);
             }
-            //For Debugging
-            mEyeCameras[LEFT]->setPosition( 0,0,0 );
-            mEyeCameras[LEFT]->lookAt(0,0,1);
-            mEyeCameras[RIGHT]->setPosition(1,0,0);
-            mEyeCameras[RIGHT]->lookAt(0,0,0);
 
             float c_vr_h = -mHmdConfig.tan[eye][0] * vr_width_half /
                 (-mHmdConfig.tan[eye][0] + mHmdConfig.tan[eye][1]);
@@ -1125,20 +1126,22 @@ namespace esvr2
         }
         if ( mCameraPoseState && mCameraPoseState->validPose() )
         {
-            Ogre::Quaternion prev_orientation = mCamerasNode->getOrientation();
+            Ogre::Quaternion prev_orientation =
+                mCamerasNode->getOrientation();
             Ogre::Vector3 prev_position = mCamerasNode->getPosition();
-            Ogre::Quaternion orientation = mCameraPoseState->getOrientation();
-            orientation = orientation * Ogre::Quaternion(Ogre::Degree(180), Ogre::Vector3::UNIT_Y);
+            Ogre::Quaternion orientation =
+                mCameraPoseState->getOrientation();
+            orientation = orientation * Ogre::Quaternion(
+                Ogre::Degree(180), Ogre::Vector3::UNIT_Z);
             Ogre::Vector3 position = mCameraPoseState->getPosition();
-            if ( !prev_orientation.orientationEquals(orientation) 
+            if ( !prev_orientation.orientationEquals(orientation)
                 || prev_position != position )
             {
-                LOG << "update orientation and position" << mOvrCompositorListener->getFrameCnt();
-                LOG << "Pos: " << position.x << " " << position.y << " " <<position.z;
-                LOG << "Orientation: " << orientation.w << " "<< orientation.x << " " << orientation.y << " " <<orientation.z<<LOGEND;
+//                 LOG << "update orientation and position" << mOvrCompositorListener->getFrameCnt();
+//                 LOG << "Pos: " << position.x << " " << position.y << " " <<position.z;
+//                 LOG << "Orientation: " << orientation.w << " "<< orientation.x << " " << orientation.y << " " <<orientation.z<<LOGEND;
                 mCamerasNode->setPosition( position );
                 mCamerasNode->setOrientation( orientation );
-                //                 mEyeCameras[LEFT]->lookAt(0,0,0);
             }
         }
     }

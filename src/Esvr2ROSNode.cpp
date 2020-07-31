@@ -387,6 +387,7 @@ namespace esvr2
         LOG << "camera_info " << eye << LOGEND;
         if ( !mIsCameraInfoInit[eye] )
         {
+            mCameraConfig.cfg[eye].eye_str = eye == LEFT ? "left": "right";
             mCameraConfig.cfg[eye].width = camInfo->width;
             mCameraConfig.cfg[eye].height = camInfo->height;
             for( size_t i = 0; i < 9; i++ )
@@ -444,10 +445,19 @@ namespace esvr2
         {
             Ogre::Vector3 trans(
                 pose.transform.translation.x, pose.transform.translation.y, pose.transform.translation.z);
-            Ogre::Quaternion rotation(
-                pose.transform.rotation.x, pose.transform.rotation.y,
-                pose.transform.rotation.z, pose.transform.rotation.w);
-            setPose( trans, rotation );
+            Ogre::Quaternion orientation(
+                pose.transform.rotation.w,
+                pose.transform.rotation.x,
+                pose.transform.rotation.y,
+                pose.transform.rotation.z);
+            if ( !mOrientation.orientationEquals(orientation)
+                || mPosition != trans )
+            {
+//                 LOG << "ROS update orientation and position" << pose.header.stamp.sec << " " << pose.header.stamp.nsec;
+//                 LOG << " Pos: " << trans.x << " " << trans.y << " " <<trans.z;
+//                 LOG << " Orientation: " << orientation.w << " "<< orientation.x << " " << orientation.y << " " <<orientation.z<<LOGEND;
+                setPose( trans, orientation );
+            }
         }
     }
 

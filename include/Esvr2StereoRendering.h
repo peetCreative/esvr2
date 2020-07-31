@@ -68,6 +68,7 @@ namespace esvr2 {
         Ogre::uint32 height;
     } HmdConfig;
     typedef struct {
+        std::string eye_str = "";
         int width = 0;
         int height = 0;
         std::vector<float> D = { 0, 0, 0, 0, 0 };

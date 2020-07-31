@@ -17,6 +17,8 @@ if (BUILD_ROS)
         roscpp
         sensor_msgs
         geometry_msgs
+        tf2
+        tf2_ros
         message_filters
         pluginlib)
     MESSAGE("build ROS")

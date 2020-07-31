@@ -123,6 +123,7 @@ void operator >> (const YAML::Node& node, SimpleMatrix& m)
             camera_name = "unknown";
         #endif
 
+            doc[CAM_YML_NAME] >> cam_info.eye_str;
             doc[WIDTH_YML_NAME] >> cam_info.width;
             doc[HEIGHT_YML_NAME] >> cam_info.height;
 
