@@ -85,7 +85,7 @@ namespace esvr2
             // Position it at 500 in Z direction
             mCamera->setPosition( Ogre::Vector3( 0.0, 0.0, 0.0 ) );
             // Look back along -Z
-            mCamera->lookAt( Ogre::Vector3( 0, 0, 1.0 ) );
+            mCamera->lookAt( Ogre::Vector3( 0, 0, -1.0 ) );
             mCamera->setNearClipDistance( mCamNear );
             mCamera->setFarClipDistance( mCamFar );
             mCamera->setAutoAspectRatio( true );
@@ -200,6 +200,56 @@ namespace esvr2
         }
     }
 
+    Ogre::Vector4 GraphicsSystem::getVpOffset( Distortion dist, size_t eye)
+    {
+        size_t vr_width_half = mVrTexture->getWidth()/2;
+        size_t vr_width = mVrTexture->getWidth();
+        size_t vr_height = mVrTexture->getHeight();
+        float f_x, f_y, c_x, c_y;
+        StereoCameraConfig cameraConfig = mVideoLoader->getStereoCameraConfig();
+        switch(dist)
+        {
+            case DIST_RAW:
+                f_x = cameraConfig.cfg[eye].K[0];
+                f_y = cameraConfig.cfg[eye].K[4];
+                c_x = cameraConfig.cfg[eye].K[2];
+                c_y = cameraConfig.cfg[eye].K[5];
+                break;
+            case DIST_UNDISTORT_RECTIFY:
+                f_x = cameraConfig.cfg[eye].P[0];
+                f_y = cameraConfig.cfg[eye].P[5];
+                c_x = cameraConfig.cfg[eye].P[2];
+                c_y = cameraConfig.cfg[eye].P[6];
+                break;
+            default:
+                return Ogre::Vector4(0,0,0,0);
+        }
+        float img_width = cameraConfig.cfg[eye].width;
+        float img_height = cameraConfig.cfg[eye].height;
+
+        float c_vr_h = -mHmdConfig.tan[eye][0] /
+            (-mHmdConfig.tan[eye][0] + mHmdConfig.tan[eye][1]);
+        float c_vr_v = -mHmdConfig.tan[eye][2] /
+            (-mHmdConfig.tan[eye][2] + mHmdConfig.tan[eye][3]);
+
+        float img_size_resize_h = c_vr_h * img_width /
+            (f_x *-mHmdConfig.tan[eye][0]);
+        float img_size_resize_v = c_vr_v * img_height /
+            (f_y *-mHmdConfig.tan[eye][2]);
+
+        float img_middle_resize_h =
+            img_size_resize_h * c_x / img_width;
+        float img_middle_resize_v =
+            img_size_resize_v * c_y / img_height;
+
+        float align_f_h = (c_vr_h - img_middle_resize_h)/2
+            + ( eye == LEFT ? 0 : 0.5 );
+        float align_f_v = c_vr_v - img_middle_resize_v;
+        float img_size_resize_h_entire = img_size_resize_h/2;
+        return Ogre::Vector4(
+            align_f_h, align_f_v, img_size_resize_h_entire, img_size_resize_v );
+    }
+
     bool GraphicsSystem::calcAlign()
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
@@ -209,33 +259,6 @@ namespace esvr2
         //which is limited by this function
         mUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
 
-        StereoCameraConfig cameraConfig = mVideoLoader->getStereoCameraConfig();
-
-        //now we have to know
-        if (!mImageRenderConfig)
-        {
-            mImageRenderConfig = new ImageRenderConfig();
-        }
-
-        size_t vr_width_half = mVrTexture->getWidth()/2;
-        size_t vr_height = mVrTexture->getHeight();
-
-//              left left
-//                 = -1.39377;
-//              left right
-//                 = 1.23437;
-//              left top
-//                  = -1.46653 ;
-//              left bottom
-//                 = 1.45802 ;
-//              right left
-//                 = -1.24354 ;
-//              right right
-//                 = 1.39482;
-//              right top
-//                 = -1.47209;
-//              right bottom
-//                 = 1.45965;
         if (mHMD)
         {
             mHMD->GetProjectionRaw(
@@ -250,35 +273,27 @@ namespace esvr2
 
         Ogre::Matrix4 eyeToHead[2];
         Ogre::Matrix4 proj_matrix[2];
+        size_t vr_width_half = mVrTexture->getWidth()/2;
+        size_t vr_width = mVrTexture->getWidth();
+        size_t vr_height = mVrTexture->getHeight();
 
-
+        StereoCameraConfig cameraConfig = mVideoLoader->getStereoCameraConfig();
         for (size_t eye = 0; eye < mEyeNum; eye++)
         {
-            float f_x, f_y, c_x, c_y;
-            if (false)
-            {
-                f_x = cameraConfig.cfg[eye].K[0];
-                f_y = cameraConfig.cfg[eye].K[4];
-                c_x = cameraConfig.cfg[eye].K[2];
-                c_y = cameraConfig.cfg[eye].K[5];
-            }
-            else
-            {
-                f_x = cameraConfig.cfg[eye].P[0];
-                f_y = cameraConfig.cfg[eye].P[5];
-                c_x = cameraConfig.cfg[eye].P[2];
-                c_y = cameraConfig.cfg[eye].P[6];
-                float far_plane = 100.0;
-                float near_plane = 0.001;
-                float img_width = cameraConfig.cfg[eye].width;
-                float img_height = cameraConfig.cfg[eye].height;
+            float far_plane = 100.0;
+            float near_plane = 0.001;
+            float img_width = cameraConfig.cfg[eye].width;
+            float img_height = cameraConfig.cfg[eye].height;
+            float f_x = cameraConfig.cfg[eye].P[0];
+            float f_y = cameraConfig.cfg[eye].P[5];
+            float c_x = cameraConfig.cfg[eye].P[2];
+            float c_y = cameraConfig.cfg[eye].P[6];
+            float win_width = mHmdConfig.width;
+            float win_height = mHmdConfig.height;
+            float zoom_x = 1.0f;
+            float zoom_y = zoom_x;
 
-                float win_width = mHmdConfig.width;
-                float win_height = mHmdConfig.height;
-                float zoom_x = 1.0f;
-                float zoom_y = zoom_x;
-
-                // Preserve aspect ratio
+            // Preserve aspect ratio
 //                 if (win_width != 0 && win_height != 0)
 //                 {
 //                     float img_aspect = (img_width / f_x) / (img_height / f_y);
@@ -294,81 +309,40 @@ namespace esvr2
 //                     }
 //                 }
 
-                eyeToHead[eye] = Ogre::Matrix4::IDENTITY;
-                proj_matrix[eye] = Ogre::Matrix4::ZERO;
+            eyeToHead[eye] = Ogre::Matrix4::IDENTITY;
+            proj_matrix[eye] = Ogre::Matrix4::ZERO;
 
-                proj_matrix[eye][0][0] = 2.0 * f_x / img_width * zoom_x;
-                proj_matrix[eye][1][1] = 2.0 * f_y / img_height * zoom_y;
+            proj_matrix[eye][0][0] = 2.0 * f_x / img_width * zoom_x;
+            proj_matrix[eye][1][1] = 2.0 * f_y / img_height * zoom_y;
 
-                proj_matrix[eye][0][2] = 2.0 * (0.5 - c_x / img_width) * zoom_x;
-                proj_matrix[eye][1][2] = 2.0 * (c_y / img_height - 0.5) * zoom_y;
+            proj_matrix[eye][0][2] = 2.0 * (0.5 - c_x / img_width) * zoom_x;
+            proj_matrix[eye][1][2] = 2.0 * (c_y / img_height - 0.5) * zoom_y;
 
-                proj_matrix[eye][2][2] = -(far_plane + near_plane) / (far_plane - near_plane);
-                proj_matrix[eye][2][3] = -2.0 * far_plane * near_plane / (far_plane - near_plane);
+            proj_matrix[eye][2][2] = -(far_plane + near_plane) / (far_plane - near_plane);
+            proj_matrix[eye][2][3] = -2.0 * far_plane * near_plane / (far_plane - near_plane);
 
-                proj_matrix[eye][3][2] = -1;
-                // we have also to set position and orientation
+            proj_matrix[eye][3][2] = -1;
+            // we have also to set position and orientation
 //                 mEyeCameras[eye]->setCustomProjectionMatrix( true, proj_matrix);
-                //2.0f ~= cameraConfig.cfg[eye].P[0]
-                // x   ~= cameraConfig.cfg[eye].P[3]
-                eyeToHead[eye][0][3] = cameraConfig.cfg[eye].P[3] *2.0f / cameraConfig.cfg[eye].P[0];
+            //2.0f ~= cameraConfig.cfg[eye].P[0]
+            // x   ~= cameraConfig.cfg[eye].P[3]
+            eyeToHead[eye][0][3] = cameraConfig.cfg[eye].P[3] *2.0f / cameraConfig.cfg[eye].P[0];
 //                 mEyeCameras[eye]->setPosition(position );
 //                 Ogre::Vector3 focusPoint = Ogre::Vector3( 0.0f, 0.0f, -1.0f );
 //                 mCameraNode[eye]->lookAt( focusPoint, Ogre::Node::TS_LOCAL );
-                Ogre::Matrix4 proj_matrix_rs;
-                mRoot->getRenderSystem()->_convertOpenVrProjectionMatrix(
-                    proj_matrix[eye], proj_matrix_rs );
+            Ogre::Matrix4 proj_matrix_rs;
+            mRoot->getRenderSystem()->_convertOpenVrProjectionMatrix(
+                proj_matrix[eye], proj_matrix_rs );
 
-                mEyeCameras[eye]->setCustomProjectionMatrix( true, proj_matrix[eye] );
+            mEyeCameras[eye]->setCustomProjectionMatrix( true, proj_matrix[eye] );
 //                 mEyeCameras[eye]->setAutoAspectRatio( true );
-                mEyeCameras[eye]->setNearClipDistance( 0.0001 );
-                mEyeCameras[eye]->setFarClipDistance( mCamFar );
-                double tx = (cameraConfig.cfg[eye].P[3] / f_x);
-                Ogre::Vector3 position = Ogre::Vector3::UNIT_X * tx;
-                LOG << "Pos "<< cameraConfig.cfg[eye].eye_str << eye << ": " << position.x << " " << position.y << " " <<position.z <<LOGEND;
-                mEyeCameras[eye]->setPosition( position );
-                mEyeCameras[eye]->lookAt(0,0,1);
-            }
-
-            float c_vr_h = -mHmdConfig.tan[eye][0] * vr_width_half /
-                (-mHmdConfig.tan[eye][0] + mHmdConfig.tan[eye][1]);
-            float c_vr_v = -mHmdConfig.tan[eye][2] * vr_height /
-                (-mHmdConfig.tan[eye][2] + mHmdConfig.tan[eye][3]);
-
-            float img_size_resize_h = c_vr_h * cameraConfig.cfg[eye].width /
-                (f_x *-mHmdConfig.tan[eye][0]);
-            float img_size_resize_v = c_vr_v * cameraConfig.cfg[eye].height /
-                (f_y *-mHmdConfig.tan[eye][2]);
-
-            float img_middle_resize_h =
-                img_size_resize_h * c_x / cameraConfig.cfg[eye].width;
-            float img_middle_resize_v =
-                img_size_resize_v * c_y / cameraConfig.cfg[eye].height;
-
-            float align_f_h = c_vr_h - img_middle_resize_h;
-            float align_f_v = c_vr_v - img_middle_resize_v;
-
-            if (align_f_h <= 0 || align_f_v <= 0 )
-                return false;
-            mImageRenderConfig->leftAlign[eye] = 
-                (eye == RIGHT ? vr_width_half : 0) +
-                static_cast<size_t>(std::round(align_f_h));
-            mImageRenderConfig->topAlign[eye] =
-                static_cast<size_t>(std::round(align_f_v));
-            OGRE_ASSERT_MSG(img_size_resize_v > 0 && img_size_resize_h > 0, "img_height/width_resize smaller than/ equal zero");
-            mImageRenderConfig->size[eye] = {
-                static_cast<int>(std::round(img_size_resize_h)),
-                static_cast<int>(std::round(img_size_resize_v)) };
-
-            //for mDrawHelpers
-            mCVr[eye][0] = static_cast<size_t>(std::round(c_vr_h));
-            mCVr[eye][1] = static_cast<size_t>(std::round(c_vr_v));
-            mImgMiddleResize[eye][0] = static_cast<size_t>(
-                std::round(img_middle_resize_h));
-            mImgMiddleResize[eye][1] = static_cast<size_t>(
-                std::round(img_middle_resize_v));
-
-
+            mEyeCameras[eye]->setNearClipDistance( 0.0001 );
+            mEyeCameras[eye]->setFarClipDistance( mCamFar );
+            double tx = (cameraConfig.cfg[eye].P[3] / f_x);
+            Ogre::Vector3 position = Ogre::Vector3::UNIT_X * tx;
+            LOG << "Pos "<< cameraConfig.cfg[eye].eye_str << eye << ": " << position.x << " " << position.y << " " <<position.z <<LOGEND;
+            mEyeCameras[eye]->setPosition( position );
+            mEyeCameras[eye]->lookAt(0,0,1);
         }
         // now as we have camera config we use it.
         mVrData->set( eyeToHead, proj_matrix);
@@ -520,8 +494,6 @@ namespace esvr2
 
     void GraphicsSystem::createTwoWorkspaces()
     {
-        if (!mImageRenderConfig)
-            return;
         Ogre::CompositorManager2 *compositorManager =
             mRoot->getCompositorManager2();
         const Ogre::IdString workspaceName( "TwoCamerasWorkspace" );
@@ -531,16 +503,7 @@ namespace esvr2
         vpModifierMask  = 0x01;
         executionMask   = 0x01;
         //set offset so that we only render to the portion of the screen where there is the image
-        int textureheight = mVrTexture->getHeight();
-        int texturewidth = mVrTexture->getWidth();
-        int texturewidthhalf = mVrTexture->getWidth() / 2;
-        float width = mImageRenderConfig->leftAlign[LEFT] / (float) texturewidth;
-        float height = mImageRenderConfig->topAlign[LEFT] / (float) textureheight;
-        float sizewidth = mImageRenderConfig->size[LEFT].width / (float) texturewidth;
-        float sizeheight = mImageRenderConfig->size[LEFT].height / (float) textureheight;
-
-        vpOffsetScale   = Ogre::Vector4( width, height, sizewidth, sizeheight  );
-//         vpOffsetScale   = Ogre::Vector4( 0.25f, 0.25f, 0.5f, 1.0f );
+        vpOffsetScale =  getVpOffset( mVideoLoader->getDistortion(), LEFT );
         mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
             mSceneManager,
             mVrTexture,
@@ -552,17 +515,9 @@ namespace esvr2
             vpModifierMask,
             executionMask );
 
-        width = mImageRenderConfig->leftAlign[RIGHT] / (float) texturewidth;
-        height = mImageRenderConfig->topAlign[RIGHT] / (float) textureheight;
-        sizewidth = mImageRenderConfig->size[RIGHT].width / (float) texturewidth;
-        sizeheight = mImageRenderConfig->size[RIGHT].height / (float) textureheight;
-
         vpModifierMask  = 0x02;
         executionMask   = 0x02;
-        vpOffsetScale   = Ogre::Vector4( width, height,
-                                          sizewidth, sizeheight );
-//         vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f,
-//                                          0.5f, 1.0f );
+        vpOffsetScale =  getVpOffset( mVideoLoader->getDistortion(), RIGHT );
         mVrWorkspaces[RIGHT] = compositorManager->addWorkspace(
             mSceneManager,
             mVrTexture,
@@ -632,68 +587,18 @@ namespace esvr2
                 mVideoTexture[eye]->getPixelFormat() );
         }
     }
-// for directly write to background
-//     bool GraphicsSystem::fillTexture(void)
-//     {
-//         const size_t bytesPerPixel = 4u;
-//         const size_t bytesPerRow =
-//             mVrTexture->_getSysRamCopyBytesPerRow( 0 );
-// 
-// //         LOG << mVideoTexture->getWidth() << LOGEND;
-// //         LOG << mVideoTexture->getHeight() << LOGEND;
-// //         LOG << width_resize << LOGEND;
-// //         LOG << "height_resize1 " << height_resize << LOGEND;
-// //         LOG << height_resize << LOGEND;
-// 
-// //         LOG << "width_resize " << width_resize << LOGEND;
-// //         LOG << "height_resize " << height_resize << LOGEND;
-// //         LOG << "ldst.cols " << ldst.cols << LOGEND;
-// //         LOG << "ldst.rows " << ldst.rows << LOGEND;
-// 
-//         if ( mImageResize[LEFT].empty() || mImageResize[RIGHT].empty() ||
-//             !mImageRenderConfig)
-//         {
-//             return false;
-//         }
-//         size_t align_left;
-//         size_t align_top;
-//         cv::Mat* dst;
-//         for(size_t eye = 0; eye < 2u; eye++) {
-//             align_left = mImageRenderConfig->leftAlign[eye];
-//             align_top = mImageRenderConfig->topAlign[eye];
-//             dst = &mImageResize[eye];
-//             size_t row_cnt = align_top * bytesPerRow;
-//             for (int y = 0; y < mImageRenderConfig->size[eye].height; y++) {
-//                 size_t cnt = row_cnt + (align_left * bytesPerPixel);
-//                 uint8_t* img_row_ptr = dst->ptr<uint8_t>(y);
-//                 for (int x = 0; x < mImageRenderConfig->size[eye].width; x++) {
-//                     mImageData[0][cnt++] = *(img_row_ptr+2);
-//                     mImageData[0][cnt++] = *(img_row_ptr+1);
-//                     mImageData[0][cnt++] = *img_row_ptr;
-//                     img_row_ptr += 3;
-//                     mImageData[0][cnt++] = 0;
-//                 }
-//                 row_cnt += bytesPerRow;
-//             }
-//         }
-// 
-//         if (mDrawHelpers)
-//         {
-//             //redline for eye pupilar middle
-//             for (size_t i = 0; i < mVrTexture->getHeight(); i++)
-//             {
-//                 mImageData[0][(bytesPerRow*i) + (mCVr[LEFT][0] * bytesPerPixel)] = 255;
-//                 mImageData[0][(bytesPerRow*i) + (bytesPerRow/2) + (mCVr[RIGHT][0] * bytesPerPixel)+4] = 255;
-//             }
-// 
-//             //green line for middle
-//             for (size_t i = 0; i < mVrTexture->getHeight()*4; i++)
-//             {
-//                 mImageData[0][(bytesPerRow/4*i)+1] = 255;
-//             }
-//         }
-//         return true;
-//     }
+
+    void GraphicsSystem::setDistortion(Distortion dist)
+    {
+        if( mVrWorkspaces[LEFT] && mVrWorkspaces[RIGHT] )
+        {
+            for(size_t eye = 0; eye < mEyeNum; eye++)
+            {
+                mVrWorkspaces[eye]->setViewportModifier(getVpOffset(dist, eye));
+            }
+        }
+        mVideoLoader->setDistortion(dist);
+    }
 
     GraphicsSystem::GraphicsSystem(
             Demo::GameState* gameState,
@@ -711,7 +616,6 @@ namespace esvr2
         Demo::GraphicsSystem( gameState, showOgreConfigDialog,
                         RESOURCE_FOLDER, PLUGIN_FOLDER ),
         mWorkSpaceType( wsType ),
-        mCamerasNodeTrans( nullptr ),
         mCamerasNode( nullptr ),
         mCameraNode{ nullptr, nullptr },
         mCameraPoseState( poseState ),
@@ -733,13 +637,7 @@ namespace esvr2
         mDeviceModelNumber( "" ),
         mVideoLoader( videoLoader ),
         mVideoTarget( renderVideoTarget ),
-        mCameraWidth{ 0, 0 },
-        mCameraHeight{ 0, 0 },
-        mImageRenderConfig( nullptr ),
         mStagingTexture{ nullptr, nullptr },
-        mDrawHelpers(true),
-        mCVr{{ 0, 0 }, { 0, 0 }},
-        mImgMiddleResize{{ 0, 0 }, { 0, 0 }},
         mScreen( screen ),
         mIsStereo( isStereo ),
         mEyeNum( isStereo ? 2 : 1 ),
@@ -981,11 +879,8 @@ namespace esvr2
                 mStagingTexture[eye] = 0;
             }
 
-            if( mVideoTexture[eye] )
-            {
-                textureManager->destroyTexture( mVideoTexture[eye] );
-                mVideoTexture[eye] = 0;
-            }
+            //Don't need to be destroyed compositorManager is doing it
+            mVideoTexture[eye] = 0;
 
             if( mEyeCameras[eye] )
             {
@@ -1008,84 +903,6 @@ namespace esvr2
 
         Demo::GraphicsSystem::deinitialize();
     }
-
-//     void GraphicsSystem::setImgPtr(
-//         const cv::Mat *left, const cv::Mat *right)
-//     {
-//         //TODO: adapt bgr rgb and so on
-//         const cv::Mat *img_ptr[2] = { left, right };
-//         if( !mShowVideo )
-//             return;
-//         //we have to wait some frames after we can send new texture
-//         // maybe we have to look this also applies to Hlms
-//         if ( !img_ptr[RIGHT] )
-//             img_ptr[RIGHT] = img_ptr[LEFT];
-//         if ( mVideoTarget == VRT_TO_BACKGROUND  && mImageRenderConfig )
-//         {
-//             //why don't we just fire images to the lens as we have them
-//             resize(*img_ptr[LEFT], mImageResize[LEFT], mImageRenderConfig->size[LEFT]);
-//             resize(*img_ptr[RIGHT], mImageResize[RIGHT], mImageRenderConfig->size[RIGHT]);
-// 
-//             if (mDrawHelpers)
-//             {
-//                 circle( mImageResize[LEFT],
-//                     cv::Point(mImgMiddleResize[LEFT][0],mImgMiddleResize[LEFT][1]),
-//                     5, cv::Scalar( 0, 0, 255 ), -1);
-//                 circle( mImageResize[RIGHT],
-//                     cv::Point(mImgMiddleResize[RIGHT][0],mImgMiddleResize[RIGHT][1]),
-//                     5, cv::Scalar( 0, 0, 255 ), -1);
-//             }
-//             mMtxImageResize.lock();
-//             fillTexture();
-//             mMtxImageResize.unlock();
-//         }
-//         else if ( mVideoTarget == VRT_TO_SQUARE )
-//         {
-//             //TODO:probably not the most efficient methode
-//             const cv::Mat *img_in_ptr[2] = {left, right};
-//             int itr = 0;
-//             if ( left->type() == CV_8UC4)
-//                 itr = 4;
-//             else if (left->type() == CV_8UC3)
-//                 itr = 3;
-//             else
-//             {
-//                 LOG << "don't know the cv" << LOGEND;
-//                 return;
-//             }
-// 
-//             mMtxImageResize.lock();
-//             mMtxImageResize.unlock();
-//         }
-//     }
-
-//     //-------------------------------------------------------------------------
-//     bool GraphicsSystem::clearTexture(void)
-//     {
-//         for( size_t eye = 0; eye < mEyeNum; eye++ )
-//         {
-//             const size_t bytesPerRow =
-//                 mVideoTexture[eye]->_getSysRamCopyBytesPerRow( 0 );
-// 
-//             memset(mImageData[eye], 0, mImageDataSize[eye]);
-//             mStagingTexture[eye]->startMapRegion();
-//             Ogre::TextureBox texBox = mStagingTexture[eye]->mapRegion(
-//                 mVideoTexture[eye]->getWidth(),
-//                 mVideoTexture[eye]->getHeight(),
-//                 mVideoTexture[eye]->getDepth(),
-//                 mVideoTexture[eye]->getNumSlices(),
-//                 mVideoTexture[eye]->getPixelFormat() );
-//             texBox.copyFrom( mImageData,
-//                             mVideoTexture[eye]->getWidth(),
-//                             mVideoTexture[eye]->getHeight(),
-//                             bytesPerRow );
-//             mStagingTexture[eye]->stopMapRegion();
-//             mStagingTexture[eye]->upload( texBox, mVideoTexture[eye], 0, 0, 0, false );
-// 
-//             mVideoTexture[eye]->notifyDataIsReady();
-//         }
-//         return true;
-//     }
 
     void GraphicsSystem::beginFrameParallel(void)
     {

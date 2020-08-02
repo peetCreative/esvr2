@@ -63,9 +63,9 @@ namespace esvr2
             case ORIENTATION_HORIZONTAL:
                 // left is below
                 // right is above
-                lrect = cv::Rect( 0, img->rows/2,
+                rrect = cv::Rect( 0, img->rows/2,
                                 img->cols, img->rows/2);
-                rrect = cv::Rect( 0, 0,
+                lrect = cv::Rect( 0, 0,
                                 img->cols, img->rows/2);
                 break;
         }
@@ -141,14 +141,14 @@ namespace esvr2
                     cv::remap(
                         *(img[eye]), *(img[eye]),
                               mUndistortMap1[eye], mUndistortMap2[eye],
-                              cv::INTER_LINEAR );
+                              cv::INTER_LINEAR, cv::BORDER_CONSTANT);
                     break;
                 case DIST_UNDISTORT_RECTIFY:
                     cv::remap(
                         *(img[eye]), *(img[eye]),
                               mUndistortRectifyMap1[eye],
                               mUndistortRectifyMap2[eye],
-                              cv::INTER_LINEAR );
+                              cv::INTER_LINEAR, cv::BORDER_CONSTANT);
                     break;
             }
         }
@@ -295,7 +295,7 @@ namespace esvr2
             cv::Size size( mCameraConfig.cfg[eye].width, mCameraConfig.cfg[eye].height );
             cv::initUndistortRectifyMap(
                 intrinsics, mCameraConfig.cfg[eye].D,
-                cv::_InputArray(), cv::_InputArray(), size, CV_32FC1,
+                cv::_InputArray(), cv::_InputArray(), size, CV_16SC2,
                 mUndistortMap1[eye], mUndistortMap2[eye] );
 
             cv::Mat rectify = cv::Mat::zeros(3, 3, CV_64FC1);
@@ -304,7 +304,7 @@ namespace esvr2
                     rectify.at<double>(x,y) = mCameraConfig.cfg[eye].R[x*3+y];
             cv::initUndistortRectifyMap(
                 intrinsics, mCameraConfig.cfg[eye].D,
-                rectify, cv::_InputArray(), size, CV_32FC1,
+                rectify, cv::_InputArray(), size, CV_16SC2,
                 mUndistortRectifyMap1[eye], mUndistortRectifyMap2[eye] );
         }
     }

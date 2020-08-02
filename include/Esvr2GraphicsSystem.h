@@ -33,7 +33,6 @@ namespace esvr2
         //Depending on this type start with different Compositor setup
         WorkspaceType               mWorkSpaceType;
 
-        Ogre::SceneNode             *mCamerasNodeTrans;
         Ogre::SceneNode             *mCamerasNode;
         Ogre::SceneNode             *mCameraNode[2];
         //two real cameras and two workspaces (two cameras rendering) or
@@ -63,20 +62,8 @@ namespace esvr2
 
         VideoLoader *mVideoLoader;
         VideoRenderTarget mVideoTarget;
-        size_t mCameraWidth[2], mCameraHeight[2];
-        //left_left, left_right right_left right_right
-        //left_top left_bottom  right_top right_bottom
-        struct ImageRenderConfig {
-            int leftAlign[2];
-            int topAlign[2];
-            cv::Size size[2];
-        } *mImageRenderConfig;
+        Ogre::Vector4 mVrOffsetScalesRaw[2], mVrOffsetScalesUndistRect[2];
         Ogre::StagingTexture *mStagingTexture[2];
-
-        //used for mDrawHelpers
-        bool mDrawHelpers;
-        int mCVr[2][2];
-        int mImgMiddleResize[2][2];
 
         int mScreen;
         bool mIsStereo;
@@ -103,8 +90,7 @@ namespace esvr2
 
         void syncCameraProjection( bool bForceUpdate );
 
-        bool fillTexture(void);
-        bool clearTexture(void);
+        Ogre::Vector4 getVpOffset( Distortion dist, size_t eye);
 
         bool calcAlign(void);
 
@@ -129,6 +115,7 @@ namespace esvr2
 
         bool getShowVideo( void ) { return mShowVideo; };
         void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
+        void setDistortion(Distortion dist);
 
         VideoLoader *getVideoLoader() { return mVideoLoader; };
 

@@ -318,12 +318,12 @@ namespace esvr2
             AUTODETECT_RESOURCE_GROUP_NAME,
             Ogre::SCENE_DYNAMIC );
 
-        mCube->setVisibilityFlags( 0x1 << 1 );
+        mCube->setVisibilityFlags( 0x1 << 2 );
         mSceneNodeMesh = sceneManager
             ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
             ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
 
-        mSceneNodeMesh->setPosition( 0, 0, -1.0 );
+        mSceneNodeMesh->setPosition( 0, 0, 0.0 );
 
         mSceneNodeMesh->scale(0.25, 0.25, 0.25);
         mSceneNodeMesh->attachObject( mCube );
@@ -477,15 +477,15 @@ namespace esvr2
 
         if( arg.keysym.scancode == SDL_SCANCODE_Y )
         {
-            mStereoGraphicsSystem->getVideoLoader()->setDistortion(DIST_RAW);
+            mStereoGraphicsSystem->setDistortion(DIST_RAW);
         }
         if( arg.keysym.scancode == SDL_SCANCODE_X )
         {
-            mStereoGraphicsSystem->getVideoLoader()->setDistortion(DIST_UNDISTORT);
+            mStereoGraphicsSystem->setDistortion(DIST_UNDISTORT);
         }
         if( arg.keysym.scancode == SDL_SCANCODE_C )
         {
-            mStereoGraphicsSystem->getVideoLoader()->setDistortion(DIST_UNDISTORT_RECTIFY);
+            mStereoGraphicsSystem->setDistortion(DIST_UNDISTORT_RECTIFY);
         }
         if( arg.keysym.scancode == SDL_SCANCODE_1 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )

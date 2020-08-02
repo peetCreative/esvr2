@@ -95,7 +95,8 @@ compositor_node TwoCamerasNode
 			//Don't be affected by the modifier, apply to the whole screen
 			viewport_modifier_mask	0x00
 
-			colour_value			0.2 0.4 0.6 1
+			//colour_value			0.2 0.4 0.6 1
+			colour_value			0 0  0 1
 		}
 
 		left video
