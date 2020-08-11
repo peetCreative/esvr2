@@ -38,6 +38,7 @@ namespace esvr2
         //two real cameras and two workspaces (two cameras rendering) or
         //only use one VR Camera and workspace (Instanced Rendering)
         Ogre::Camera                *mEyeCameras[2];
+        Ogre::Real                  mZoom;
         Ogre::Real                  mCamNear;
         Ogre::Real                  mCamFar;
         Ogre::CompositorWorkspace   *mVrWorkspaces[2];
@@ -116,6 +117,9 @@ namespace esvr2
         bool getShowVideo( void ) { return mShowVideo; };
         void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
         void setDistortion(Distortion dist);
+
+        Ogre::Real getZoom();
+        void setZoom( Ogre::Real );
 
         VideoLoader *getVideoLoader() { return mVideoLoader; };
 

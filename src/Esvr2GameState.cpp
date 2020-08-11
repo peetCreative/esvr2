@@ -483,6 +483,12 @@ namespace esvr2
         {
             mStereoGraphicsSystem->setDistortion(DIST_UNDISTORT);
         }
+        if( arg.keysym.scancode == SDL_SCANCODE_A )
+        {
+            Ogre::Real zoom = mStereoGraphicsSystem->getZoom();
+            zoom += arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL) ? 0.1 : -0.1;
+            mStereoGraphicsSystem->setZoom( zoom );
+        }
         if( arg.keysym.scancode == SDL_SCANCODE_C )
         {
             mStereoGraphicsSystem->setDistortion(DIST_UNDISTORT_RECTIFY);

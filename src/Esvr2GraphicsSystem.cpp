@@ -210,14 +210,14 @@ namespace esvr2
         switch(dist)
         {
             case DIST_RAW:
-                f_x = cameraConfig.cfg[eye].K[0];
-                f_y = cameraConfig.cfg[eye].K[4];
+                f_x = cameraConfig.cfg[eye].K[0] * mZoom;
+                f_y = cameraConfig.cfg[eye].K[4] * mZoom;
                 c_x = cameraConfig.cfg[eye].K[2];
                 c_y = cameraConfig.cfg[eye].K[5];
                 break;
             case DIST_UNDISTORT_RECTIFY:
-                f_x = cameraConfig.cfg[eye].P[0];
-                f_y = cameraConfig.cfg[eye].P[5];
+                f_x = cameraConfig.cfg[eye].P[0] * mZoom;
+                f_y = cameraConfig.cfg[eye].P[5] * mZoom;
                 c_x = cameraConfig.cfg[eye].P[2];
                 c_y = cameraConfig.cfg[eye].P[6];
                 break;
@@ -284,8 +284,8 @@ namespace esvr2
             float near_plane = 0.001;
             float img_width = cameraConfig.cfg[eye].width;
             float img_height = cameraConfig.cfg[eye].height;
-            float f_x = cameraConfig.cfg[eye].P[0];
-            float f_y = cameraConfig.cfg[eye].P[5];
+            float f_x = cameraConfig.cfg[eye].P[0] * mZoom;
+            float f_y = cameraConfig.cfg[eye].P[5] * mZoom;
             float c_x = cameraConfig.cfg[eye].P[2];
             float c_y = cameraConfig.cfg[eye].P[6];
             float win_width = mHmdConfig.width;
@@ -600,6 +600,25 @@ namespace esvr2
         mVideoLoader->setDistortion(dist);
     }
 
+    Ogre::Real GraphicsSystem::getZoom()
+    {
+        return mZoom;
+    }
+
+    void GraphicsSystem::setZoom( Ogre::Real zoom )
+    {
+        if( zoom > 0.1 && zoom < 10.0f )
+            mZoom = zoom;
+        Distortion dist = mVideoLoader->getDistortion();
+        if( mVrWorkspaces[LEFT] && mVrWorkspaces[RIGHT] )
+        {
+            for(size_t eye = 0; eye < mEyeNum; eye++)
+            {
+                mVrWorkspaces[eye]->setViewportModifier(getVpOffset(dist, eye));
+            }
+        }
+    }
+
     GraphicsSystem::GraphicsSystem(
             Demo::GameState* gameState,
             WorkspaceType wsType,
@@ -620,6 +639,7 @@ namespace esvr2
         mCameraNode{ nullptr, nullptr },
         mCameraPoseState( poseState ),
         mEyeCameras{ nullptr, nullptr },
+        mZoom( 1.0f ),
         mCamNear( camNear ),
         mCamFar( camFar ),
         mVrWorkspaces{ nullptr, nullptr },
