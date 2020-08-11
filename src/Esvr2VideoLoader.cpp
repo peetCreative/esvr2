@@ -291,20 +291,23 @@ namespace esvr2
             cv::Mat intrinsics = cv::Mat::zeros(3, 3, CV_64FC1);
             for( int y = 0; y < 3; y++ )
                 for( int x = 0; x < 3; x++ )
-                    intrinsics.at<double>(x,y) = mCameraConfig.cfg[eye].K[x*3+y];
-            cv::Size size( mCameraConfig.cfg[eye].width, mCameraConfig.cfg[eye].height );
+                    intrinsics.at<double>(y,x) = mCameraConfig.cfg[eye].K[y*3+x];
+                cv::Size size( mCameraConfig.cfg[eye].width, mCameraConfig.cfg[eye].height );
             cv::initUndistortRectifyMap(
                 intrinsics, mCameraConfig.cfg[eye].D,
                 cv::_InputArray(), cv::_InputArray(), size, CV_16SC2,
-                mUndistortMap1[eye], mUndistortMap2[eye] );
-
+                                        mUndistortMap1[eye], mUndistortMap2[eye] );
             cv::Mat rectify = cv::Mat::zeros(3, 3, CV_64FC1);
             for( int y = 0; y < 3; y++ )
                 for( int x = 0; x < 3; x++ )
-                    rectify.at<double>(x,y) = mCameraConfig.cfg[eye].R[x*3+y];
+                    rectify.at<double>(y,x) = mCameraConfig.cfg[eye].R[y*3+x];
+                cv::Mat project = cv::Mat::zeros(3, 4, CV_64FC1);
+            for( int y = 0; y < 3; y++ )
+                for( int x = 0; x < 4; x++ )
+                    project.at<double>(y,x) = mCameraConfig.cfg[eye].P[y*4+x];
             cv::initUndistortRectifyMap(
                 intrinsics, mCameraConfig.cfg[eye].D,
-                rectify, cv::_InputArray(), size, CV_16SC2,
+                rectify, project, size, CV_16SC2,
                 mUndistortRectifyMap1[eye], mUndistortRectifyMap2[eye] );
         }
     }
