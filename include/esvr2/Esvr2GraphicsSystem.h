@@ -1,15 +1,16 @@
 #ifndef _Esvr2_GraphicsSystem_H_
 #define _Esvr2_GraphicsSystem_H_
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 #include "Esvr2VideoLoader.h"
 #include "Esvr2PoseState.h"
 
-#include "GraphicsSystem.h"
-
+#include "Ogre.h"
 #include "OgreSceneNode.h"
 #include "OgreCamera.h"
 #include "Compositor/OgreCompositorManager2.h"
+#include "RenderSystems/GL3Plus/OgreGL3PlusPlugin.h"
+#include <Overlay/OgreOverlaySystem.h>
 
 #include "openvr.h"
 
@@ -20,6 +21,9 @@
 #include "opencv2/opencv.hpp"
 
 #include <experimental/filesystem>
+#include <RenderSystems/GL3Plus/OgreGL3PlusPlugin.h>
+
+#include <memory>
 
 namespace esvr2
 {
@@ -27,9 +31,62 @@ namespace esvr2
 
     class VideoLoader;
 
-    class GraphicsSystem : public Demo::GraphicsSystem
+    class GraphicsSystem
     {
+    friend Esvr2;
+    friend GameState;
+    public:
+        GraphicsSystem( Esvr2 *esvr2, std::shared_ptr<GameState> gameState );
+        ~GraphicsSystem();
+
+        // we are overwriting initialize
+        void initialize( const Ogre::String &windowTitle );
+        void deinitialize(void);
+
+        bool getShowVideo( void ) { return mShowVideo; };
+        void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
+        void setDistortion(Distortion dist);
+
+        Ogre::Real getZoom();
+        void setZoom( Ogre::Real );
+
+        void beginFrameParallel(void);
+        void finishFrameParallel(void) {};
+    public:
+        Ogre::Root *getRoot();
+        Ogre::SceneManager *getSceneManager();
+        Ogre::Window *getRenderWindow();
+
+        void setQuit();
+        bool getQuit();
+
     private:
+        void setupResources(void);
+        void loadResources(void);
+        void registerHlms(void);
+        void loadTextureCache(void);
+        void loadHlmsDiskCache(void);
+        void chooseSceneManager(void);
+        void update(float timesincelast);
+    private:
+        Esvr2 *mEsvr2;
+        std::shared_ptr<GameState> mGameState;
+
+        Ogre::SceneManager          *mSceneManager;
+        Ogre::Root                  *mRoot;
+        Ogre::Camera                *mCamera;
+        // TODO: do we need two windows
+        Ogre::Window                *mWindow;
+        Ogre::Window                *mRenderWindow;
+        Ogre::CompositorWorkspace   *mWorkspace;
+        Ogre::String                mPluginsFolder;
+        Ogre::String                mWriteAccessFolder;
+        Ogre::String                mResourcePath;
+
+        Ogre::GL3PlusPlugin         *mGL3PlusPlugin;
+
+        Ogre::v1::OverlaySystem     *mOverlaySystem;
+
         //Depending on this type start with different Compositor setup
         WorkspaceType               mWorkSpaceType;
 
@@ -59,9 +116,7 @@ namespace esvr2
         std::string mStrDisplay;
         std::string mDeviceModelNumber;
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
-        PoseState *mCameraPoseState;
 
-        VideoLoader *mVideoLoader;
         VideoRenderTarget mVideoTarget;
         Ogre::Vector4 mVrOffsetScalesRaw[2], mVrOffsetScalesUndistRect[2];
         Ogre::StagingTexture *mStagingTexture[2];
@@ -71,8 +126,14 @@ namespace esvr2
         size_t mEyeNum;
         bool mShowVideo;
 
+        bool mQuit;
+
         int mLastFrameUpdate;
         int mUpdateFrames;
+
+        bool mUseMicrocodeCache;
+        bool mUseHlmsDiskCache;
+
         //------------------------------------
         // function
         //------------------------------------
@@ -94,36 +155,6 @@ namespace esvr2
         Ogre::Vector4 getVpOffset( Distortion dist, size_t eye);
 
         bool calcAlign(void);
-
-    public:
-        GraphicsSystem(
-            Demo::GameState *gameState,
-            WorkspaceType wsType,
-            Ogre::VrData *vrData,
-            HmdConfig hmdConfig,
-            VideoLoader *videoLoader,
-            PoseState *poseState,
-            int screen,
-            bool isStereo,
-            bool showOgreDialog = false,
-            bool showVideo = true,
-            esvr2::VideoRenderTarget renderVideoTarget = VRT_TO_SQUARE,
-            Ogre::Real camNear = 0.005f, Ogre::Real camFar = 200.0f);
-        virtual void deinitialize(void);
-
-        // we are overwriting initialize
-        void initialize( const Ogre::String &windowTitle );
-
-        bool getShowVideo( void ) { return mShowVideo; };
-        void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
-        void setDistortion(Distortion dist);
-
-        Ogre::Real getZoom();
-        void setZoom( Ogre::Real );
-
-        VideoLoader *getVideoLoader() { return mVideoLoader; };
-
-        virtual void beginFrameParallel(void);
     };
 }
 

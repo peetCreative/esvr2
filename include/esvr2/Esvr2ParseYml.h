@@ -36,7 +36,7 @@
 #ifndef _Esvr2_Parse_Yml_H
 #define _Esvr2_Parse_Yml_H
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 
 #include <string>
 #include <istream>
@@ -53,6 +53,9 @@ namespace esvr2 {
  */
 bool readCalibrationYml(const std::string& file_name, std::string& camera_name,
                         CameraConfig& cam_info);
+bool readConfigYml(const std::string& file_name,
+                   std::shared_ptr<Esvr2Config> config,
+                   std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig);
 
 } //namespace esvr2
 

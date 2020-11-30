@@ -1,6 +1,5 @@
 #include "Esvr2PoseState.h"
 
-#include "Esvr2StereoRendering.h"
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>
 #include <OgreMatrix4.h>

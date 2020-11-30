@@ -1,7 +1,7 @@
 #ifdef USE_BLACKMAGICCAMERA
 #include "Esvr2BlackMagicVideoLoader.h"
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 
 #include "Esvr2VideoLoader.h"
 #include "Esvr2GraphicsSystem.h"

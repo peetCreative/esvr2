@@ -1,7 +1,7 @@
 #ifndef _Esvr2_OpenVRCompositorListener_H_
 #define _Esvr2_OpenVRCompositorListener_H_
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 #include "Esvr2PoseState.h"
 
 #include "OgreFrameListener.h"
@@ -50,7 +50,7 @@ namespace esvr2
 
         Ogre::CompositorWorkspace *mWorkspaces[2];
         Ogre::SceneNode     *mCamerasNode;
-        PoseState *mCameraPoseState;
+        std::shared_ptr<PoseState> mCameraPoseState;
 
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
         Ogre::Matrix4           mDevicePose[vr::k_unMaxTrackedDeviceCount];
@@ -75,7 +75,8 @@ namespace esvr2
             vr::IVRSystem *hmd, vr::IVRCompositor *vrCompositor,
             Ogre::TextureGpu *vrTexture, Ogre::Root *root,
             Ogre::CompositorWorkspace *workspaces[2],
-            Ogre::SceneNode *mCamerasNode, PoseState *poseState  );
+            Ogre::SceneNode *mCamerasNode,
+            std::shared_ptr<PoseState> poseState );
         virtual ~OpenVRCompositorListener();
 
         virtual bool frameStarted( const Ogre::FrameEvent& evt );

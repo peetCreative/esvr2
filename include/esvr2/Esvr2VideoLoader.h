@@ -2,7 +2,7 @@
 #ifndef _Esvr2_VideoLoader_H_
 #define _Esvr2_VideoLoader_H_
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 
 #include <mutex>
 

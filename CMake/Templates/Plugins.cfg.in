@@ -4,5 +4,4 @@
 PluginFolder=@PLUGIN_PATH@
 
 # Define plugins
-@OGRE_PLUGIN_RS_D3D11@
 @OGRE_PLUGIN_RS_GL3PLUS@

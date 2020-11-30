@@ -1,6 +1,6 @@
 #include "Esvr2VideoLoader.h"
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 
 #include "Esvr2GraphicsSystem.h"
 
@@ -31,8 +31,8 @@ namespace esvr2
 
     bool VideoLoader::configValid()
     {
-        return mCameraConfig.cfg[LEFT].valid() &&
-            (!mStereo || (mCameraConfig.cfg[RIGHT].valid() ));
+        return mCameraConfig.cfg[LEFT]->valid() &&
+            (!mStereo || (mCameraConfig.cfg[RIGHT]->valid() ));
     }
 
     bool VideoLoader::buffersValid()
@@ -127,11 +127,11 @@ namespace esvr2
         cv::Mat *img[2] = { left, right };
         for (size_t eye = 0; eye < eyeNum; eye++ )
         {
-            if ( static_cast<size_t>( img[eye]->cols ) != mCameraConfig.cfg[eye].width ||
-                static_cast<size_t>(  img[eye]->rows ) != mCameraConfig.cfg[eye].height )
+            if ( static_cast<size_t>( img[eye]->cols ) != mCameraConfig.cfg[eye]->width ||
+                static_cast<size_t>(  img[eye]->rows ) != mCameraConfig.cfg[eye]->height )
             {
                 resize(*(img[eye]), *(img[eye]),
-                       cv::Size(mCameraConfig.cfg[eye].width, mCameraConfig.cfg[eye].height));
+                       cv::Size(mCameraConfig.cfg[eye]->width, mCameraConfig.cfg[eye]->height));
             }
             switch( mDistortion )
             {
@@ -228,7 +228,7 @@ namespace esvr2
 
     CameraConfig VideoLoader::getMonoCameraConfig()
     {
-        return mCameraConfig.cfg[LEFT];
+        return mCameraConfig.leftCameraConfig;
     }
     ImageData VideoLoader::getCurMonoImageData()
     {
@@ -291,27 +291,28 @@ namespace esvr2
             cv::Mat intrinsics = cv::Mat::zeros(3, 3, CV_64FC1);
             for( int y = 0; y < 3; y++ )
                 for( int x = 0; x < 3; x++ )
-                    intrinsics.at<double>(y,x) = mCameraConfig.cfg[eye].K[y*3+x];
-                cv::Size size( mCameraConfig.cfg[eye].width, mCameraConfig.cfg[eye].height );
+                    intrinsics.at<double>(y,x) = mCameraConfig.cfg[eye]->K[y*3+x];
+                cv::Size size( mCameraConfig.cfg[eye]->width, mCameraConfig.cfg[eye]->height );
             cv::initUndistortRectifyMap(
-                intrinsics, mCameraConfig.cfg[eye].D,
+                intrinsics, mCameraConfig.cfg[eye]->D,
                 cv::_InputArray(), cv::_InputArray(), size, CV_16SC2,
                                         mUndistortMap1[eye], mUndistortMap2[eye] );
             cv::Mat rectify = cv::Mat::zeros(3, 3, CV_64FC1);
             for( int y = 0; y < 3; y++ )
                 for( int x = 0; x < 3; x++ )
-                    rectify.at<double>(y,x) = mCameraConfig.cfg[eye].R[y*3+x];
+                    rectify.at<double>(y,x) = mCameraConfig.cfg[eye]->R[y*3+x];
                 cv::Mat project = cv::Mat::zeros(3, 4, CV_64FC1);
             for( int y = 0; y < 3; y++ )
                 for( int x = 0; x < 4; x++ )
-                    project.at<double>(y,x) = mCameraConfig.cfg[eye].P[y*4+x];
+                    project.at<double>(y,x) = mCameraConfig.cfg[eye]->P[y*4+x];
             cv::initUndistortRectifyMap(
-                intrinsics, mCameraConfig.cfg[eye].D,
-                rectify, project, size, CV_16SC2,
+                intrinsics, mCameraConfig.cfg[eye]->D,
+                rectify, cv::_InputArray(), size, CV_16SC2,
                 mUndistortRectifyMap1[eye], mUndistortRectifyMap2[eye] );
         }
     }
 
+    //TODO: do we realy need this?
     bool VideoLoader::initialize(void) { return false; }
     void VideoLoader::deinitialize(void) {}
     void VideoLoader::update( ) {}

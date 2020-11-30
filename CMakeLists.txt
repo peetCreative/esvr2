@@ -1,103 +1,138 @@
-cmake_minimum_required( VERSION 3.9 )
-project( esvr2 )
+cmake_minimum_required( VERSION 3.16 )
+project( Esvr2 )
 
-include( CMake/Bootstrap.cmake )
-include( CMake/Dependencies/OGRE.cmake )
+SET(CMAKE_MODULE_PATH
+        "${Esvr2_SOURCE_DIR}/CMake"
+        "${Esvr2_SOURCE_DIR}/CMake/Utils"
+        "${Esvr2_SOURCE_DIR}/CMake/Packages")
 
-include( CMake/FindPkgMacros.cmake )
+set( CMAKE_BUILD_TYPE Debug CACHE STRING "One of: Debug Release RelWithDebInfo MinSizeRel." FORCE )
+
+set( CMAKE_CXX_FLAGS_DEBUG			"${CMAKE_CXX_FLAGS_DEBUG}			-DDEBUG=1 -D_DEBUG=1 -g"	)
+set( CMAKE_CXX_FLAGS_RELEASE		"${CMAKE_CXX_FLAGS_RELEASE}			-O2 -DNDEBUG"				)
+set( CMAKE_CXX_FLAGS_RELWITHDEBINFO	"${CMAKE_CXX_FLAGS_RELWITHDEBINFO}	-O2 -g"						)
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wno-overloaded-virtual" )
+set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-class-memaccess" )
+
+if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
+    set( CMAKE_CXX_FLAGS_DEBUG		"${CMAKE_CXX_FLAGS_DEBUG}			-fno-limit-debug-info"		)
+endif()
+
+SET(OGRE_HOME /opt/ogre)
+macro(SUBDIRLIST result curdir)
+    FILE(GLOB_RECURSE children LIST_DIRECTORIES true ${curdir}/*)
+    SET(dirlist "")
+    FOREACH(child ${children})
+        IF(IS_DIRECTORY ${child} AND NOT "${child}" STREQUAL "Deprecated")
+            SET(dirlist "${dirlist};${child}")
+        ENDIF()
+    ENDFOREACH()
+    SET(${result} ${dirlist})
+endmacro()
+macro( add_recursive_lib dir retVal suffix)
+    file( GLOB_RECURSE ${retVal} ${dir}/*${suffix}.so )
+endmacro()
+
+#SUBDIRLIST( OGRE_INCLUDE_DIRS ${OGRE_HOME}/include)
+SET(OGRE_INCLUDE_DIR ${OGRE_HOME}/include/OGRE)
+SET(OGRE_INCLUDE_DIRS "${OGRE_INCLUDE_DIR}"
+        "${OGRE_INCLUDE_DIR}/RenderSystems/GL3Plus"
+        "${OGRE_INCLUDE_DIR}/Hlms/Unlit"
+        "${OGRE_INCLUDE_DIR}/Hlms/Common"
+        )
+if(${CMAKE_BUILD_TYPE} MATCHES Debug)
+    message("Debug")
+    add_recursive_lib(${OGRE_HOME}/lib OGRE_LIBRARIES "_d")
+else()
+    message("Release")
+    add_recursive_lib(${OGRE_HOME}/lib OGRE_LIBRARIES "")
+endif()
+message(OGRE_INCLUDE_DIRS:${OGRE_INCLUDE_DIRS})
+message(OGRE_LIBRARIES:${OGRE_LIBRARIES})
+SET(OGRE_VERSION 2.2.4)
+
+#SET(Ogre_FOUND TRUE)
+#SET(Ogre_INCLUDE_DIRS /opt )
+#  Ogre_LIBRARIES - link these to use the Ogre core
+#  Ogre_BINARY_REL - location of the main Ogre binary (win32 non-static only, release)
+#  Ogre_BINARY_DBG - location of the main Ogre binaries (win32 non-static only, debug)
+
+
+#find_package( Ogre PATHS ${Ogre_DIR} NO_DEFAULT_PATH REQUIRED)
+if(NOT ${OGRE_VERSION} VERSION_GREATER 2.2.0)
+    message(INFO "OGRE_INCLUDE_DIRS:${OGRE_INCLUDE_DIRS}")
+    message(INFO "OGRE_LIBRARY_REL:${OGRE_LIBRARY_REL}")
+    message(SEND_ERROR "Too Low Ogre Version (${OGRE_VERSION}) found")
+else()
+    message(INFO "OGRE_INCLUDE_DIRS:${OGRE_INCLUDE_DIRS}")
+    message(INFO "OGRE_LIBRARY_REL:${OGRE_LIBRARY_REL}")
+endif()
+
 find_package( OpenCV REQUIRED )
 message("OpenCV Libs: ${OpenCV_LIBS}")
 message("OpenCV Include : ${OpenCV_INCLUDE_DIRS}")
-set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-class-memaccess" )
-option( BUILD_ROS "compile ROS Nodelet" ON )
-#set( BUILD_ROS catkin_FOUND )
-if (BUILD_ROS)
-    find_package(catkin REQUIRED COMPONENTS
-        cv_bridge
-        roscpp
-        sensor_msgs
-        geometry_msgs
-        tf2
-        tf2_ros
-        message_filters
-        pluginlib)
-    MESSAGE("build ROS")
-    catkin_package()
-    set( CMAKE_CURRENT_BIN_DIR "${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_SHARE_DESTINATION}" )
-    message( "CMAKE_CURRENT_BIN_DIR is ${CMAKE_CURRENT_BIN_DIR}" )
-    add_definitions(-DPLUGIN_FOLDER="${CMAKE_CURRENT_BIN_DIR}/${CMAKE_BUILD_TYPE}/" )
-    add_definitions(-DRESOURCE_FOLDER="${CMAKE_CURRENT_BIN_DIR}/Data/")
-    add_definitions(-DUSE_ROS)
-#     generate_messages(DEPENDENCIES geometry_msgs std_msgs std_srvs)
 
-#     catkin_package(CATKIN_DEPENDS geometry_msgs message_runtime std_msgs std_srvs)
-else()
-    set( CMAKE_CURRENT_BIN_DIR "${CMAKE_CURRENT_SOURCE_DIR}/bin" )
-    set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_SOURCE_DIR}/bin/${CMAKE_BUILD_TYPE}" )
-endif()
+set( CMAKE_CURRENT_BIN_DIR "${CMAKE_CURRENT_BUILD_DIR}/bin" )
+set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BUILD_DIR}/bin/${CMAKE_BUILD_TYPE}" )
 
-set(CMAKE_CXX_FLAGS "-Wno-class-memaccess")
-setupOgre( OGRE_SOURCE, OGRE_BINARIES, OGRE_LIBRARIES, FALSE )
+#find_package(PkgConfig)
 
-find_package(PkgConfig)
-
-pkg_check_modules(YAML_CPP yaml-cpp)
-if(${YAML_CPP_VERSION} VERSION_GREATER 0.5)
+find_package( yaml-cpp REQUIRED )
+Message(yaml-cpp_VERSION:${yaml-cpp_VERSION})
+#pkg_check_modules(YAML_CPP yaml-cpp)
+if(${yaml-cpp_VERSION} VERSION_GREATER 0.5)
     add_definitions(-DHAVE_NEW_YAMLCPP)
 endif()
-link_directories(${YAML_CPP_LIBRARY_DIRS})
-include_directories(${YAML_CPP_INCLUDE_DIRS})
+link_directories(${yaml-cpp_LIBRARY_DIRS})
+include_directories(${yaml-cpp_INCLUDE_DIRS})
 
 # set(OpenVR_DIR /usr/local/include/openvr/)
 #TODO: write proper findlibconfig++.cmake to find this library
 # find_package(libconfig++ REQUIRED)
-#TODO: automatically find package make the
-# find_package( OpenVR REQUIRED )
-if (NOT OpenVR_FOUND)
-	message("no openvr")
-	set(OpenVR_INCLUDE_DIRS /path/to/openvr/headers)
-	set(OpenVR_LIBRARIES /path/to/openvr/lib/linux64/libopenvr_api.so)
-endif()
+find_package(OpenVR REQUIRED)
 
-option(USE_BLACKMAGICCAMERA "Use the blackmagic Camera driver" ON)
-
-
-if (USE_BLACKMAGICCAMERA)
-    #TODO: find BlackMagic
-    set(BLACKMAGIC_INCLUDE_DIRS /home/klausinpe/workspace/RealTimeCamera)
-    set(BLACKMAGIC_LIBRARIES /home/klausinpe/workspace/RealTimeCamera/build/libblackmagic.so )
-#     set(BLACKMAGIC_INCLUDE_DIRS /usr/local/include/blackmagic/)
-#     set(BLACKMAGIC_LIBRARIES /usr/local/lib/libblackmagic.so )
+find_package(BlackMagic)
+if(BlackMagic_FOUND)
     add_definitions(-DUSE_BLACKMAGICCAMERA)
-endif()
-# Setup our application
-if( MSVC )
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-	if( NOT PLATFORM_X64 )
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /arch:SSE2")
-	endif()
-	add_definitions( -DUNICODE -D_UNICODE )
 endif()
 
 macro( add_recursive dir retVal )
     file( GLOB_RECURSE ${retVal} ${dir}/*.h ${dir}/*.cpp ${dir}/*.c )
 endmacro()
 
-include_directories( "${CMAKE_CURRENT_SOURCE_DIR}/include" ${OpenVR_INCLUDE_DIRS} ${OpenCV_INCLUDE_DIRS} ${BLACKMAGIC_INCLUDE_DIRS} )
+add_recursive( ${CMAKE_CURRENT_SOURCE_DIR}/src/esvr2 SOURCES_LIB )
+add_recursive( ${CMAKE_CURRENT_SOURCE_DIR}/include/esvr2 HEADERS_LIB )
+
+
+include_directories(
+        ${OGRE_INCLUDE_DIRS}
+        ${OpenVR_INCLUDE_DIRS}
+        ${OpenCV_INCLUDE_DIRS}
+        ${BLACKMAGIC_INCLUDE_DIRS} )
 
 link_libraries(stdc++fs)
 
-add_recursive( ${CMAKE_CURRENT_SOURCE_DIR}/src SOURCES )
-add_recursive( ${CMAKE_CURRENT_SOURCE_DIR}/include HEADERS )
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/esvr2)
 
-if (BUILD_ROS)
-    include_directories("${catkin_INCLUDE_DIRS}")
-    add_executable( ${PROJECT_NAME}Node
-        ${SOURCES} ${SOURCES_ROS} ${HEADERS} ${RESOURCES} )
-    target_link_libraries( ${PROJECT_NAME}Node
-        ${catkin_LIBRARIES} ${OGRE_LIBRARIES}
-        ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++ ${YAML_CPP_LIBRARIES} ${BLACKMAGIC_LIBRARIES})
-else()
-    add_executable( ${PROJECT_NAME} ${SOURCES} ${HEADERS} ${RESOURCES} )
-    target_link_libraries( ${PROJECT_NAME} ${OGRE_LIBRARIES} ${OpenVR_LIBRARIES} ${OpenCV_LIBS} config++ ${YAML_CPP_LIBRARIES} ${BLACKMAGIC_LIBRARIES})
-endif()
+add_library(
+    ${PROJECT_NAME}_lib
+    ${SOURCES_LIB} ${HEADERS_LIB} ${RESOURCES})
+
+add_executable(
+    ${PROJECT_NAME}
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/Esvr2Main.cpp
+)
+
+target_link_libraries(
+    ${PROJECT_NAME}_lib
+    ${OGRE_LIBRARIES}
+    ${OpenVR_LIBRARIES}
+    ${OpenCV_LIBS}
+    ${YAML_CPP_LIBRARIES}
+#    ${BLACKMAGIC_LIBRARIES}
+)
+
+target_link_libraries(
+    ${PROJECT_NAME}
+    ${PROJECT_NAME}_lib
+)

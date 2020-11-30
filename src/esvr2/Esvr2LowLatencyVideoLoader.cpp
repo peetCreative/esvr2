@@ -1,4 +1,6 @@
 #include "Esvr2LowLatencyVideoLoader.h"
+
+#include "Esvr2.h"
 #include "Esvr2GraphicsSystem.h"
 
 #include <fstream>
@@ -10,14 +12,13 @@
 namespace esvr2 {
 
 LowLatencyVideoLoader::LowLatencyVideoLoader(
-        VideoInput videoInput, bool profilingEnabled,
-        StereoCameraConfig cameraConfig,
-        Distortion distortion):
-    VideoLoader(distortion, true),
-    mVideoInput(videoInput),
+        std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig,
+        bool profilingEnabled):
+    VideoLoader(videoInputConfig->distortion, true),
+    mPath(videoInputConfig->path),
     mProfilingEnabled(profilingEnabled)
 {
-    mCameraConfig = cameraConfig;
+    mCameraConfig = videoInputConfig->stereoCameraConfig;
 }
 
 LowLatencyVideoLoader::~LowLatencyVideoLoader()
@@ -43,7 +44,7 @@ bool LowLatencyVideoLoader::initialize()
     // open video interface
     try {
         //resolution and framerate are configured automatically
-        videoInterface.open(mVideoInput.path, {0, 0}, {0, 0});
+        videoInterface.open(mPath, {0, 0}, {0, 0});
     } catch(v4l2::V4L2Interface::IOError &e) {
         LOG << "V4L2Interface::IOError: " <<  e.what() << LOGEND;
         quit();
@@ -67,8 +68,8 @@ bool LowLatencyVideoLoader::initialize()
     mImageRight = cv::Mat(cv::Size(cols, outputRows), CV_8UC3, cv::Scalar(0,0,0));
 
     updateDestinationSize(
-        mCameraConfig.cfg[LEFT].width, mCameraConfig.cfg[LEFT].height, 4u,
-        mCameraConfig.cfg[LEFT].width* mCameraConfig.cfg[LEFT].height* 4u );
+        mCameraConfig.cfg[LEFT]->width, mCameraConfig.cfg[LEFT]->height, 4u,
+        mCameraConfig.cfg[LEFT]->width* mCameraConfig.cfg[LEFT]->height* 4u );
     updateMaps();
     mReady = true;
     return true;

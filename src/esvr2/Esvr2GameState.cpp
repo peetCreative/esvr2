@@ -1,11 +1,8 @@
 #include "Esvr2GameState.h"
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2PointCloud.h"
-
-#include "CameraController.h"
-#include "GraphicsSystem.h"
 
 #include "OgreSceneManager.h"
 #include "OgreItem.h"
@@ -19,14 +16,17 @@
 #include "OgreBillboardSet.h"
 #include "OgreEntity.h"
 #include "OgreCamera.h"
+#include "OgreFrameStats.h"
+#include "Overlay/OgreOverlay.h"
+#include "Overlay/OgreOverlayManager.h"
+#include "Overlay/OgreOverlayContainer.h"
+#include "Overlay/OgreTextAreaOverlayElement.h"
 
 namespace esvr2
 {
-    GameState::GameState(
-            const Ogre::String &helpDescription,
-            bool isStereo, Ogre::VrData *vrData ) :
-        TutorialGameState( helpDescription ),
-        mStereoGraphicsSystem( nullptr ),
+    GameState::GameState(Esvr2 *esvr2):
+        mEsvr2(esvr2),
+        mGraphicsSystem( nullptr ),
         mVideoDatablock{ nullptr, nullptr },
         mProjectionRectangle{ nullptr, nullptr, nullptr, nullptr },
         mAxis( nullptr ),
@@ -38,15 +38,18 @@ namespace esvr2
         mSceneNodePointCloud( nullptr ),
         mSceneNodeTooltips( nullptr ),
         mSceneNodeMesh( nullptr ),
-        mVrData( vrData ),
-        mIsStereo( isStereo ),
-        mEyeNum( isStereo ? 2 : 1 ),
+        mIsStereo( esvr2->mConfig->isStereo ),
+        mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
         mProjPlaneDistance{ 0, 0, 0, 0 },
         mLeft{ 0, 0 },
         mRight{ 0, 0 },
         mTop{ 0, 0 },
         mBottom{ 0, 0 },
-        mScale( 1.0f )
+        mScale( 1.0f ),
+        mDisplayHelpMode(false),
+        mDebugText(nullptr),
+        mDebugTextShadow(nullptr),
+        mHelpDescription("")
     {
         if( mIsStereo )
         {
@@ -71,37 +74,37 @@ namespace esvr2
     {
         float projPlaneDistance = 1.0f;
         StereoCameraConfig cameraConfig =
-            mStereoGraphicsSystem->getVideoLoader()->getStereoCameraConfig();
+            mEsvr2->mVideoLoader->getStereoCameraConfig();
         if ( cameraConfig.leftToRight )
-            mScale = mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
+            mScale = mGraphicsSystem->mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
         for( size_t eye = 0; eye < mEyeNum * 2; eye++ )
         {
-            CameraConfig cfg = cameraConfig.cfg [eye%2];
-            Ogre::Real width = cfg.width;
-            Ogre::Real height = cfg.height;
+            CameraConfig *cfg = cameraConfig.cfg [eye%2];
+            Ogre::Real width = cfg->width;
+            Ogre::Real height = cfg->height;
             Ogre::Real f_x, f_y, c_x, c_y;
             if (eye < mEyeNum)
             {
-                f_x = cfg.K[0];
-                f_y = cfg.K[4];
+                f_x = cfg->K[0];
+                f_y = cfg->K[4];
 //                 c_x = width/2;
 //                 c_y = height/2;
-                c_x = cfg.K[2];
-                c_y = cfg.K[5];
+                c_x = cfg->K[2];
+                c_y = cfg->K[5];
                 mProjPlaneDistance[eye] = projPlaneDistance;
             }
             else
             {
-                f_x = cfg.P[0];
-                f_y = cfg.P[5];
+                f_x = cfg->P[0];
+                f_y = cfg->P[5];
 //                 c_x = width/2;
 //                 c_y = height/2;
-                c_x = cfg.P[2];
-                c_y = cfg.P[6];
+                c_x = cfg->P[2];
+                c_y = cfg->P[6];
 
                 mProjPlaneDistance[eye] =
-                    mVrData->mLeftToRight.length() * f_x /
-                    -cameraConfig.cfg[RIGHT].P[3];
+                    mGraphicsSystem->mVrData->mLeftToRight.length() * f_x /
+                    -cameraConfig.cfg[RIGHT]->P[3];
             }
 
             //in xy left is negativ
@@ -119,8 +122,7 @@ namespace esvr2
     //TODO: compiles but doesn't work
     void GameState::createProjectionRectangle2D()
     {
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-        mProjectionRectangle2D = sceneManager->createRectangle2D(Ogre::SCENE_DYNAMIC);
+        mProjectionRectangle2D = mGraphicsSystem->mSceneManager->createRectangle2D(Ogre::SCENE_DYNAMIC);
         mProjectionRectangle2D->setName("Rectangle2D");
         mProjectionRectangle2D->initialize(
             Ogre::BT_DEFAULT,
@@ -133,7 +135,7 @@ namespace esvr2
         );
         mProjectionRectangle2D->setDatablock(mDatablockName[LEFT]);
         mProjectionRectangle2D->setRenderQueueGroup( 212u );
-        sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )
+        mGraphicsSystem->mSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )
             ->attachObject(mProjectionRectangle2D);
 
         Ogre::MaterialManager &materialManager =
@@ -173,8 +175,6 @@ namespace esvr2
         if ( !alldata )
             return;
 
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-
         Ogre::Vector4 edge;
         //we need to create two planes for raw and recitified
         for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
@@ -193,7 +193,8 @@ namespace esvr2
 // 
 //             mSceneNodeProjPlane[eye]->lookAt(focusPoint.xyz(), Ogre::Node::TS_PARENT);
 
-            mProjectionRectangle[eye] = sceneManager->createManualObject();
+            mProjectionRectangle[eye] =
+                    mGraphicsSystem->mSceneManager->createManualObject();
 
             mProjectionRectangle[eye]->begin(
                 mDatablockName[eye%2], Ogre::OT_TRIANGLE_LIST);
@@ -227,8 +228,8 @@ namespace esvr2
 
     Ogre::ManualObject *GameState::createAxisIntern( void )
     {
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-        Ogre::ManualObject *axis = sceneManager->createManualObject();
+        Ogre::ManualObject *axis =
+                mGraphicsSystem->mSceneManager->createManualObject();
         axis->begin("Red", Ogre::OT_TRIANGLE_LIST);
         axis->position( 0.0f, 0.001f, 0.0f );
         axis->position( 0.0f, -0.001f, 0.0f );
@@ -277,27 +278,26 @@ namespace esvr2
 
     void GameState::createAxis(void)
     {
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
         mAxis = createAxisIntern();
         mAxis->setName("AxisOrigin");
         mAxis->setVisibilityFlags( 0x1 );
-        sceneManager->getRootSceneNode(
+        mGraphicsSystem->mSceneManager->getRootSceneNode(
             Ogre::SCENE_DYNAMIC )->attachObject(mAxis);
         mAxisCameras = createAxisIntern();
         mAxisCameras->setName("AxisCamera");
         mAxisCameras->setVisibilityFlags( 0x1 << 1 );
-        Ogre::SceneNode *camerasNode = sceneManager->findSceneNodes ("Cameras Node")[0];
+        Ogre::SceneNode *camerasNode =
+                mGraphicsSystem->mSceneManager->findSceneNodes ("Cameras Node")[0];
         camerasNode->attachObject(mAxisCameras);
     }
 
     void GameState::createTooltips( void )
     {
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-        mSceneNodeTooltips = sceneManager->getRootSceneNode(
+        mSceneNodeTooltips = mGraphicsSystem->mSceneManager->getRootSceneNode(
                 Ogre::SCENE_DYNAMIC )->
                     createChildSceneNode( Ogre::SCENE_DYNAMIC );
         mSceneNodeTooltips->setPosition( 0.0, 0.0, 0.0 );
-        mTooltips = sceneManager->createBillboardSet();
+        mTooltips = mGraphicsSystem->mSceneManager->createBillboardSet();
         mTooltips->beginBillboards(1);
         Ogre::v1::Billboard* b = mTooltips->createBillboard(
             0.0, 0.0, 0.0);
@@ -311,15 +311,14 @@ namespace esvr2
 
     void GameState::createMesh()
     {
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-        Ogre::Item *mCube = sceneManager->createItem(
+        Ogre::Item *mCube = mGraphicsSystem->mSceneManager->createItem(
             "Cube_d.mesh",
             Ogre::ResourceGroupManager::
             AUTODETECT_RESOURCE_GROUP_NAME,
             Ogre::SCENE_DYNAMIC );
 
         mCube->setVisibilityFlags( 0x1 << 2 );
-        mSceneNodeMesh = sceneManager
+        mSceneNodeMesh = mGraphicsSystem->mSceneManager
             ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
             ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
 
@@ -331,7 +330,6 @@ namespace esvr2
 
     void GameState::createPointCloud( void )
     {
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
         size_t numpoints = 100;
         Ogre::Real colorarray[numpoints*3];
         Ogre::Real pointlist[numpoints*3];
@@ -351,12 +349,12 @@ namespace esvr2
         mPointCloud = new PointCloud(
             pcEntName, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, numpoints, pointlist, colorarray);
 
-        Ogre::v1::Entity *pcEnt = sceneManager->createEntity(
+        Ogre::v1::Entity *pcEnt = mGraphicsSystem->mSceneManager->createEntity(
             mPointCloud->getMeshPtr());
 
         pcEnt->setMaterialName("Pointcloud");
 
-        mSceneNodePointCloud = sceneManager
+        mSceneNodePointCloud = mGraphicsSystem->mSceneManager
             ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
             ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
         mSceneNodePointCloud->setPosition( 0, 0, -1.0 );
@@ -367,11 +365,9 @@ namespace esvr2
     //-----------------------------------------------------------------------------------
     void GameState::createScene01(void)
     {
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-
         calcAlign();
 
-        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->getRoot()->getHlmsManager();
+        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
         Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>( hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
 
         Ogre::String cameraNodeNames[2] =
@@ -380,16 +376,18 @@ namespace esvr2
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
             Ogre::SceneManager::SceneNodeList scnlist =
-                sceneManager->findSceneNodes(cameraNodeNames[eye]);
+                    mGraphicsSystem->mSceneManager->findSceneNodes(
+                            cameraNodeNames[eye]);
             if( !scnlist.empty() )
             {
                 mSceneNodeCamera[eye] = scnlist.at(0);
             }
             else
             {
-                mSceneNodeCamera[eye] = sceneManager->getRootSceneNode(
-                    Ogre::SCENE_DYNAMIC )->
-                        createChildSceneNode( Ogre::SCENE_DYNAMIC );
+                mSceneNodeCamera[eye] =
+                        mGraphicsSystem->mSceneManager
+                            ->getRootSceneNode(Ogre::SCENE_DYNAMIC )
+                            ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
             }
 
             mVideoDatablock[eye] = static_cast<Ogre::HlmsUnlitDatablock*>(
@@ -444,109 +442,186 @@ namespace esvr2
 //         createPointCloud();
         createMesh();
 
-        Ogre::Light *light = sceneManager->createLight();
-        mSceneNodeLight = sceneManager->getRootSceneNode()->createChildSceneNode();
+        Ogre::Light *light = mGraphicsSystem->mSceneManager->createLight();
+        mSceneNodeLight = mGraphicsSystem->mSceneManager
+                ->getRootSceneNode()->createChildSceneNode();
         mSceneNodeLight->attachObject( light );
         light->setPowerScale( Ogre::Math::PI ); //Since we don't do HDR, counter the PBS' division by PI
         light->setType( Ogre::Light::LT_DIRECTIONAL );
         light->setDirection( Ogre::Vector3( -1, -1, -1 ).normalisedCopy() );
 
-        mCameraController = new Demo::CameraController( mGraphicsSystem, true );
+        //TODO: write camera Controller
+        //mCameraController = new CameraController( mGraphicsSystem, true );
 
-        sceneManager->setVisibilityMask(0xFFFFFF30);
-        TutorialGameState::createScene01();
+        mGraphicsSystem->mSceneManager->setVisibilityMask(0xFFFFFF30);
+
+        //FROM
+        //TutorialGameState::createScene01();
+        Ogre::v1::OverlayManager &overlayManager =
+                Ogre::v1::OverlayManager::getSingleton();
+        Ogre::v1::Overlay *overlay = overlayManager.create( "DebugText" );
+
+        Ogre::v1::OverlayContainer *panel = static_cast<Ogre::v1::OverlayContainer*>(
+                overlayManager.createOverlayElement("Panel", "DebugPanel"));
+        mDebugText = static_cast<Ogre::v1::TextAreaOverlayElement*>(
+                overlayManager.createOverlayElement( "TextArea", "DebugText" ) );
+        mDebugText->setFontName( "DebugFont" );
+        mDebugText->setCharHeight( 0.025f );
+
+        mDebugTextShadow= static_cast<Ogre::v1::TextAreaOverlayElement*>(
+                overlayManager.createOverlayElement( "TextArea", "0DebugTextShadow" ) );
+        mDebugTextShadow->setFontName( "DebugFont" );
+        mDebugTextShadow->setCharHeight( 0.025f );
+        mDebugTextShadow->setColour( Ogre::ColourValue::Black );
+        mDebugTextShadow->setPosition( 0.002f, 0.002f );
+
+        panel->addChild( mDebugTextShadow );
+        panel->addChild( mDebugText );
+        overlay->add2D( panel );
+        overlay->show();
+
     }
+
+    //-----------------------------------------------------------------------------------
+    void GameState::generateDebugText( float timeSinceLast, Ogre::String &outText )
+    {
+        if( mDisplayHelpMode == 0 )
+        {
+            outText = mHelpDescription;
+            outText += "\n\nPress F1 to toggle help";
+            outText += "\n\nProtip: Ctrl+F1 will reload PBS shaders (for real time template editing).\n"
+                       "Ctrl+F2 reloads Unlit shaders.\n"
+                       "Ctrl+F3 reloads Compute shaders.\n"
+                       "Note: If the modified templates produce invalid shader code, "
+                       "crashes or exceptions can happen.\n";
+            return;
+        }
+
+        const Ogre::FrameStats *frameStats = mGraphicsSystem->mRoot->getFrameStats();
+
+        Ogre::String finalText;
+        finalText.reserve( 128 );
+        finalText  = "Frame time:\t";
+        finalText += Ogre::StringConverter::toString( timeSinceLast * 1000.0f );
+        finalText += " ms\n";
+        finalText += "Frame FPS:\t";
+        finalText += Ogre::StringConverter::toString( 1.0f / timeSinceLast );
+        finalText += "\nAvg time:\t";
+        finalText += Ogre::StringConverter::toString( frameStats->getAvgTime() );
+        finalText += " ms\n";
+        finalText += "Avg FPS:\t";
+        finalText += Ogre::StringConverter::toString( 1000.0f / frameStats->getAvgTime() );
+        finalText += "\n\nPress F1 to toggle help";
+
+        outText.swap( finalText );
+
+        mDebugText->setCaption( finalText );
+        mDebugTextShadow->setCaption( finalText );
+    }
+
+
     //-----------------------------------------------------------------------------------
     void GameState::update( float timeSinceLast )
     {
-        //update Pointcloud
-        TutorialGameState::update( timeSinceLast );
+        //update Pointcloud ?
+        if( mDisplayHelpMode != 0 )
+        {
+            //Show FPS
+            Ogre::String finalText;
+            generateDebugText( timeSinceLast, finalText );
+            mDebugText->setCaption( finalText );
+            mDebugTextShadow->setCaption( finalText );
+        }
+
+        //TODO: move Camera here
+//        if( mCameraController )
+//            mCameraController->update( timeSinceLast );
     }
 
-    void GameState::keyReleased( const SDL_KeyboardEvent &arg )
-    {
-        if( arg.keysym.scancode == SDL_SCANCODE_ESCAPE )
-        {
-            mGraphicsSystem->setQuit();
-            return;
-        }
-        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-        Ogre::uint32 flipMask = 0x0;
-        Ogre::uint32 setMask = 0x0;
-        Ogre::uint32 unsetMask = 0x0;
-
-        if( arg.keysym.scancode == SDL_SCANCODE_Y )
-        {
-            mStereoGraphicsSystem->setDistortion(DIST_RAW);
-        }
-        if( arg.keysym.scancode == SDL_SCANCODE_X )
-        {
-            mStereoGraphicsSystem->setDistortion(DIST_UNDISTORT);
-        }
-        if( arg.keysym.scancode == SDL_SCANCODE_A )
-        {
-            Ogre::Real zoom = mStereoGraphicsSystem->getZoom();
-            zoom += arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL) ? 0.1 : -0.1;
-            mStereoGraphicsSystem->setZoom( zoom );
-        }
-        if( arg.keysym.scancode == SDL_SCANCODE_C )
-        {
-            mStereoGraphicsSystem->setDistortion(DIST_UNDISTORT_RECTIFY);
-        }
-        if( arg.keysym.scancode == SDL_SCANCODE_1 &&
-            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
-        {
-            Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
-            if (visibilityMask & 0xF0)
-                unsetMask = 0xF0;
-            else
-            {
-                Distortion dist = mStereoGraphicsSystem->getVideoLoader()->getDistortion();
-                if (dist == DIST_UNDISTORT_RECTIFY)
-                {
-                    setMask = 0x40 | 0x80;
-                    unsetMask = 0x10 | 0x20;
-                }
-                else
-                {
-                    setMask = 0x10 | 0x20;
-                    unsetMask = 0x40 | 0x80;
-                }
-            }
-        }
-        //strg + 2 axis
-        if( arg.keysym.scancode == SDL_SCANCODE_2 &&
-            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
-        {
-            flipMask = 0x1;
-        }
-        //strg + 4 mesh
-        if( arg.keysym.scancode == SDL_SCANCODE_3 &&
-            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
-        {
-            flipMask = 0x1 << 1;
-        }
-        //strg + 3 point cloud
-        if( arg.keysym.scancode == SDL_SCANCODE_4 &&
-            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
-        {
-            flipMask = 0x1 << 2;
-        }
-
-        //TODO: It's too complicated for just flipping certain bits
-        Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
-        visibilityMask &= ~flipMask;
-        visibilityMask |= ~sceneManager->getVisibilityMask() & flipMask;
-        visibilityMask |= setMask;
-        visibilityMask &= ~unsetMask;
-        sceneManager->setVisibilityMask( visibilityMask );
-
-        // stop Video
-        if( arg.keysym.scancode == SDL_SCANCODE_SPACE )
-        {
-            mStereoGraphicsSystem->toggleShowVideo();
-        }
-
-        TutorialGameState::keyReleased( arg );
-    }
+//    void GameState::keyReleased( const SDL_KeyboardEvent &arg )
+//    {
+//        if( arg.keysym.scancode == SDL_SCANCODE_ESCAPE )
+//        {
+//            mGraphicsSystem->setQuit();
+//            return;
+//        }
+//        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
+//        Ogre::uint32 flipMask = 0x0;
+//        Ogre::uint32 setMask = 0x0;
+//        Ogre::uint32 unsetMask = 0x0;
+//
+//        if( arg.keysym.scancode == SDL_SCANCODE_Y )
+//        {
+//            mGraphicsSystem->setDistortion(DIST_RAW);
+//        }
+//        if( arg.keysym.scancode == SDL_SCANCODE_X )
+//        {
+//            mGraphicsSystem->setDistortion(DIST_UNDISTORT);
+//        }
+//        if( arg.keysym.scancode == SDL_SCANCODE_A )
+//        {
+//            Ogre::Real zoom = mGraphicsSystem->getZoom();
+//            zoom += arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL) ? 0.1 : -0.1;
+//            mGraphicsSystem->setZoom( zoom );
+//        }
+//        if( arg.keysym.scancode == SDL_SCANCODE_C )
+//        {
+//            mGraphicsSystem->setDistortion(DIST_UNDISTORT_RECTIFY);
+//        }
+//        if( arg.keysym.scancode == SDL_SCANCODE_1 &&
+//            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+//        {
+//            Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
+//            if (visibilityMask & 0xF0)
+//                unsetMask = 0xF0;
+//            else
+//            {
+//                Distortion dist = mEsvr2->mVideoLoader->getDistortion();
+//                if (dist == DIST_UNDISTORT_RECTIFY)
+//                {
+//                    setMask = 0x40 | 0x80;
+//                    unsetMask = 0x10 | 0x20;
+//                }
+//                else
+//                {
+//                    setMask = 0x10 | 0x20;
+//                    unsetMask = 0x40 | 0x80;
+//                }
+//            }
+//        }
+//        //strg + 2 axis
+//        if( arg.keysym.scancode == SDL_SCANCODE_2 &&
+//            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+//        {
+//            flipMask = 0x1;
+//        }
+//        //strg + 4 mesh
+//        if( arg.keysym.scancode == SDL_SCANCODE_3 &&
+//            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+//        {
+//            flipMask = 0x1 << 1;
+//        }
+//        //strg + 3 point cloud
+//        if( arg.keysym.scancode == SDL_SCANCODE_4 &&
+//            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+//        {
+//            flipMask = 0x1 << 2;
+//        }
+//
+//        //TODO: It's too complicated for just flipping certain bits
+//        Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
+//        visibilityMask &= ~flipMask;
+//        visibilityMask |= ~sceneManager->getVisibilityMask() & flipMask;
+//        visibilityMask |= setMask;
+//        visibilityMask &= ~unsetMask;
+//        sceneManager->setVisibilityMask( visibilityMask );
+//
+//        // stop Video
+//        if( arg.keysym.scancode == SDL_SCANCODE_SPACE )
+//        {
+//            mGraphicsSystem->toggleShowVideo();
+//        }
+//
+//        TutorialGameState::keyReleased( arg );
+//    }
 }

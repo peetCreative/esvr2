@@ -1,23 +1,39 @@
 #ifndef _Esvr2_GameState_H_
 #define _Esvr2_GameState_H_
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2PointCloud.h"
 
 #include "OgrePrerequisites.h"
-#include "TutorialGameState.h"
 
 #include "OgreCamera.h"
 #include "OgreHlmsUnlitDatablock.h"
 #include "OgreManualObject2.h"
 #include "OgreRectangle2D2.h"
+#include "Overlay/OgreTextAreaOverlayElement.h"
+
+#include <memory>
 
 namespace esvr2
 {
-    class GameState : public Demo::TutorialGameState
+    class GameState
     {
-        GraphicsSystem *mStereoGraphicsSystem;
+    friend GraphicsSystem;
+    public:
+        GameState( Esvr2 *esvr2 );
+
+        void _notifyStereoGraphicsSystem(
+            std::shared_ptr<GraphicsSystem> graphicsSystem )
+        {
+            mGraphicsSystem = graphicsSystem;
+        }
+
+        void createScene01(void);
+
+    private:
+        Esvr2* mEsvr2;
+        std::shared_ptr<GraphicsSystem> mGraphicsSystem;
 
         Ogre::HlmsUnlitDatablock *mVideoDatablock[2];
         Ogre::Rectangle2D        *mProjectionRectangle2D;
@@ -35,6 +51,11 @@ namespace esvr2
         bool                     mIsStereo;
         size_t                   mEyeNum;
 
+        bool mDisplayHelpMode;
+        Ogre::v1::TextAreaOverlayElement* mDebugText;
+        Ogre::v1::TextAreaOverlayElement* mDebugTextShadow;
+        Ogre::String mHelpDescription;
+
         Ogre::Real mProjPlaneDistance[4],
             mLeft[4], mRight[4], mTop[4], mBottom[4];
         Ogre::Real mScale;
@@ -47,22 +68,17 @@ namespace esvr2
         void createPointCloud();
         void createMesh();
 
+        void generateDebugText( float timeSinceLast, Ogre::String &outText );
+
+
     public:
-        GameState(
-            const Ogre::String &helpDescription,
-            bool isStereo, Ogre::VrData *vrData );
         void calcAlign( );
-        void createScene01(void);
 
         void update( float timeSinceLast );
-        void keyReleased( const SDL_KeyboardEvent &arg );
+        //TODO: implement
+        void destroyScene() {};
+//        void keyReleased( const SDL_KeyboardEvent &arg );
 
-        void _notifyStereoGraphicsSystem(
-            GraphicsSystem *stereoGraphicsSystem )
-        {
-            mStereoGraphicsSystem = stereoGraphicsSystem;
-            _notifyGraphicsSystem( stereoGraphicsSystem );
-        }
     };
 }
 

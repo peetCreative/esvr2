@@ -2,7 +2,7 @@
 #ifndef _Esvr2_OpenCvVideoLoader_H_
 #define _Esvr2_OpenCvVideoLoader_H_
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 
 #include "Esvr2VideoLoader.h"
 
@@ -14,16 +14,15 @@ namespace esvr2 {
 
     class OpenCvVideoLoader : public VideoLoader
     {
-        VideoInput mVideoInput;
+        std::string mPath;
+        VideoInputType mVideoInputType;
         cv::VideoCapture mCapture;
         int mCaptureFrameWidth;
         int mCaptureFrameHeight;
 
     public:
         OpenCvVideoLoader(
-            VideoInput vInput,
-            StereoCameraConfig cameraConfig,
-            Distortion distortion, bool stereo);
+                const std::shared_ptr<Esvr2VideoInputConfig>& videoInputConfig);
         ~OpenCvVideoLoader();
 
         bool initialize(void);

@@ -1,7 +1,10 @@
 #ifndef _Esvr2_POSESTATE_H_
 #define _Esvr2_POSESTATE_H_
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
+
+//Class to externally control the movements of the camera in our application
+// used for debugging
 
 namespace esvr2 {
     class PoseState {

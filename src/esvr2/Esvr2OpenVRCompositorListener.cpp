@@ -1,6 +1,6 @@
 #include "Esvr2OpenVRCompositorListener.h"
 
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 #include "Esvr2PoseState.h"
 
 #include "OgreTextureGpuManager.h"
@@ -19,7 +19,7 @@ namespace esvr2
             vr::IVRSystem *hmd, vr::IVRCompositor *vrCompositor,
             Ogre::TextureGpu *vrTexture, Ogre::Root *root,
             Ogre::CompositorWorkspace *workspaces[2],
-            Ogre::SceneNode *camerasNode, PoseState *poseState ) :
+            Ogre::SceneNode *camerasNode, std::shared_ptr<PoseState> poseState ) :
         mHMD( hmd ),
         mVrCompositor( vrCompositor ),
         mVrTexture( vrTexture ),
