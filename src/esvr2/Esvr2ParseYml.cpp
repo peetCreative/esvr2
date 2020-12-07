@@ -122,7 +122,8 @@ namespace esvr2 {
         return true;
     }
 
-    bool readCalibrationYmlIntern(std::istream& in, std::string& camera_name, CameraConfig& cam_info)
+    bool readCalibrationYmlIntern(
+            std::istream& in, std::string& camera_name, CameraConfig& cam_info)
     {
         try {
             YAML::Node doc = YAML::Load(in);
@@ -154,6 +155,56 @@ namespace esvr2 {
         if (!success)
             LOG << "Failed to parse camera calibration from file [" << file_name << " %s]" << LOGEND;
         return success;
+    }
+
+    template<class T>
+    bool readSequence(YAML::Node node, T& vec,
+                     int length)
+    {
+        int i = 0;
+        float v[length];
+        for (YAML::iterator it = node.begin(); it != node.end(); ++it)
+        {
+            if (i >= length)
+                return false;
+            v[i++] = it->as<float>();
+        }
+        if (i != length)
+            return false;
+        vec = T(v);
+        return true;
+    }
+
+
+    bool readHmdConfigYmlIntern(YAML::Node doc, HmdConfig& hmdConfig)
+    {
+        bool succ = true;
+        if (YAML::Node widthNode = doc["width"])
+            hmdConfig.width = widthNode.as<int>();
+        else return false;
+        if (YAML::Node heightNode = doc["height"])
+            hmdConfig.height = heightNode.as<int>();
+        else return false;
+        std::vector<std::string> eye = {"left", "right"};
+        for (auto it = eye.begin(); it != eye.end(); it++ )
+        {
+            if (YAML::Node eyeNode = doc[*it])
+            {
+                YAML::Node e2hNode = eyeNode["eye_to_head"];
+                YAML::Node pmNode = eyeNode["projection_matrix"];
+                YAML::Node tanNode = eyeNode["tan"];
+                if(!(e2hNode && pmNode && tanNode &&
+                    readSequence<Ogre::Matrix4>(
+                            e2hNode, hmdConfig.eyeToHead[LEFT], 16) &&
+                    readSequence<Ogre::Matrix4>(
+                            pmNode, hmdConfig.projectionMatrix[LEFT], 16) &&
+                     readSequence<Ogre::Vector4>(
+                            tanNode, hmdConfig.tan[LEFT], 4)
+                        ))
+                    return false;
+            }
+        }
+        return succ;
     }
 
     bool readConfigYmlIntern(std::istream& in,
@@ -199,16 +250,19 @@ namespace esvr2 {
                 videoInputConfig->wait4CameraConfig =
                         param.as<bool>();
         }
+        bool succ = true;
         if (YAML::Node param = doc["stereo_camera_config_left"])
-            readStereoCameraConfigNodeIntern(
+            succ = succ && readStereoCameraConfigNodeIntern(
                     param,
                     videoInputConfig->stereoCameraConfig.leftCameraConfig);
 
         if (YAML::Node param = doc["stereo_camera_config_right"])
-            readStereoCameraConfigNodeIntern(
+            succ = succ && readStereoCameraConfigNodeIntern(
                     param,
                     videoInputConfig->stereoCameraConfig.rightCameraConfig);
-        return true;
+        if (YAML::Node param = doc["hmd_info"])
+            succ = succ && readHmdConfigYmlIntern(param, config->hmdConfig);
+        return succ;
     }
 
     bool readConfigYml(const std::string& file_name,

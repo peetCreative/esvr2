@@ -1,11 +1,12 @@
 show_ogre_dialog: false
 multithreading: false
 show_video: true
-render_video_target: "TO_SQUARE"
+render_video_target: "TO_2D_RECTANGLE"
 video:
   input_type: "VIDEO_OPENCV"
   path: "/path/to/your/video.mp4"
   stereo: true
+  video_input_type: "STEREO_VERTICAL_SPLIT"
 #example camera config
 stereo_camera_config_left:
   image_width: 960

@@ -82,8 +82,8 @@ compositor_node TwoCamerasNode
 {
 	in 0 rt_renderwindow
 
-	texture video_texture_left 960 540 PFG_RGBA8_UNORM
-	texture video_texture_right 960 540 PFG_RGBA8_UNORM
+	texture video_texture_left 960 540 PFG_RGBA8_UNORM keep_content
+	texture video_texture_right 960 540 PFG_RGBA8_UNORM keep_content
 
 	target rt_renderwindow
 	{
@@ -99,7 +99,7 @@ compositor_node TwoCamerasNode
 			colour_value			0 0  0 1
 		}
 
-		left video
+		//left video
 		pass render_quad
 		{
 			execution_mask 0x01
@@ -108,7 +108,7 @@ compositor_node TwoCamerasNode
 			viewport_modifier_mask	0x01
 		}
 
-		right video
+		//right video
 		pass render_quad
 		{
 			execution_mask			0x02

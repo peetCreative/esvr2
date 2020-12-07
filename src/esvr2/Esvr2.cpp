@@ -77,7 +77,7 @@ namespace esvr2 {
     {
         VideoRenderTarget input = VRT_TO_SQUARE;
         if (input_str.compare("TO_SQUARE") == 0)
-            input = VRT_TO_2D_RECTANGLE;
+            input = VRT_TO_SQUARE;
         if (input_str.compare("TO_2D_RECTANGLE") == 0)
             input = VRT_TO_2D_RECTANGLE;
         return input;

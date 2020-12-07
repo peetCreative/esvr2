@@ -47,7 +47,6 @@ namespace esvr2
         Ogre::SceneNode          *mSceneNodePointCloud;
         Ogre::SceneNode          *mSceneNodeTooltips;
         Ogre::SceneNode          *mSceneNodeMesh;
-        Ogre::VrData             *mVrData;
         bool                     mIsStereo;
         size_t                   mEyeNum;
 

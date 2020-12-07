@@ -17,12 +17,22 @@
 include(FindPkgMacros)
 findpkg_begin(OpenVR)
 
-# Get path, convert backslashes as ${ENV_${var}}
-getenv_path(OGRE_SOURCE)
-getenv_path(OGRE_HOME)
+set(OpenVR_PREFIX_GUESSES
+        /opt/openvr
+        /opt/OpenVR
+        /usr/lib${LIB_SUFFIX}/openvr
+        /usr/lib${LIB_SUFFIX}/OpenVR
+        /usr/local/lib${LIB_SUFFIX}/openvr
+        /usr/local/lib${LIB_SUFFIX}/OpenVR
+        $ENV{HOME}/openvr
+        $ENV{HOME}/OpenVR
+        )
+
 
 # construct search paths
-set(OpenVR_PREFIX_PATH ${OGRE_SOURCE}/Dependencies ${ENV_OGRE_SOURCE}/Dependencies ${OGRE_HOME} ${ENV_OGRE_HOME})
+set(OpenVR_PREFIX_PATH
+        ${OpenVR_HOME} ${ENV_OpenVR_HOME} ${ENV_OpenVR_SDK}
+        ${OpenVR_PREFIX_GUESSES})
 
 create_search_paths(OpenVR)
 

@@ -18,6 +18,8 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
     set( CMAKE_CXX_FLAGS_DEBUG		"${CMAKE_CXX_FLAGS_DEBUG}			-fno-limit-debug-info"		)
 endif()
 
+set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}" )
+
 SET(OGRE_HOME /opt/ogre)
 macro(SUBDIRLIST result curdir)
     FILE(GLOB_RECURSE children LIST_DIRECTORIES true ${curdir}/*)
@@ -47,6 +49,7 @@ else()
     message("Release")
     add_recursive_lib(${OGRE_HOME}/lib OGRE_LIBRARIES "")
 endif()
+SET(OGRE_MEDIA_DIR ${OGRE_HOME}/share/OGRE/Media)
 message(OGRE_INCLUDE_DIRS:${OGRE_INCLUDE_DIRS})
 message(OGRE_LIBRARIES:${OGRE_LIBRARIES})
 SET(OGRE_VERSION 2.2.4)
@@ -72,8 +75,6 @@ find_package( OpenCV REQUIRED )
 message("OpenCV Libs: ${OpenCV_LIBS}")
 message("OpenCV Include : ${OpenCV_INCLUDE_DIRS}")
 
-set( CMAKE_CURRENT_BIN_DIR "${CMAKE_CURRENT_BUILD_DIR}/bin" )
-set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BUILD_DIR}/bin/${CMAKE_BUILD_TYPE}" )
 
 #find_package(PkgConfig)
 
@@ -86,15 +87,20 @@ endif()
 link_directories(${yaml-cpp_LIBRARY_DIRS})
 include_directories(${yaml-cpp_INCLUDE_DIRS})
 
-# set(OpenVR_DIR /usr/local/include/openvr/)
-#TODO: write proper findlibconfig++.cmake to find this library
-# find_package(libconfig++ REQUIRED)
 find_package(OpenVR REQUIRED)
+message("OpenVR_INCLUDE_DIRS:${OpenVR_INCLUDE_DIRS}")
+message("OpenVR_LIBRARIES:${OpenVR_LIBRARIES}")
+message("OpenVR_LIBRARY:${OpenVR_LIBRARY_DBG}")
 
 find_package(BlackMagic)
 if(BlackMagic_FOUND)
     add_definitions(-DUSE_BLACKMAGICCAMERA)
 endif()
+
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Templates/Resources.cfg.in"
+        ${EXECUTABLE_OUTPUT_PATH}/Resources.cfg
+)
 
 macro( add_recursive dir retVal )
     file( GLOB_RECURSE ${retVal} ${dir}/*.h ${dir}/*.cpp ${dir}/*.c )
@@ -129,6 +135,7 @@ target_link_libraries(
     ${OpenVR_LIBRARIES}
     ${OpenCV_LIBS}
     ${YAML_CPP_LIBRARIES}
+    ${CMAKE_DL_LIBS}
 #    ${BLACKMAGIC_LIBRARIES}
 )
 

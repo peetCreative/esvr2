@@ -76,7 +76,7 @@ namespace esvr2
         StereoCameraConfig cameraConfig =
             mEsvr2->mVideoLoader->getStereoCameraConfig();
         if ( cameraConfig.leftToRight )
-            mScale = mGraphicsSystem->mVrData->mLeftToRight.length() / cameraConfig.leftToRight;
+            mScale = mGraphicsSystem->mVrData.mLeftToRight.length() / cameraConfig.leftToRight;
         for( size_t eye = 0; eye < mEyeNum * 2; eye++ )
         {
             CameraConfig *cfg = cameraConfig.cfg [eye%2];

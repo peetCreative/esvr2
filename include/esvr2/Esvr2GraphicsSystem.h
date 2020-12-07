@@ -87,9 +87,6 @@ namespace esvr2
 
         Ogre::v1::OverlaySystem     *mOverlaySystem;
 
-        //Depending on this type start with different Compositor setup
-        WorkspaceType               mWorkSpaceType;
-
         Ogre::SceneNode             *mCamerasNode;
         Ogre::SceneNode             *mCameraNode[2];
         //two real cameras and two workspaces (two cameras rendering) or
@@ -103,7 +100,7 @@ namespace esvr2
         Ogre::Camera                *mVrCullCamera;
         Ogre::TextureGpu            *mVrTexture;
         Ogre::TextureGpu            *mVideoTexture[2];
-        Ogre::VrData                *mVrData;
+        Ogre::VrData                mVrData;
         HmdConfig                   mHmdConfig;
         StereoCameraConfig          mCameraConfig;
 
@@ -117,7 +114,6 @@ namespace esvr2
         std::string mDeviceModelNumber;
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
 
-        VideoRenderTarget mVideoTarget;
         Ogre::Vector4 mVrOffsetScalesRaw[2], mVrOffsetScalesUndistRect[2];
         Ogre::StagingTexture *mStagingTexture[2];
 

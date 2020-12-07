@@ -1,16 +1,15 @@
 [Essential]
-Zip=@OGRE_MEDIA_DIR@Data/DebugPack.zip
+Zip=@OGRE_MEDIA_DIR@/packs/DebugPack.zip
 
 [Popular]
 FileSystem=@CMAKE_CURRENT_SOURCE_DIR@/media
-FileSystem=@CMAKE_CURRENT_SOURCE_DIR@/media/rectangle
-FileSystem=@OGRE_MEDIA_DIR@Data
-FileSystem=@OGRE_MEDIA_DIR@Data/Materials/Common
-FileSystem=@OGRE_MEDIA_DIR@Data/Materials/Common/GLSL
-FileSystem=@OGRE_MEDIA_DIR@Data/Materials/Common/HLSL
-FileSystem=@OGRE_MEDIA_DIR@Data/Materials/Common/Metal
+FileSystem=@OGRE_MEDIA_DIR@
+FileSystem=@OGRE_MEDIA_DIR@/2.0/scripts/materials/Common
+FileSystem=@OGRE_MEDIA_DIR@/2.0/scripts/materials/Common/GLSL
+FileSystem=@OGRE_MEDIA_DIR@/2.0/scripts/materials/Common/HLSL
+FileSystem=@OGRE_MEDIA_DIR@/2.0/scripts/materials/Common/Metal
 
 # Do not load this as a resource. It's here merely to tell the code where
 # the Hlms templates are located
 [Hlms]
-DoNotUseAsResource=@OGRE_MEDIA_DIR@Data
+DoNotUseAsResource=@OGRE_MEDIA_DIR@
