@@ -29,7 +29,8 @@ namespace esvr2
             mGraphicsSystem = graphicsSystem;
         }
 
-        void createScene01(void);
+        void createLaparoscopeScene(void);
+        void createVRScene(void);
 
     private:
         Esvr2* mEsvr2;
@@ -42,11 +43,12 @@ namespace esvr2
         Ogre::ManualObject       *mAxisCameras;
         Ogre::v1::BillboardSet   *mTooltips;
         PointCloud               *mPointCloud;
-        Ogre::SceneNode          *mSceneNodeLight;
-        Ogre::SceneNode          *mSceneNodeCamera[2];
-        Ogre::SceneNode          *mSceneNodePointCloud;
-        Ogre::SceneNode          *mSceneNodeTooltips;
-        Ogre::SceneNode          *mSceneNodeMesh;
+        Ogre::SceneNode          *mVRSceneNodeLight;
+        Ogre::SceneNode          *mVRSceneNodeCamera[2];
+        Ogre::SceneNode          *mLaparoscopeSceneNodeCamera[2];
+        Ogre::SceneNode          *mLaparoscopeSceneNodePointCloud;
+        Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
+        Ogre::SceneNode          *mLaparoscopeSceneNodeMesh;
         bool                     mIsStereo;
         size_t                   mEyeNum;
 

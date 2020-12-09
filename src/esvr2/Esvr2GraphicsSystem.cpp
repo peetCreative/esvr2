@@ -36,35 +36,38 @@ namespace esvr2
     GraphicsSystem::GraphicsSystem(
             Esvr2 *esvr2,
             std::shared_ptr<GameState> gameState):
-        mEsvr2(esvr2),
-        mGameState(gameState),
-        mGL3PlusPlugin(nullptr),
-        mCamerasNode( nullptr ),
-        mCameraNode{ nullptr, nullptr },
-        mEyeCameras{ nullptr, nullptr },
-        mZoom( 1.0f ),
-        mCamNear( 0.005f ),
-        mCamFar( 200.0f ),
-        mVrWorkspaces{ nullptr, nullptr },
-        mMirrorWorkspace( nullptr ),
-        mVrCullCamera( nullptr ),
-        mVrTexture( nullptr ),
-        mVideoTexture{ nullptr, nullptr },
-        mVrData(),
-        mOvrCompositorListener( nullptr ),
-        mHMD( nullptr ),
-        mHmdConfig(esvr2->mConfig->hmdConfig),
-        mVRCompositor( nullptr ),
-        mStrDriver( "" ),
-        mStrDisplay( "" ),
-        mDeviceModelNumber( "" ),
-        mStagingTexture{ nullptr, nullptr },
-        mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
-        mLastFrameUpdate(0),
-        mUpdateFrames(2),
-        mQuit(false),
-        mUseHlmsDiskCache(true),
-        mUseMicrocodeCache(true)
+            mEsvr2(esvr2),
+            mGameState(gameState),
+            mGL3PlusPlugin(nullptr),
+            mLaparoscopeCamerasNode( nullptr ),
+            mLaparoscopeCameraNode{ nullptr, nullptr },
+            mVRCamerasNode( nullptr ),
+            mVRCameraNode{ nullptr, nullptr },
+            mLaparoscopeCameras{nullptr, nullptr },
+            mZoom( 1.0f ),
+            mCamNear( 0.005f ),
+            mCamFar( 200.0f ),
+            mLaparoscopeWorkspaces{ nullptr, nullptr },
+            mVRWorkspaces{ nullptr, nullptr },
+            mMirrorWorkspace( nullptr ),
+            mVRCullCamera( nullptr ),
+            mVRTexture( nullptr ),
+            mVideoTexture{ nullptr, nullptr },
+            mVrData(),
+            mOvrCompositorListener( nullptr ),
+            mHMD( nullptr ),
+            mHmdConfig(esvr2->mConfig->hmdConfig),
+            mVRCompositor( nullptr ),
+            mStrDriver( "" ),
+            mStrDisplay( "" ),
+            mDeviceModelNumber( "" ),
+            mStagingTexture{ nullptr, nullptr },
+            mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
+            mLastFrameUpdate(0),
+            mUpdateFrames(2),
+            mQuit(false),
+            mUseHlmsDiskCache(true),
+            mUseMicrocodeCache(true)
 //TODO: Load Resource Folder, Load Plugin Folder
 //        GraphicsSystem( gameState, showOgreConfigDialog,
 //                        RESOURCE_FOLDER, PLUGIN_FOLDER ),
@@ -73,8 +76,7 @@ namespace esvr2
         LOG << "PLUGIN_FOLDER:" << PLUGIN_FOLDER << LOGEND;
         const Ogre::Matrix4 id[2] =
                 { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY };
-        mVrData = new Ogre::VrData();
-        mVrData->set(id, id);
+        mVrData.set(id, id);
         memset( mTrackedDevicePose, 0, sizeof (mTrackedDevicePose) );
     }
 
@@ -158,94 +160,6 @@ namespace esvr2
         Ogre::NameValuePairList params;
         bool fullscreen = Ogre::StringConverter::parseBool(
                 cfgOpts["Full Screen"].currentValue );
-#if OGRE_USE_SDL2
-        if (mScreen >= SDL_GetNumVideoDisplays())
-        {
-            OGRE_EXCEPT( Ogre::Exception::ERR_INTERNAL_ERROR,
-                         "Requested Screen does not exist",
-                         "GraphicsSystem::initialize" );
-        }
-        int posX = SDL_WINDOWPOS_CENTERED_DISPLAY(mScreen);
-        int posY = SDL_WINDOWPOS_CENTERED_DISPLAY(mScreen);
-
-        if(fullscreen)
-        {
-            posX = SDL_WINDOWPOS_UNDEFINED_DISPLAY(mScreen);
-            posY = SDL_WINDOWPOS_UNDEFINED_DISPLAY(mScreen);
-            SDL_DisplayMode dm;
-
-            if (SDL_GetDesktopDisplayMode(mScreen, &dm) != 0)
-            {
-                SDL_Log("SDL_GetDesktopDisplayMode failed: %s", SDL_GetError());
-            }
-
-            width = dm.w;
-            height = dm.h;
-        }
-
-        Uint32 flags =
-            SDL_WINDOW_SHOWN  |
-            SDL_WINDOW_OPENGL |
-//             SDL_WINDOW_FULLSCREEN_DESKTOP |
-            SDL_WINDOW_BORDERLESS;
-
-        mSdlWindow = SDL_CreateWindow(
-                    windowTitle.c_str(),    // window title
-                    posX,               // initial x position
-                    posY,               // initial y position
-                    width,              // width, in pixels
-                    height,             // height, in pixels
-                    flags);
-
-        //Get the native whnd
-        SDL_SysWMinfo wmInfo;
-        SDL_VERSION( &wmInfo.version );
-
-        if( SDL_GetWindowWMInfo( mSdlWindow, &wmInfo ) == SDL_FALSE )
-        {
-            OGRE_EXCEPT( Ogre::Exception::ERR_INTERNAL_ERROR,
-                         "Couldn't get WM Info! (SDL2)",
-                         "GraphicsSystem::initialize" );
-        }
-
-        Ogre::String winHandle;
-        switch( wmInfo.subsystem )
-        {
-        #if defined(SDL_VIDEO_DRIVER_WINDOWS)
-        case SDL_SYSWM_WINDOWS:
-            // Windows code
-            winHandle = Ogre::StringConverter::toString( (uintptr_t)wmInfo.info.win.window );
-            break;
-        #endif
-        #if defined(SDL_VIDEO_DRIVER_WINRT)
-        case SDL_SYSWM_WINRT:
-            // Windows code
-            winHandle = Ogre::StringConverter::toString( (uintptr_t)wmInfo.info.winrt.window );
-            break;
-        #endif
-        #if defined(SDL_VIDEO_DRIVER_COCOA)
-        case SDL_SYSWM_COCOA:
-            winHandle  = Ogre::StringConverter::toString(WindowContentViewHandle(wmInfo));
-            break;
-        #endif
-        #if defined(SDL_VIDEO_DRIVER_X11)
-        case SDL_SYSWM_X11:
-            winHandle = Ogre::StringConverter::toString( (uintptr_t)wmInfo.info.x11.window );
-            break;
-        #endif
-        default:
-            OGRE_EXCEPT( Ogre::Exception::ERR_NOT_IMPLEMENTED,
-                         "Unexpected WM! (SDL2)",
-                         "GraphicsSystem::initialize" );
-            break;
-        }
-
-        #if OGRE_PLATFORM == OGRE_PLATFORM_WIN32 || OGRE_PLATFORM == OGRE_PLATFORM_WINRT
-            params.insert( std::make_pair("externalWindowHandle",  winHandle) );
-        #else
-            params.insert( std::make_pair("parentWindowHandle",  winHandle) );
-        #endif
-#endif
 
         params.insert( std::make_pair("title", windowTitle) );
         params.insert( std::make_pair("gamma", cfgOpts["sRGB Gamma Conversion"].currentValue) );
@@ -253,21 +167,18 @@ namespace esvr2
         params.insert( std::make_pair("vsync", cfgOpts["VSync"].currentValue) );
         params.insert( std::make_pair("reverse_depth", "Yes" ) );
 
-        mRenderWindow = Ogre::Root::getSingleton().createRenderWindow( windowTitle, width, height,
-                                                                       fullscreen, &params );
+        mRenderWindow = Ogre::Root::getSingleton().createRenderWindow(
+                windowTitle, width, height, fullscreen, &params );
+
+        mOverlaySystem = OGRE_NEW Ogre::v1::OverlaySystem();
+
         setupResources();
         loadResources();
         chooseSceneManager();
-        createCamera();
-        mWorkspace = setupCompositor();
-
-
-        //TODO: create OgreWindow
-//    #if OGRE_USE_SDL2
-//        mInputHandler = new SdlInputHandler( mSdlWindow, mCurrentGameState,
-//                                             mCurrentGameState, mCurrentGameState );
-//    #endif
-
+        createVRCameras();
+        createLaparoscopeCameras();
+        setupVRCompositor();
+        setupLaparoscopeCompositors();
 
 #if OGRE_PROFILING
         Ogre::Profiler::getSingleton().setEnabled( true );
@@ -291,10 +202,10 @@ namespace esvr2
         Ogre::TextureGpuManager *textureManager =
                 mRoot->getRenderSystem()->getTextureGpuManager();
 
-        if( mVrTexture )
+        if( mVRTexture )
         {
-            textureManager->destroyTexture( mVrTexture );
-            mVrTexture = 0;
+            textureManager->destroyTexture( mVRTexture );
+            mVRTexture = 0;
         }
 
         for( size_t eye = 0; eye < 2; eye++ )
@@ -309,17 +220,17 @@ namespace esvr2
             //Don't need to be destroyed compositorManager is doing it
             mVideoTexture[eye] = 0;
 
-            if( mEyeCameras[eye] )
+            if( mLaparoscopeCameras[eye] )
             {
-                mSceneManager->destroyCamera( mEyeCameras[eye] );
-                mEyeCameras[eye] = nullptr;
+                mLaparoscopeSceneManager->destroyCamera(mLaparoscopeCameras[eye] );
+                mLaparoscopeCameras[eye] = nullptr;
             }
         }
 
-        if( mVrCullCamera )
+        if( mVRCullCamera )
         {
-            mSceneManager->destroyCamera( mVrCullCamera );
-            mVrCullCamera = 0;
+            mLaparoscopeSceneManager->destroyCamera( mVRCullCamera );
+            mVRCullCamera = 0;
         }
 
         if( mHMD )
@@ -334,11 +245,11 @@ namespace esvr2
 
     void GraphicsSystem::setDistortion(Distortion dist)
     {
-        if( mVrWorkspaces[LEFT] && mVrWorkspaces[RIGHT] )
+        if( mLaparoscopeWorkspaces[LEFT] && mLaparoscopeWorkspaces[RIGHT] )
         {
             for(size_t eye = 0; eye < mEyeNum; eye++)
             {
-                mVrWorkspaces[eye]->setViewportModifier(getVpOffset(dist, eye));
+                mLaparoscopeWorkspaces[eye]->setViewportModifier(getVpOffset(dist, eye));
             }
         }
         mEsvr2->mVideoLoader->setDistortion(dist);
@@ -354,77 +265,110 @@ namespace esvr2
         if( zoom > 0.1 && zoom < 10.0f )
             mZoom = zoom;
         Distortion dist = mEsvr2->mVideoLoader->getDistortion();
-        if( mVrWorkspaces[LEFT] && mVrWorkspaces[RIGHT] )
+        if( mLaparoscopeWorkspaces[LEFT] && mLaparoscopeWorkspaces[RIGHT] )
         {
             for(size_t eye = 0; eye < mEyeNum; eye++)
             {
-                mVrWorkspaces[eye]->setViewportModifier(getVpOffset(dist, eye));
+                mLaparoscopeWorkspaces[eye]->setViewportModifier(getVpOffset(dist, eye));
             }
         }
     }
 
-
     //-------------------------------------------------------------------------------
-    void GraphicsSystem::createCamera(void)
+    void GraphicsSystem::createVRCameras()
     {
         //Use one node to control both cameras
 //         mCamerasNode->setOrientation( orientation );
-        mCamerasNode = mSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
-                createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        mCamerasNode->setName( "Cameras Node" );
+        mVRCamerasNode = mVRSceneManager
+                ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
+                ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mVRCamerasNode->setName( "Cameras Node" );
 //         mCamerasNode->setPosition( pos );
 //         mCamerasNode->setOrientation( orientation );
 
-        mCameraNode[LEFT] = mCamerasNode->
+        mVRCameraNode[LEFT] = mVRCamerasNode->
                 createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        mCameraNode[LEFT]->setName( "Left Camera Node" );
+        mVRCameraNode[LEFT]->setName( "Left Camera Node" );
 
-        mCameraNode[RIGHT] = mCamerasNode->
+        mVRCameraNode[RIGHT] = mVRCamerasNode->
                 createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        mCameraNode[RIGHT]->setName( "Right Camera Node" );
+        mVRCameraNode[RIGHT]->setName( "Right Camera Node" );
 
-        mVrCullCamera = mSceneManager->createCamera( "VrCullCamera" );
-//         mVrCullCamera->detachFromParent();
-//         mCamerasNode->attachObject( mVrCullCamera );
+        mVRCullCamera = mVRSceneManager->createCamera( "VrCullCamera" );
+        mVRCullCamera->detachFromParent();
+        mVRCamerasNode->attachObject( mVRCullCamera );
 
 //         mCamerasNode->setPosition(pos);
 
         //setup mVrData und mVrCullCamera using the mHmdConfig
-        syncCameraProjection( true );
+        syncVRCameraProjection( true );
 
-        if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
+        if ( mEsvr2->mConfig->workspaceType == WS_TWO_CAMERAS_STEREO )
         {
-            mEyeCameras[LEFT] = mSceneManager->createCamera( "Left Eye" );
-            mEyeCameras[RIGHT] = mSceneManager->createCamera( "Right Eye" );
+            mVRCameras[LEFT] = mVRSceneManager->createCamera("Left Eye" );
+            mVRCameras[RIGHT] = mVRSceneManager->createCamera("Right Eye" );
 
 //             const Ogre::Real eyeDistance        = 0.06f;
 //             const Ogre::Real eyeFocusDistance   = 0.06f;
 
             //By default cameras are attached to the Root Scene Node.
-            mEyeCameras[LEFT]->detachFromParent();
-            mCamerasNode->attachObject( mEyeCameras[LEFT] );
-            mEyeCameras[RIGHT]->detachFromParent();
-            mCamerasNode->attachObject( mEyeCameras[RIGHT] );
+            mVRCameras[LEFT]->detachFromParent();
+            mVRCamerasNode->attachObject(mVRCameras[LEFT] );
+            mVRCameras[RIGHT]->detachFromParent();
+            mVRCamerasNode->attachObject(mVRCameras[RIGHT] );
 //             mCameraNode[RIGHT]->attachObject( mEyeCameras[RIGHT] );
-
-            mCamera = mEyeCameras[RIGHT];
+            //TODO: configure the cameras according to HMD config
         }
-        if (mWorkSpaceType == WS_INSTANCED_STEREO)
+        if (mEsvr2->mConfig->workspaceType == WS_INSTANCED_STEREO)
         {
-            mCamera = mSceneManager->createCamera( "Main Camera" );
+            mVRCameras[MONO] = mVRSceneManager->createCamera( "Main Camera" );
 
             // Position it at 500 in Z direction
-            mCamera->setPosition( Ogre::Vector3( 0.0, 0.0, 0.0 ) );
+            mVRCameras[MONO]->setPosition( Ogre::Vector3( 0.0, 0.0, 0.0 ) );
             // Look back along -Z
-            mCamera->lookAt( Ogre::Vector3( 0, 0, -1.0 ) );
-            mCamera->setNearClipDistance( mCamNear );
-            mCamera->setFarClipDistance( mCamFar );
-            mCamera->setAutoAspectRatio( true );
-            mCamera->detachFromParent();
-            mCamera->setVrData( mVrData );
-            mCamerasNode->attachObject( mCamera );
-            mEyeCameras[LEFT] = mCamera;
+            mVRCameras[MONO]->lookAt( Ogre::Vector3( 0, 0, -1.0 ) );
+            mVRCameras[MONO]->setNearClipDistance( mCamNear );
+            mVRCameras[MONO]->setFarClipDistance( mCamFar );
+            mVRCameras[MONO]->setAutoAspectRatio( true );
+            mVRCameras[MONO]->detachFromParent();
+            mVRCameras[MONO]->setVrData( &mVrData );
+            mVRCamerasNode->attachObject( mVRCameras[MONO] );
         }
+
+    }
+
+
+    //-------------------------------------------------------------------------------
+    void GraphicsSystem::createLaparoscopeCameras(void)
+    {
+        //Use one node to control both cameras
+//         mCamerasNode->setOrientation( orientation );
+        mLaparoscopeCamerasNode = mLaparoscopeSceneManager
+                ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
+                ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mLaparoscopeCamerasNode->setName( "Cameras Node" );
+//         mCamerasNode->setPosition( pos );
+//         mCamerasNode->setOrientation( orientation );
+
+        mLaparoscopeCameraNode[LEFT] = mVRCamerasNode->
+                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mLaparoscopeCameraNode[LEFT]->setName( "Left Camera Node" );
+
+        mLaparoscopeCameraNode[RIGHT] = mLaparoscopeCamerasNode->
+                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mLaparoscopeCameraNode[RIGHT]->setName( "Right Camera Node" );
+        mLaparoscopeCameras[LEFT] = mLaparoscopeSceneManager->createCamera("Left Eye" );
+        mLaparoscopeCameras[RIGHT] = mLaparoscopeSceneManager->createCamera("Right Eye" );
+
+//             const Ogre::Real eyeDistance        = 0.06f;
+//             const Ogre::Real eyeFocusDistance   = 0.06f;
+
+        //By default cameras are attached to the Root Scene Node.
+        mLaparoscopeCameras[LEFT]->detachFromParent();
+        mLaparoscopeCamerasNode->attachObject(mLaparoscopeCameras[LEFT] );
+        mLaparoscopeCameras[RIGHT]->detachFromParent();
+        mLaparoscopeCamerasNode->attachObject(mLaparoscopeCameras[RIGHT] );
+        //TODO: config cameras according to camera config
     }
 
     inline void printMatrix4(Ogre::Matrix4 m)
@@ -448,16 +392,10 @@ namespace esvr2
 
     }
 
-    void GraphicsSystem::alignCameras()
-    {
-        //                 const Ogre::Vector3 camPos( eyeDistance * (leftOrRight * 2 - 1), 0, 0 );
-
-
-    }
     //-------------------------------------------------------------------------
-    void GraphicsSystem::syncCameraProjection( bool bForceUpdate )
+    void GraphicsSystem::syncVRCameraProjection( bool bForceUpdate )
     {
-        if( bForceUpdate && mVrData )
+        if( bForceUpdate )
         {
             Ogre::Matrix4 eyeToHead[2];
             Ogre::Matrix4 projectionMatrix[2];
@@ -500,8 +438,8 @@ namespace esvr2
                 LOG<< "projectionMatrixRS"<< LOGEND;
                 printMatrix4(projectionMatrixRS[i]);
             }
-//             mVrData->set( eyeToHead, projectionMatrixRS );
-            mVrData->set( eyeToHead, projectionMatrixRS );
+//             mVrData.set( eyeToHead, projectionMatrixRS );
+            mVrData.set( eyeToHead, projectionMatrixRS );
 
             Ogre::Vector4 cameraCullFrustumExtents;
             cameraCullFrustumExtents.x = std::min(
@@ -513,29 +451,29 @@ namespace esvr2
             cameraCullFrustumExtents.w = std::min(
                 eyeFrustumExtents[0].w, eyeFrustumExtents[1].w );
 
-            mVrCullCamera->setFrustumExtents(
+            mVRCullCamera->setFrustumExtents(
                 cameraCullFrustumExtents.x,
                 cameraCullFrustumExtents.y,
                 cameraCullFrustumExtents.w,
                 cameraCullFrustumExtents.z,
                 Ogre::FET_TAN_HALF_ANGLES );
 
-            const float ipd = mVrData->mLeftToRight.x;
+            const float ipd = mVrData.mLeftToRight.x;
             Ogre::Vector3 cullCameraOffset = Ogre::Vector3::ZERO;
             cullCameraOffset.z = (ipd / 2.0f) /
                 Ogre::Math::Abs( cameraCullFrustumExtents.x );
 
             const Ogre::Real offset = cullCameraOffset.length();
-            mVrCullCamera->setNearClipDistance( mCamNear + offset );
-            mVrCullCamera->setFarClipDistance( mCamFar + offset );
+            mVRCullCamera->setNearClipDistance( mCamNear + offset );
+            mVRCullCamera->setFarClipDistance( mCamFar + offset );
         }
     }
 
     Ogre::Vector4 GraphicsSystem::getVpOffset( Distortion dist, size_t eye)
     {
-        size_t vr_width_half = mVrTexture->getWidth()/2;
-        size_t vr_width = mVrTexture->getWidth();
-        size_t vr_height = mVrTexture->getHeight();
+        size_t vr_width_half = mVRTexture->getWidth()/2;
+        size_t vr_width = mVRTexture->getWidth();
+        size_t vr_height = mVRTexture->getHeight();
         float f_x, f_y, c_x, c_y;
         StereoCameraConfig cameraConfig = mEsvr2->mVideoLoader->getStereoCameraConfig();
         switch(dist)
@@ -583,8 +521,10 @@ namespace esvr2
 
     bool GraphicsSystem::calcAlign()
     {
-        Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
-        Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
+        Ogre::CompositorManager2 *compositorManager =
+                mRoot->getCompositorManager2();
+        Ogre::TextureGpuManager *textureManager =
+                mRoot->getRenderSystem()->getTextureGpuManager();
 
         // for some reason we can only update every n frames.
         //which is limited by this function
@@ -604,9 +544,9 @@ namespace esvr2
 
         Ogre::Matrix4 eyeToHead[2];
         Ogre::Matrix4 proj_matrix[2];
-        size_t vr_width_half = mVrTexture->getWidth()/2;
-        size_t vr_width = mVrTexture->getWidth();
-        size_t vr_height = mVrTexture->getHeight();
+        size_t vr_width_half = mVRTexture->getWidth()/2;
+        size_t vr_width = mVRTexture->getWidth();
+        size_t vr_height = mVRTexture->getHeight();
 
         StereoCameraConfig cameraConfig =
                 mEsvr2->mVideoLoader->getStereoCameraConfig();
@@ -666,59 +606,94 @@ namespace esvr2
             mRoot->getRenderSystem()->_convertOpenVrProjectionMatrix(
                 proj_matrix[eye], proj_matrix_rs );
 
-            mEyeCameras[eye]->setCustomProjectionMatrix( true, proj_matrix[eye] );
+            mVRCameras[eye]->setCustomProjectionMatrix(true, proj_matrix[eye] );
 //                 mEyeCameras[eye]->setAutoAspectRatio( true );
-            mEyeCameras[eye]->setNearClipDistance( 0.0001 );
-            mEyeCameras[eye]->setFarClipDistance( mCamFar );
+            mVRCameras[eye]->setNearClipDistance(0.0001 );
+            mVRCameras[eye]->setFarClipDistance(mCamFar );
             double tx = (cameraConfig.cfg[eye]->P[3] / f_x);
             Ogre::Vector3 position = Ogre::Vector3::UNIT_X * tx;
             LOG << "Pos "<< cameraConfig.cfg[eye]->eye_str << eye << ": " << position.x << " " << position.y << " " <<position.z <<LOGEND;
-            mEyeCameras[eye]->setPosition( position );
-            mEyeCameras[eye]->lookAt(0,0,1);
+            mVRCameras[eye]->setPosition(position );
+            mVRCameras[eye]->lookAt(0, 0, 1);
         }
         // now as we have camera config we use it.
-        mVrData->set( eyeToHead, proj_matrix);
+        mVrData.set( eyeToHead, proj_matrix);
         return true;
     }
 
-    Ogre::CompositorWorkspace* GraphicsSystem::setupCompositor(void)
+    void GraphicsSystem::setupVRCompositor(void)
     {
         Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
 
         initOpenVR();
         calcAlign();
+
         //create Workspaces
-        if ( mWorkSpaceType == WS_TWO_CAMERAS_STEREO )
+        if ( mEsvr2->mConfig->workspaceType == WS_TWO_CAMERAS_STEREO )
         {
             createTwoWorkspaces();
         }
-        else if (mWorkSpaceType == WS_INSTANCED_STEREO)
+        else if (mEsvr2->mConfig->workspaceType == WS_INSTANCED_STEREO)
         {
-            mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
-                mSceneManager, mVrTexture,
-                mCamera, "InstancedStereoWorkspace", true, 0 );
+            mVRWorkspaces[MONO] = compositorManager->addWorkspace(
+                mVRSceneManager, mVRTexture,
+                mVRCameras[MONO],
+                "InstancedStereoWorkspace", true, 1 );
         }
 
         mOvrCompositorListener =
             new OpenVRCompositorListener(
-                mHMD, mVRCompositor, mVrTexture,
-                mRoot, mVrWorkspaces,
-                mCamerasNode, mEsvr2->mPoseState
+                mHMD, mVRCompositor, mVRTexture,
+                mRoot, mLaparoscopeWorkspaces,
+                mVRCamerasNode, mEsvr2->mPoseState
             );
         setupImageData();
 
-        syncCameraProjection( true );
+        syncVRCameraProjection( true );
 
         const Ogre::IdString workspaceName( "StereoMirrorWindowWorkspace" );
 
         Ogre::CompositorChannelVec channels( 2u );
-        channels[0] = mWindow->getTexture();
-        channels[1] = mVrTexture;
+        channels[0] = mRenderWindow->getTexture();
+        channels[1] = mVRTexture;
         mMirrorWorkspace = compositorManager->addWorkspace(
-            mSceneManager, channels, mCamera,
-            workspaceName, true );
+            mVRSceneManager, channels, mVRCameras[LEFT],
+            workspaceName, true, 3);
+    }
 
-        return mMirrorWorkspace;
+    void GraphicsSystem::setupLaparoscopeCompositors(void)
+    {
+        Ogre::CompositorManager2 *compositorManager =
+                mRoot->getCompositorManager2();
+        Ogre::TextureGpuManager *textureManager =
+                mRoot->getRenderSystem()->getTextureGpuManager();
+        int width = 960;
+        int height = 540;
+        std::string textureNames[2] = {"LaparoscopeViewLeft", "LaparoscopeViewRight" };
+        for (size_t eye = 0; eye < mEyeNum; eye++ )
+        {
+            //Radial Density Mask requires the VR texture to be UAV & reinterpretable
+            mLaparoscopeViewTexture[eye] = textureManager->createOrRetrieveTexture(
+                    textureNames[eye],
+                    Ogre::GpuPageOutStrategy::Discard,
+                    Ogre::TextureFlags::RenderToTexture|
+                    Ogre::TextureFlags::Uav|
+                    Ogre::TextureFlags::Reinterpretable,
+                    Ogre::TextureTypes::Type2D );
+            mLaparoscopeViewTexture[eye]->setResolution(width, height);
+            mLaparoscopeViewTexture[eye]->setPixelFormat( Ogre::PFG_RGBA8_UNORM );
+            mLaparoscopeViewTexture[eye]->scheduleTransitionTo(
+                    Ogre::GpuResidency::Resident );
+            Ogre::CompositorManager2 *compositorManager =
+                    mRoot->getCompositorManager2();
+            mLaparoscopeWorkspaces[eye] = compositorManager->addWorkspace(
+                    mLaparoscopeSceneManager,
+                    mLaparoscopeViewTexture[eye],
+                    mLaparoscopeCameras[eye],
+                    "LaparoscopeViewWorkspace",
+                    true,
+                    0);
+        }
     }
 
     //-----------------------------------------------------------------------------
@@ -805,7 +780,7 @@ namespace esvr2
 
         Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
         //Radial Density Mask requires the VR texture to be UAV & reinterpretable
-        mVrTexture = textureManager->createOrRetrieveTexture(
+        mVRTexture = textureManager->createOrRetrieveTexture(
             "OpenVR Both Eyes",
             Ogre::GpuPageOutStrategy::Discard,
             Ogre::TextureFlags::RenderToTexture|
@@ -813,13 +788,11 @@ namespace esvr2
             Ogre::TextureFlags::Reinterpretable,
             Ogre::TextureTypes::Type2D );
         new_width = width << 1u;
-        mVrTexture->setResolution( new_width, height);
-        mVrTexture->setPixelFormat( Ogre::PFG_RGBA8_UNORM );
-        mVrTexture->scheduleTransitionTo(
+        mVRTexture->setResolution( new_width, height);
+        mVRTexture->setPixelFormat( Ogre::PFG_RGBA8_UNORM );
+        mVRTexture->scheduleTransitionTo(
             Ogre::GpuResidency::Resident );
 
-        Ogre::CompositorManager2 *compositorManager =
-            mRoot->getCompositorManager2();
 
     }
 
@@ -827,53 +800,53 @@ namespace esvr2
     {
         Ogre::CompositorManager2 *compositorManager =
             mRoot->getCompositorManager2();
-        const Ogre::IdString workspaceName( "TwoCamerasWorkspace" );
+        const Ogre::IdString workspaceName( "StereoRenderingWorkspace" );
         Ogre::uint8 vpModifierMask, executionMask;
         Ogre::Vector4 vpOffsetScale;
 
         vpModifierMask  = 0x01;
         executionMask   = 0x01;
         //set offset so that we only render to the portion of the screen where there is the image
-        vpOffsetScale =  getVpOffset( mEsvr2->mVideoLoader->getDistortion(), LEFT );
-        mVrWorkspaces[LEFT] = compositorManager->addWorkspace(
-            mSceneManager,
-            mVrTexture,
-            mEyeCameras[LEFT], workspaceName,
-            true, -1, nullptr,
-            nullptr,
-            vpOffsetScale,
-            vpModifierMask,
-            executionMask );
+        vpOffsetScale   = Ogre::Vector4( 0.0f,	 0.0f, 0.5f, 1.0f );
+        mVRWorkspaces[LEFT] = compositorManager->addWorkspace(
+                mLaparoscopeSceneManager,
+                mVRTexture,
+                mLaparoscopeCameras[LEFT], workspaceName,
+                true, 1, nullptr,
+                nullptr,
+                vpOffsetScale,
+                vpModifierMask,
+                executionMask );
 
         vpModifierMask  = 0x02;
         executionMask   = 0x02;
-        vpOffsetScale =  getVpOffset( mEsvr2->mVideoLoader->getDistortion(), RIGHT );
-        mVrWorkspaces[RIGHT] = compositorManager->addWorkspace(
-            mSceneManager,
-            mVrTexture,
-            mEyeCameras[RIGHT], workspaceName,
-            true, -1, nullptr,
-            nullptr,
-            vpOffsetScale,
-            vpModifierMask,
-            executionMask);
+        vpOffsetScale   = Ogre::Vector4( 0.5f, 0.0f, 0.5f, 1.0f );
+        mVRWorkspaces[RIGHT] = compositorManager->addWorkspace(
+                mLaparoscopeSceneManager,
+                mVRTexture,
+                mLaparoscopeCameras[RIGHT], workspaceName,
+                true, 1, nullptr,
+                nullptr,
+                vpOffsetScale,
+                vpModifierMask,
+                executionMask);
     }
 
     void GraphicsSystem::setupImageData()
     {
-        if (!mVrWorkspaces[LEFT])
+        if (!mLaparoscopeWorkspaces[LEFT])
             return;
         Ogre::TextureGpuManager *textureManager =
             mRoot->getRenderSystem()->getTextureGpuManager();
 
-        if ( mVideoTarget == VRT_TO_2D_RECTANGLE )
+        if ( mEsvr2->mConfig->videoRenderTarget == VRT_TO_2D_RECTANGLE )
         {
-            if ( mIsStereo )
+            if ( mEsvr2->mConfig->isStereo )
             {
                 //TODO: guard if we don't find it.
                 LOG << "setup Video Texture Left" << LOGEND;
-                mVideoTexture[LEFT] = mVrWorkspaces[LEFT]->findNode("TwoCamerasNode")->getLocalTextures()[0];
-                mVideoTexture[RIGHT] = mVrWorkspaces[RIGHT]->findNode("TwoCamerasNode")->getLocalTextures()[1];
+                mVideoTexture[LEFT] = mLaparoscopeWorkspaces[LEFT]->findNode("TwoCamerasNode")->getLocalTextures()[0];
+                mVideoTexture[RIGHT] = mLaparoscopeWorkspaces[RIGHT]->findNode("TwoCamerasNode")->getLocalTextures()[1];
             }
             else
             {
@@ -917,9 +890,6 @@ namespace esvr2
         }
     }
 
-
-
-
     void GraphicsSystem::beginFrameParallel(void)
     {
         if ( mOvrCompositorListener->getFrameCnt() >=
@@ -959,8 +929,8 @@ namespace esvr2
         if ( mEsvr2->mPoseState && mEsvr2->mPoseState->validPose() )
         {
             Ogre::Quaternion prev_orientation =
-                mCamerasNode->getOrientation();
-            Ogre::Vector3 prev_position = mCamerasNode->getPosition();
+                mLaparoscopeCamerasNode->getOrientation();
+            Ogre::Vector3 prev_position = mLaparoscopeCamerasNode->getPosition();
             Ogre::Quaternion orientation =
                 mEsvr2->mPoseState->getOrientation();
             orientation = orientation * Ogre::Quaternion(
@@ -972,8 +942,8 @@ namespace esvr2
 //                 LOG << "update orientation and position" << mOvrCompositorListener->getFrameCnt();
 //                 LOG << "Pos: " << position.x << " " << position.y << " " <<position.z;
 //                 LOG << "Orientation: " << orientation.w << " "<< orientation.x << " " << orientation.y << " " <<orientation.z<<LOGEND;
-                mCamerasNode->setPosition( position );
-                mCamerasNode->setOrientation( orientation );
+                mLaparoscopeCamerasNode->setPosition( position );
+                mLaparoscopeCamerasNode->setOrientation( orientation );
             }
         }
     }
@@ -983,7 +953,7 @@ namespace esvr2
     {
         // Load resource paths from config file
         Ogre::ConfigFile cf;
-        cf.load(mResourcePath + "resources2.cfg");
+        cf.load(mResourcePath + "Resources.cfg");
 
         // Go through all sections & settings in the file
         Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
@@ -1018,7 +988,9 @@ namespace esvr2
 
         // Initialise, parse scripts etc
         Ogre::ResourceGroupManager::getSingleton().initialiseAllResourceGroups( true );
-
+        Ogre::CompositorManager2 *compositorManager = mRoot->getCompositorManager2();
+        size_t numWorkspaces = compositorManager->getNumWorkspaces();
+        LOG << numWorkspaces << LOGEND;
         // Initialize resources for LTC area lights and accurate specular reflections (IBL)
         Ogre::Hlms *hlms = mRoot->getHlmsManager()->getHlms( Ogre::HLMS_PBS );
         OGRE_ASSERT_HIGH( dynamic_cast<Ogre::HlmsPbs*>( hlms ) );
@@ -1041,7 +1013,7 @@ namespace esvr2
     void GraphicsSystem::registerHlms(void)
     {
         Ogre::ConfigFile cf;
-        cf.load( mResourcePath + "resources2.cfg" );
+        cf.load( mResourcePath + "Resources.cfg" );
 
 #if OGRE_PLATFORM == OGRE_PLATFORM_APPLE || OGRE_PLATFORM == OGRE_PLATFORM_APPLE_IOS
         Ogre::String rootHlmsFolder = Ogre::macBundlePath() + '/' +
@@ -1244,18 +1216,21 @@ namespace esvr2
         const size_t numThreads = std::max<size_t>( 1, Ogre::PlatformInformation::getNumLogicalCores() );
 #endif
         // Create the SceneManager, in this case a generic one
-        mSceneManager = mRoot->createSceneManager( Ogre::ST_GENERIC,
+        mLaparoscopeSceneManager = mRoot->createSceneManager( Ogre::ST_GENERIC,
                                                    numThreads,
-                                                   "ExampleSMInstance" );
+                                                   "LaparoscopeScene" );
+        mVRSceneManager = mRoot->createSceneManager( Ogre::ST_GENERIC,
+                                                   numThreads,
+                                                   "VRView" );
 
-        mSceneManager->addRenderQueueListener( mOverlaySystem );
-        mSceneManager->getRenderQueue()->setSortRenderQueue(
+        mVRSceneManager->addRenderQueueListener( mOverlaySystem );
+        mVRSceneManager->getRenderQueue()->setSortRenderQueue(
                 Ogre::v1::OverlayManager::getSingleton().mDefaultRenderQueueId,
                 Ogre::RenderQueue::StableSort );
 
         //Set sane defaults for proper shadow mapping
-        mSceneManager->setShadowDirectionalLightExtrusionDistance( 500.0f );
-        mSceneManager->setShadowFarDistance( 500.0f );
+        mVRSceneManager->setShadowDirectionalLightExtrusionDistance( 500.0f );
+        mVRSceneManager->setShadowFarDistance( 500.0f );
     }
 
     void GraphicsSystem::setQuit()

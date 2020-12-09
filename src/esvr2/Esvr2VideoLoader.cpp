@@ -297,9 +297,13 @@ namespace esvr2
                                         mUndistortMap1[eye], mUndistortMap2[eye] );
             cv::Mat rectify = cv::Mat::zeros(3, 3, CV_64FC1);
             for( int y = 0; y < 3; y++ )
+            {
                 for( int x = 0; x < 3; x++ )
+                {
                     rectify.at<double>(y,x) = mCameraConfig.cfg[eye]->R[y*3+x];
-                cv::Mat project = cv::Mat::zeros(3, 4, CV_64FC1);
+                }
+            }
+            cv::Mat project = cv::Mat::zeros(3, 4, CV_64FC1);
             for( int y = 0; y < 3; y++ )
                 for( int x = 0; x < 4; x++ )
                     project.at<double>(y,x) = mCameraConfig.cfg[eye]->P[y*4+x];

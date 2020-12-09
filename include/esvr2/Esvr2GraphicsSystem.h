@@ -53,8 +53,6 @@ namespace esvr2
         void beginFrameParallel(void);
         void finishFrameParallel(void) {};
     public:
-        Ogre::Root *getRoot();
-        Ogre::SceneManager *getSceneManager();
         Ogre::Window *getRenderWindow();
 
         void setQuit();
@@ -72,13 +70,11 @@ namespace esvr2
         Esvr2 *mEsvr2;
         std::shared_ptr<GameState> mGameState;
 
-        Ogre::SceneManager          *mSceneManager;
+        Ogre::SceneManager          *mLaparoscopeSceneManager;
+        Ogre::SceneManager          *mVRSceneManager;
         Ogre::Root                  *mRoot;
-        Ogre::Camera                *mCamera;
         // TODO: do we need two windows
-        Ogre::Window                *mWindow;
         Ogre::Window                *mRenderWindow;
-        Ogre::CompositorWorkspace   *mWorkspace;
         Ogre::String                mPluginsFolder;
         Ogre::String                mWriteAccessFolder;
         Ogre::String                mResourcePath;
@@ -87,19 +83,24 @@ namespace esvr2
 
         Ogre::v1::OverlaySystem     *mOverlaySystem;
 
-        Ogre::SceneNode             *mCamerasNode;
-        Ogre::SceneNode             *mCameraNode[2];
+        Ogre::SceneNode             *mLaparoscopeCamerasNode;
+        Ogre::SceneNode             *mLaparoscopeCameraNode[2];
+        Ogre::SceneNode             *mVRCamerasNode;
+        Ogre::SceneNode             *mVRCameraNode[2];
         //two real cameras and two workspaces (two cameras rendering) or
         //only use one VR Camera and workspace (Instanced Rendering)
-        Ogre::Camera                *mEyeCameras[2];
+        Ogre::Camera                *mLaparoscopeCameras[2];
+        Ogre::Camera                *mVRCameras[2];
         Ogre::Real                  mZoom;
         Ogre::Real                  mCamNear;
         Ogre::Real                  mCamFar;
-        Ogre::CompositorWorkspace   *mVrWorkspaces[2];
+        Ogre::CompositorWorkspace   *mLaparoscopeWorkspaces[2];
+        Ogre::CompositorWorkspace   *mVRWorkspaces[2];
         Ogre::CompositorWorkspace   *mMirrorWorkspace;
-        Ogre::Camera                *mVrCullCamera;
-        Ogre::TextureGpu            *mVrTexture;
+        Ogre::Camera                *mVRCullCamera;
+        Ogre::TextureGpu            *mVRTexture;
         Ogre::TextureGpu            *mVideoTexture[2];
+        Ogre::TextureGpu            *mLaparoscopeViewTexture[2];
         Ogre::VrData                mVrData;
         HmdConfig                   mHmdConfig;
         StereoCameraConfig          mCameraConfig;
@@ -133,9 +134,10 @@ namespace esvr2
         //------------------------------------
         // function
         //------------------------------------
-        void createCamera(void);
-        void alignCameras(void);
-        Ogre::CompositorWorkspace* setupCompositor(void);
+        void createLaparoscopeCameras(void);
+        void createVRCameras(void);
+        void setupVRCompositor(void);
+        void setupLaparoscopeCompositors(void);
 
         std::string GetTrackedDeviceString(
             vr::TrackedDeviceIndex_t unDevice,
@@ -146,7 +148,7 @@ namespace esvr2
         void createTwoWorkspaces();
         void setupImageData();
 
-        void syncCameraProjection( bool bForceUpdate );
+        void syncVRCameraProjection( bool bForceUpdate );
 
         Ogre::Vector4 getVpOffset( Distortion dist, size_t eye);
 

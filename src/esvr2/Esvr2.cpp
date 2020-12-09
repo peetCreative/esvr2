@@ -140,7 +140,8 @@ namespace esvr2 {
         mGameState->_notifyStereoGraphicsSystem( mGraphicsSystem );
 
         mGraphicsSystem->initialize( "esvr2" );
-        mGameState->createScene01();
+        mGameState->createLaparoscopeScene();
+        mGameState->createVRScene();
 
         //TODO: check configuration
         mIsConfigured = true;

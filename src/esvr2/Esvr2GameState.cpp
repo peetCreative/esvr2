@@ -30,11 +30,12 @@ namespace esvr2
         mAxisCameras( nullptr ),
         mTooltips( nullptr ),
         mPointCloud( nullptr ),
-        mSceneNodeLight( nullptr ),
-        mSceneNodeCamera{ nullptr, nullptr },
-        mSceneNodePointCloud( nullptr ),
-        mSceneNodeTooltips( nullptr ),
-        mSceneNodeMesh( nullptr ),
+        mVRSceneNodeLight( nullptr ),
+        mLaparoscopeSceneNodeCamera{ nullptr, nullptr },
+        mVRSceneNodeCamera{ nullptr, nullptr },
+        mLaparoscopeSceneNodePointCloud( nullptr ),
+        mLaparoscopeSceneNodeTooltips( nullptr ),
+        mLaparoscopeSceneNodeMesh( nullptr ),
         mIsStereo( esvr2->mConfig->isStereo ),
         mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
         mProjPlaneDistance{ 0, 0, 0, 0 },
@@ -100,7 +101,7 @@ namespace esvr2
                 c_y = cfg->P[6];
 
                 mProjPlaneDistance[eye] =
-                    mGraphicsSystem->mVrData->mLeftToRight.length() * f_x /
+                    mGraphicsSystem->mVrData.mLeftToRight.length() * f_x /
                     -cameraConfig.cfg[RIGHT]->P[3];
             }
 
@@ -119,7 +120,8 @@ namespace esvr2
     //TODO: compiles but doesn't work
     void GameState::createProjectionRectangle2D()
     {
-        mProjectionRectangle2D = mGraphicsSystem->mSceneManager->createRectangle2D(Ogre::SCENE_DYNAMIC);
+        mProjectionRectangle2D = mGraphicsSystem->mVRSceneManager
+                ->createRectangle2D(Ogre::SCENE_DYNAMIC);
         mProjectionRectangle2D->setName("Rectangle2D");
         mProjectionRectangle2D->initialize(
             Ogre::BT_DEFAULT,
@@ -132,7 +134,7 @@ namespace esvr2
         );
         mProjectionRectangle2D->setDatablock(mDatablockName[LEFT]);
         mProjectionRectangle2D->setRenderQueueGroup( 212u );
-        mGraphicsSystem->mSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )
+        mGraphicsSystem->mVRSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )
             ->attachObject(mProjectionRectangle2D);
 
         Ogre::MaterialManager &materialManager =
@@ -162,7 +164,7 @@ namespace esvr2
     void GameState::createProjectionPlanes()
     {
         bool alldata =
-//             mVrData->mHeadToEye[LEFT] != Ogre::Matrix4::IDENTITY &&
+//             mVrData.mHeadToEye[LEFT] != Ogre::Matrix4::IDENTITY &&
             mProjPlaneDistance &&
             mLeft[LEFT] && mRight[LEFT] && mTop[LEFT] && mBottom[LEFT] &&
             ( !mIsStereo ||
@@ -177,7 +179,7 @@ namespace esvr2
         for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
         {
 //             Ogre::Matrix4 eyeToHead =
-//                 mVrData->mHeadToEye[eye %2]/*.inverse()*/;
+//                 mVrData.mHeadToEye[eye %2]/*.inverse()*/;
 //             Ogre::Vector4 camPos = eyeToHead *
 //                 Ogre::Vector4( 0, 0, 0, 1.0 );
 //             // Look back along -Z
@@ -191,7 +193,8 @@ namespace esvr2
 //             mSceneNodeProjPlane[eye]->lookAt(focusPoint.xyz(), Ogre::Node::TS_PARENT);
 
             mProjectionRectangle[eye] =
-                    mGraphicsSystem->mSceneManager->createManualObject();
+                    mGraphicsSystem->mVRSceneManager
+                    ->createManualObject();
 
             mProjectionRectangle[eye]->begin(
                 mDatablockName[eye%2], Ogre::OT_TRIANGLE_LIST);
@@ -218,7 +221,7 @@ namespace esvr2
 
             mProjectionRectangle[eye]->end();
 
-            mSceneNodeCamera[eye%2]->attachObject(mProjectionRectangle[eye]);
+            mVRSceneNodeCamera[eye%2]->attachObject(mProjectionRectangle[eye]);
             mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
         }
     }
@@ -226,7 +229,7 @@ namespace esvr2
     Ogre::ManualObject *GameState::createAxisIntern( void )
     {
         Ogre::ManualObject *axis =
-                mGraphicsSystem->mSceneManager->createManualObject();
+                mGraphicsSystem->mLaparoscopeSceneManager->createManualObject();
         axis->begin("Red", Ogre::OT_TRIANGLE_LIST);
         axis->position( 0.0f, 0.001f, 0.0f );
         axis->position( 0.0f, -0.001f, 0.0f );
@@ -278,23 +281,24 @@ namespace esvr2
         mAxis = createAxisIntern();
         mAxis->setName("AxisOrigin");
         mAxis->setVisibilityFlags( 0x1 );
-        mGraphicsSystem->mSceneManager->getRootSceneNode(
+        mGraphicsSystem->mLaparoscopeSceneManager->getRootSceneNode(
             Ogre::SCENE_DYNAMIC )->attachObject(mAxis);
         mAxisCameras = createAxisIntern();
         mAxisCameras->setName("AxisCamera");
         mAxisCameras->setVisibilityFlags( 0x1 << 1 );
         Ogre::SceneNode *camerasNode =
-                mGraphicsSystem->mSceneManager->findSceneNodes ("Cameras Node")[0];
+                mGraphicsSystem->mLaparoscopeSceneManager
+                ->findSceneNodes ("Cameras Node")[0];
         camerasNode->attachObject(mAxisCameras);
     }
 
     void GameState::createTooltips( void )
     {
-        mSceneNodeTooltips = mGraphicsSystem->mSceneManager->getRootSceneNode(
+        mLaparoscopeSceneNodeTooltips = mGraphicsSystem->mLaparoscopeSceneManager->getRootSceneNode(
                 Ogre::SCENE_DYNAMIC )->
                     createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        mSceneNodeTooltips->setPosition( 0.0, 0.0, 0.0 );
-        mTooltips = mGraphicsSystem->mSceneManager->createBillboardSet();
+        mLaparoscopeSceneNodeTooltips->setPosition( 0.0, 0.0, 0.0 );
+        mTooltips = mGraphicsSystem->mLaparoscopeSceneManager->createBillboardSet();
         mTooltips->beginBillboards(1);
         Ogre::v1::Billboard* b = mTooltips->createBillboard(
             0.0, 0.0, 0.0);
@@ -302,27 +306,28 @@ namespace esvr2
         b->setColour(Ogre::ColourValue::Red);
         mTooltips->endBillboards();
         mTooltips->setVisibilityFlags( 0x1 );
-        mSceneNodeTooltips->attachObject( mTooltips );
+        mLaparoscopeSceneNodeTooltips->attachObject( mTooltips );
     }
 
 
     void GameState::createMesh()
     {
-        Ogre::Item *mCube = mGraphicsSystem->mSceneManager->createItem(
-            "Cube_d.mesh",
-            Ogre::ResourceGroupManager::
-            AUTODETECT_RESOURCE_GROUP_NAME,
-            Ogre::SCENE_DYNAMIC );
+        Ogre::Item *mCube = mGraphicsSystem->mLaparoscopeSceneManager
+                ->createItem(
+                    "Cube_d.mesh",
+                    Ogre::ResourceGroupManager::
+                    AUTODETECT_RESOURCE_GROUP_NAME,
+                    Ogre::SCENE_DYNAMIC );
 
         mCube->setVisibilityFlags( 0x1 << 2 );
-        mSceneNodeMesh = mGraphicsSystem->mSceneManager
+        mLaparoscopeSceneNodeMesh = mGraphicsSystem->mLaparoscopeSceneManager
             ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
             ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
 
-        mSceneNodeMesh->setPosition( 0, 0, 0.0 );
+        mLaparoscopeSceneNodeMesh->setPosition( 0, 0, 0.0 );
 
-        mSceneNodeMesh->scale(0.25, 0.25, 0.25);
-        mSceneNodeMesh->attachObject( mCube );
+        mLaparoscopeSceneNodeMesh->scale(0.25, 0.25, 0.25);
+        mLaparoscopeSceneNodeMesh->attachObject( mCube );
     }
 
     void GameState::createPointCloud( void )
@@ -346,85 +351,97 @@ namespace esvr2
         mPointCloud = new PointCloud(
             pcEntName, Ogre::ResourceGroupManager::AUTODETECT_RESOURCE_GROUP_NAME, numpoints, pointlist, colorarray);
 
-        Ogre::v1::Entity *pcEnt = mGraphicsSystem->mSceneManager->createEntity(
-            mPointCloud->getMeshPtr());
+        Ogre::v1::Entity *pcEnt = mGraphicsSystem->mLaparoscopeSceneManager
+                ->createEntity(mPointCloud->getMeshPtr());
 
         pcEnt->setMaterialName("Pointcloud");
 
-        mSceneNodePointCloud = mGraphicsSystem->mSceneManager
+        mLaparoscopeSceneNodePointCloud = mGraphicsSystem->mLaparoscopeSceneManager
             ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
             ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        mSceneNodePointCloud->setPosition( 0, 0, -1.0 );
-        mSceneNodePointCloud->attachObject( pcEnt );
+        mLaparoscopeSceneNodePointCloud->setPosition( 0, 0, -1.0 );
+        mLaparoscopeSceneNodePointCloud->attachObject( pcEnt );
         pcEnt->setVisibilityFlags( 0x1 << 2 );
     }
 
-    //-----------------------------------------------------------------------------------
-    void GameState::createScene01(void)
+    void GameState::createLaparoscopeScene()
     {
-        calcAlign();
-
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
-        Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>( hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
+        Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>(
+                hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
 
         Ogre::String cameraNodeNames[2] =
-            {"Left Camera Node", "Right Camera Node"};
+                {"Left Camera Node", "Right Camera Node"};
 
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
             Ogre::SceneManager::SceneNodeList scnlist =
-                    mGraphicsSystem->mSceneManager->findSceneNodes(
-                            cameraNodeNames[eye]);
+                    mGraphicsSystem->mLaparoscopeSceneManager
+                            ->findSceneNodes(cameraNodeNames[eye]);
             if( !scnlist.empty() )
             {
-                mSceneNodeCamera[eye] = scnlist.at(0);
+                mLaparoscopeSceneNodeCamera[eye] = scnlist.at(0);
             }
             else
             {
-                mSceneNodeCamera[eye] =
-                        mGraphicsSystem->mSceneManager
-                            ->getRootSceneNode(Ogre::SCENE_DYNAMIC )
-                            ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
+                mLaparoscopeSceneNodeCamera[eye] =
+                        mGraphicsSystem->mLaparoscopeSceneManager
+                                ->getRootSceneNode(Ogre::SCENE_DYNAMIC )
+                                ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
+            }
+
+            scnlist = mGraphicsSystem->mVRSceneManager
+                    ->findSceneNodes(cameraNodeNames[eye]);
+            if( !scnlist.empty() )
+            {
+                mVRSceneNodeCamera[eye] = scnlist.at(0);
+            }
+            else
+            {
+                mVRSceneNodeCamera[eye] =
+                        mGraphicsSystem->mLaparoscopeSceneManager
+                                ->getRootSceneNode(Ogre::SCENE_DYNAMIC )
+                                ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
             }
 
             mVideoDatablock[eye] = static_cast<Ogre::HlmsUnlitDatablock*>(
-                hlmsUnlit->createDatablock(
-                    mDatablockName[eye],
-                    mDatablockName[eye],
-                    Ogre::HlmsMacroblock(),
-                    Ogre::HlmsBlendblock(),
-                    Ogre::HlmsParamVec() ) );
+                    hlmsUnlit->createDatablock(
+                            mDatablockName[eye],
+                            mDatablockName[eye],
+                            Ogre::HlmsMacroblock(),
+                            Ogre::HlmsBlendblock(),
+                            Ogre::HlmsParamVec() ) );
 
             mVideoDatablock[eye]->setTexture( 0, mTextureName[eye] );
         }
         Ogre::HlmsUnlitDatablock* colourdatablock =
-            static_cast<Ogre::HlmsUnlitDatablock*>(
-                hlmsUnlit->createDatablock(
-                    "Red",
-                    "Red",
-                    Ogre::HlmsMacroblock(),
-                    Ogre::HlmsBlendblock(),
-                    Ogre::HlmsParamVec() ) );
+                static_cast<Ogre::HlmsUnlitDatablock*>(
+                        hlmsUnlit->createDatablock(
+                                "Red",
+                                "Red",
+                                Ogre::HlmsMacroblock(),
+                                Ogre::HlmsBlendblock(),
+                                Ogre::HlmsParamVec() ) );
         colourdatablock->setUseColour(true);
         colourdatablock->setColour( Ogre::ColourValue(1,0,0,1));
         colourdatablock =
-            static_cast<Ogre::HlmsUnlitDatablock*>(
-                hlmsUnlit->createDatablock(
-                    "Green",
-                    "Green",
-                    Ogre::HlmsMacroblock(),
-                    Ogre::HlmsBlendblock(),
-                    Ogre::HlmsParamVec() ) );
+                static_cast<Ogre::HlmsUnlitDatablock*>(
+                        hlmsUnlit->createDatablock(
+                                "Green",
+                                "Green",
+                                Ogre::HlmsMacroblock(),
+                                Ogre::HlmsBlendblock(),
+                                Ogre::HlmsParamVec() ) );
         colourdatablock->setUseColour(true);
         colourdatablock->setColour( Ogre::ColourValue(0,1,0,1));
         colourdatablock =
-            static_cast<Ogre::HlmsUnlitDatablock*>(
-                hlmsUnlit->createDatablock(
-                    "Blue",
-                    "Blue",
-                    Ogre::HlmsMacroblock(),
-                    Ogre::HlmsBlendblock(),
-                    Ogre::HlmsParamVec() ) );
+                static_cast<Ogre::HlmsUnlitDatablock*>(
+                        hlmsUnlit->createDatablock(
+                                "Blue",
+                                "Blue",
+                                Ogre::HlmsMacroblock(),
+                                Ogre::HlmsBlendblock(),
+                                Ogre::HlmsParamVec() ) );
         colourdatablock->setUseColour(true);
         colourdatablock->setColour( Ogre::ColourValue(0,0,1,1));
         const Ogre::HlmsManager::HlmsDatablockMap datablocks = hlmsManager->getDatablocks();
@@ -432,25 +449,43 @@ namespace esvr2
         {
             LOG << "HlmsDatablock: " << d->second->getName().getFriendlyText() << LOGEND;
         }
+
+    }
+
+    //-----------------------------------------------------------------------------------
+    void GameState::createVRScene(void)
+    {
+        calcAlign();
+
+        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
+        Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>( hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
+
 //         createProjectionRectangle2D();
-//         createProjectionPlanes();
-        createAxis();
+         createProjectionPlanes();
+//        createAxis();
 //         createTooltips();
 //         createPointCloud();
-        createMesh();
+//        createMesh();
 
-        Ogre::Light *light = mGraphicsSystem->mSceneManager->createLight();
-        mSceneNodeLight = mGraphicsSystem->mSceneManager
+        Ogre::Light *light = mGraphicsSystem->mVRSceneManager->createLight();
+        mVRSceneNodeLight = mGraphicsSystem->mVRSceneManager
                 ->getRootSceneNode()->createChildSceneNode();
-        mSceneNodeLight->attachObject( light );
+        mVRSceneNodeLight->attachObject( light );
         light->setPowerScale( Ogre::Math::PI ); //Since we don't do HDR, counter the PBS' division by PI
         light->setType( Ogre::Light::LT_DIRECTIONAL );
         light->setDirection( Ogre::Vector3( -1, -1, -1 ).normalisedCopy() );
 
+        //Follow the tip make the upper Hemisphere little more blue
+        mGraphicsSystem->mLaparoscopeSceneManager->setAmbientLight(
+                Ogre::ColourValue(0.6f, 0.8, 1.0),
+                Ogre::ColourValue(1.0f, 0.8, 0.6),
+                Ogre::Vector3(0.0f, 1.0f, 0.0f));
+
+
         //TODO: write camera Controller
         //mCameraController = new CameraController( mGraphicsSystem, true );
 
-        mGraphicsSystem->mSceneManager->setVisibilityMask(0xFFFFFF30);
+        mGraphicsSystem->mVRSceneManager->setVisibilityMask(0xFFFFFF30);
 
         //FROM
         //TutorialGameState::createScene01();
