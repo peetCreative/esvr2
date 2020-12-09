@@ -1,25 +1,17 @@
 #include "Esvr2.h"
 #include "Esvr2GameState.h"
 #include "Esvr2GraphicsSystem.h"
-#include "Esvr2OpenCvVideoLoader.h"
-#include "Esvr2BlackMagicVideoLoader.h"
 #include "Esvr2VideoLoader.h"
 #include "Esvr2LowLatencyVideoLoader.h"
-#include "Esvr2ParseYml.h"
 #include "Esvr2TestPose.h"
 #include "Esvr2LaparoscopeController.h"
 
-#include "OgreSceneManager.h"
 #include "OgreCamera.h"
-#include "OgreRoot.h"
 #include "OgreWindow.h"
-#include "Compositor/OgreCompositorManager2.h"
 
-#include "OgreWindow.h"
 #include "OgreTimer.h"
 
 #include "Threading/OgreThreads.h"
-#include "Threading/OgreBarrier.h"
 
 #include <experimental/filesystem>
 #include <mutex>

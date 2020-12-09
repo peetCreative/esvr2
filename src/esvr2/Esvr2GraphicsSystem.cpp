@@ -15,7 +15,6 @@
 #include "Compositor/OgreCompositorNode.h"
 #include "Compositor/OgreCompositorWorkspace.h"
 
-#include "OgreTextureGpuManager.h"
 #include "OgrePixelFormatGpuUtils.h"
 #include "OgreMemoryAllocatorConfig.h"
 #include "OgreGpuResource.h"

@@ -3,15 +3,12 @@
 
 #include "Esvr2PointCloud.h"
 
-#include "OgreMesh.h"
 #include "OgreSubMesh.h"
 #include "OgreMeshManager.h"
 #include "OgreHardwareVertexBuffer.h"
 #include "OgreHardwareBufferManager.h"
 #include "OgreVertexIndexData.h"
-#include "OgreHardwareVertexBuffer.h"
 #include "OgreRoot.h"
-#include "OgreRenderOperation.h"
 //inspired by: https://forums.ogre3d.org/viewtopic.php?f=5&t=51683
 
 namespace esvr2

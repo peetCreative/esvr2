@@ -1,7 +1,6 @@
 #include "Esvr2GameState.h"
 
 #include "Esvr2.h"
-#include "Esvr2GraphicsSystem.h"
 #include "Esvr2PointCloud.h"
 
 #include "OgreSceneManager.h"
@@ -13,9 +12,7 @@
 #include "OgreRectangle2D2.h"
 #include "OgreManualObject2.h"
 #include "OgreBillboard.h"
-#include "OgreBillboardSet.h"
 #include "OgreEntity.h"
-#include "OgreCamera.h"
 #include "OgreFrameStats.h"
 #include "Overlay/OgreOverlay.h"
 #include "Overlay/OgreOverlayManager.h"

@@ -2,8 +2,6 @@
 
 #include "Esvr2.h"
 
-#include "Esvr2GraphicsSystem.h"
-
 namespace esvr2
 {
     VideoLoader::VideoLoader( Distortion distortion, bool stereo ):
