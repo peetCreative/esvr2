@@ -58,9 +58,9 @@ namespace esvr2
             mHMD( nullptr ),
             mHmdConfig(esvr2->mConfig->hmdConfig),
             mVRCompositor( nullptr ),
-            mStrDriver( "" ),
-            mStrDisplay( "" ),
-            mDeviceModelNumber( "" ),
+            mStrDriver(),
+            mStrDisplay(),
+            mDeviceModelNumber(),
             mStagingTexture{ nullptr, nullptr },
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
             mLastFrameUpdate(0),
@@ -642,10 +642,7 @@ namespace esvr2
         }
 
         mOvrCompositorListener =
-            new OpenVRCompositorListener(
-                mHMD, mVRCompositor, mVRTexture,
-                mRoot, mLaparoscopeWorkspaces,
-                mVRCamerasNode, mEsvr2->mPoseState
+            new OpenVRCompositorListener(this, mEsvr2->mPoseState
             );
         setupImageData();
 

@@ -73,7 +73,7 @@ namespace esvr2
         float projPlaneDistance = 1.0f;
         StereoCameraConfig cameraConfig =
             mEsvr2->mVideoLoader->getStereoCameraConfig();
-        if ( cameraConfig.leftToRight )
+        if ( cameraConfig.leftToRight != 0.0f )
             mScale = mGraphicsSystem->mVrData.mLeftToRight.length() / cameraConfig.leftToRight;
         for( size_t eye = 0; eye < mEyeNum * 2; eye++ )
         {
@@ -367,7 +367,7 @@ namespace esvr2
     void GameState::createLaparoscopeScene()
     {
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
-        Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>(
+        Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
                 hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
 
         Ogre::String cameraNodeNames[2] =

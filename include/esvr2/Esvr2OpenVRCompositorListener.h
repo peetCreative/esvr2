@@ -3,7 +3,9 @@
 
 #include "Esvr2.h"
 #include "Esvr2PoseState.h"
+#include "Esvr2GraphicsSystem.h"
 
+#include "OgreCamera.h"
 #include "OgreFrameListener.h"
 #include "Compositor/OgreCompositorWorkspaceListener.h"
 
@@ -40,22 +42,17 @@ namespace esvr2
 
     class OpenVRCompositorListener : public Ogre::FrameListener, public Ogre::CompositorWorkspaceListener
     {
-    protected:
-        vr::IVRSystem		*mHMD;
-        vr::IVRCompositor	*mVrCompositor;
-
-        Ogre::TextureGpu	*mVrTexture;
-        Ogre::Root          *mRoot;
-        Ogre::RenderSystem  *mRenderSystem;
-
-        Ogre::CompositorWorkspace *mWorkspaces[2];
-        Ogre::SceneNode     *mCamerasNode;
+    private:
+        GraphicsSystem          *mGraphicsSystem;
+        Ogre::RenderSystem      *mRenderSystem;
         std::shared_ptr<PoseState> mCameraPoseState;
 
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
         Ogre::Matrix4           mDevicePose[vr::k_unMaxTrackedDeviceCount];
         vr::ETextureType        mApiTextureType;
         Ogre::Vector3           mCullCameraOffset;
+
+        int mValidPoseCount;
 
         VrWaitingMode::VrWaitingMode mWaitingMode;
         VrWaitingMode::VrWaitingMode mFirstGlitchFreeMode;
