@@ -35,6 +35,7 @@ namespace esvr2
     {
     friend Esvr2;
     friend GameState;
+    friend OpenVRCompositorListener;
     public:
         GraphicsSystem( Esvr2 *esvr2, std::shared_ptr<GameState> gameState );
         ~GraphicsSystem();

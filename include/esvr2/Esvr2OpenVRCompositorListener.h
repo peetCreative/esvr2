@@ -3,7 +3,9 @@
 
 #include "Esvr2.h"
 #include "Esvr2PoseState.h"
+#include "Esvr2GraphicsSystem.h"
 
+#include "OgreCamera.h"
 #include "OgreFrameListener.h"
 #include "Compositor/OgreCompositorWorkspaceListener.h"
 
