@@ -56,7 +56,6 @@ namespace esvr2
 
         VrWaitingMode::VrWaitingMode mWaitingMode;
         VrWaitingMode::VrWaitingMode mFirstGlitchFreeMode;
-
         bool                    mMustSyncAtEndOfFrame;
 
         int mFrameCnt;
@@ -69,10 +68,7 @@ namespace esvr2
 //         void syncCullCamera(void);
     public:
         OpenVRCompositorListener(
-            vr::IVRSystem *hmd, vr::IVRCompositor *vrCompositor,
-            Ogre::TextureGpu *vrTexture, Ogre::Root *root,
-            Ogre::CompositorWorkspace *workspaces[2],
-            Ogre::SceneNode *mCamerasNode,
+                GraphicsSystem *graphicsSystem,
             std::shared_ptr<PoseState> poseState );
         virtual ~OpenVRCompositorListener();
 

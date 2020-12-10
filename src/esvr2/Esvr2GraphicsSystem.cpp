@@ -891,7 +891,8 @@ namespace esvr2
     {
         if ( mOvrCompositorListener->getFrameCnt() >=
                 mLastFrameUpdate + mUpdateFrames &&
-            mVideoTexture && mStagingTexture[LEFT])
+            mVideoTexture[LEFT] && mStagingTexture[LEFT] &&
+                (mEyeNum < 2 || (mVideoTexture[RIGHT] && mStagingTexture[RIGHT])))
         {
             mLastFrameUpdate = mOvrCompositorListener->getFrameCnt();
 //             LOG << "update" << LOGEND;

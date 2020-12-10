@@ -7,7 +7,6 @@
 
 #include "OgreTextureGpuManager.h"
 #include "OgreTextureGpu.h"
-#include "OgreSceneNode.h"
 #include "Compositor/Pass/OgreCompositorPass.h"
 #include "Compositor/Pass/OgreCompositorPassDef.h"
 #include "Compositor/Pass/PassScene/OgreCompositorPassScene.h"
@@ -33,11 +32,11 @@ namespace esvr2
     {
         memset( mTrackedDevicePose, 0, sizeof( mTrackedDevicePose ) );
         memset( mDevicePose, 0, sizeof( mDevicePose ) );
-        memset( &mVrData, 0, sizeof( mVrData ) );
 
         if ( mGraphicsSystem->mIsStereo )
         {
-            mGraphicsSystem->mVRCameras[MONO]->setVrData(&mVrData);
+            mGraphicsSystem->mVRCameras[MONO]->setVrData(
+                    &mGraphicsSystem->mVrData);
         }
 
         mGraphicsSystem->mRoot->addFrameListener( this );
