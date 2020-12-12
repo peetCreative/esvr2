@@ -85,9 +85,7 @@ namespace esvr2
         Ogre::v1::OverlaySystem     *mOverlaySystem;
 
         Ogre::SceneNode             *mLaparoscopeCamerasNode;
-        Ogre::SceneNode             *mLaparoscopeCameraNode[2];
         Ogre::SceneNode             *mVRCamerasNode;
-        Ogre::SceneNode             *mVRCameraNode[2];
         //two real cameras and two workspaces (two cameras rendering) or
         //only use one VR Camera and workspace (Instanced Rendering)
         Ogre::Camera                *mLaparoscopeCameras[2];
@@ -127,7 +125,7 @@ namespace esvr2
         bool mQuit;
 
         int mLastFrameUpdate;
-        int mUpdateFrames;
+        int mVideoUpdateFrames;
 
         bool mUseMicrocodeCache;
         bool mUseHlmsDiskCache;
@@ -153,7 +151,22 @@ namespace esvr2
 
         Ogre::Vector4 getVpOffset( Distortion dist, size_t eye);
 
-        bool calcAlign(void);
+        bool configureLaparoscopeCamera(void);
+        bool configureVRCamera(void);
+
+        bool isRenderWindowVisible();
+
+    //Debug
+    private:
+        Ogre::Window *mDebugWindow;
+        Ogre::CompositorWorkspace *mDebugWS;
+        Ogre::Camera *mDebugCamera;
+        Ogre::SceneNode *mDebugCameraNode;
+    public:
+        void createDebugScreen(
+                std::string windowTitle,
+               bool fullscreen,
+               Ogre::NameValuePairList *params);
     };
 }
 

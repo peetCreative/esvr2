@@ -140,7 +140,8 @@ namespace esvr2 {
         mGameState->_notifyStereoGraphicsSystem( mGraphicsSystem );
 
         mGraphicsSystem->initialize( "esvr2" );
-        mGameState->createLaparoscopeScene();
+        mGameState->loadDatablocks();
+//        mGameState->createLaparoscopeScene();
         mGameState->createVRScene();
 
         //TODO: check configuration
@@ -188,10 +189,11 @@ namespace esvr2 {
             {
                 mGraphicsSystem->beginFrameParallel();
                 mVideoLoader->update();
+                mGameState->update(timeSinceLast);
                 mGraphicsSystem->update( timeSinceLast );
                 mGraphicsSystem->finishFrameParallel();
 
-                if( !mGraphicsSystem->getRenderWindow()->isVisible() )
+                if( !mGraphicsSystem->isRenderWindowVisible() )
                 {
                     //Don't burn CPU cycles unnecessary when we're minimized.
                     Ogre::Threads::Sleep( 500 );

@@ -109,6 +109,33 @@ workspace LaparoscopeViewWorkspace
     connect_output LaparoscopeVideoNode 0
 }
 
+compositor_node DebugNode
+{
+    in 0 rt_debug
+
+    target rt_debug
+    {
+        pass render_scene
+        {
+            load
+            {
+                all				clear
+                clear_colour	0.2 0.4 0.6 1
+            }
+            store
+            {
+                depth	dont_care
+                stencil	dont_care
+            }
+        }
+    }
+}
+
+workspace DebugWorksapce
+{
+    connect_output DebugNode 0
+}
+
 compositor_node StereoRenderingNode
 {
 	in 0 rt_renderwindow

@@ -26,7 +26,7 @@ namespace esvr2
         mFirstGlitchFreeMode( VrWaitingMode::NumVrWaitingModes ),
         mMustSyncAtEndOfFrame( false ),
         mFrameCnt(0),
-        mTrackPose(false),
+        mTrackPose(true),
         mValidPoseCount(0),
         mWriteTexture(false)
     {
@@ -132,8 +132,10 @@ namespace esvr2
         if (mTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
         {
             OGRE_ASSERT_MEDIUM( mTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid );
-            mGraphicsSystem->mVRCamerasNode->setPosition( mDevicePose[vr::k_unTrackedDeviceIndex_Hmd].getTrans() );
-            mGraphicsSystem->mVRCamerasNode->setOrientation( mDevicePose[vr::k_unTrackedDeviceIndex_Hmd].extractQuaternion() );
+            Ogre::Vector3 trans = mDevicePose[vr::k_unTrackedDeviceIndex_Hmd].getTrans();
+            mGraphicsSystem->mVRCamerasNode->setPosition( trans );
+            Ogre::Quaternion orientation = mDevicePose[vr::k_unTrackedDeviceIndex_Hmd].extractQuaternion();
+            mGraphicsSystem->mVRCamerasNode->setOrientation( orientation );
         }
 
 //        if( mWaitingMode < VrWaitingMode::AfterFrustumCulling )

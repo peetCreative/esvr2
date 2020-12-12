@@ -28,7 +28,7 @@ namespace esvr2
         {
             mGraphicsSystem = graphicsSystem;
         }
-
+        void loadDatablocks();
         void createLaparoscopeScene(void);
         void createVRScene(void);
 
@@ -41,14 +41,17 @@ namespace esvr2
         Ogre::ManualObject       *mProjectionRectangle[4];
         Ogre::ManualObject       *mAxis;
         Ogre::ManualObject       *mAxisCameras;
+        Ogre::ManualObject       *mAxisVROrigin;
+        Ogre::ManualObject       *mAxisVRCameras;
+
         Ogre::v1::BillboardSet   *mTooltips;
         PointCloud               *mPointCloud;
         Ogre::SceneNode          *mVRSceneNodeLight;
-        Ogre::SceneNode          *mVRSceneNodeCamera[2];
-        Ogre::SceneNode          *mLaparoscopeSceneNodeCamera[2];
+        Ogre::SceneNode          *mVRSceneNodeMesh;
+        Ogre::SceneNode          *mVRSceneNodesProjectionPlaneRaw;
+        Ogre::SceneNode          *mVRSceneNodesProjectionPlaneRect;
         Ogre::SceneNode          *mLaparoscopeSceneNodePointCloud;
         Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
-        Ogre::SceneNode          *mLaparoscopeSceneNodeMesh;
         bool                     mIsStereo;
         size_t                   mEyeNum;
 
@@ -63,8 +66,9 @@ namespace esvr2
         Ogre::String mTextureName[2], mDatablockName[2];
         void createProjectionRectangle2D();
         void createProjectionPlanes();
-        Ogre::ManualObject *createAxisIntern( void );
+        Ogre::ManualObject *createAxisIntern( Ogre::SceneManager *sceneManager );
         void createAxis( void );
+        void createVRAxis(void);
         void createTooltips();
         void createPointCloud();
         void createMesh();
@@ -76,7 +80,8 @@ namespace esvr2
         void calcAlign( );
 
         void update( float timeSinceLast );
-        //TODO: implement
+
+        //TODO: implement destroyScene
         void destroyScene() {};
 //        void keyReleased( const SDL_KeyboardEvent &arg );
 
