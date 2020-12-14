@@ -3,6 +3,7 @@
 #include <utility>
 
 #include "Esvr2.h"
+#include "Esvr2GameState.h"
 #include "Esvr2PoseState.h"
 
 #include "OgreTextureGpuManager.h"
@@ -10,40 +11,28 @@
 #include "Compositor/Pass/OgreCompositorPass.h"
 #include "Compositor/Pass/OgreCompositorPassDef.h"
 #include "Compositor/Pass/PassScene/OgreCompositorPassScene.h"
+#include "Vao/OgreVaoManager.h"
+
 
 #include "Compositor/OgreCompositorWorkspace.h"
 
 namespace esvr2
 {
     OpenVRCompositorListener::OpenVRCompositorListener(
-            GraphicsSystem *graphicsSystem,
-            std::shared_ptr<PoseState> poseState ) :
+            GraphicsSystem *graphicsSystem ) :
         mGraphicsSystem(graphicsSystem),
+        mGameState(graphicsSystem->mGameState),
         mRenderSystem(graphicsSystem->mRoot->getRenderSystem()),
-        mCameraPoseState(std::move( poseState )),
         mApiTextureType( vr::TextureType_Invalid ),
         mWaitingMode( VrWaitingMode::BeforeSceneGraph ),
         mFirstGlitchFreeMode( VrWaitingMode::NumVrWaitingModes ),
         mMustSyncAtEndOfFrame( false ),
-        mFrameCnt(0),
         mTrackPose(true),
         mValidPoseCount(0),
         mWriteTexture(false)
     {
         memset( mTrackedDevicePose, 0, sizeof( mTrackedDevicePose ) );
         memset( mDevicePose, 0, sizeof( mDevicePose ) );
-
-        if ( mGraphicsSystem->mIsStereo )
-        {
-            mGraphicsSystem->mVRCameras[MONO]->setVrData(
-                    &mGraphicsSystem->mVrData);
-        }
-
-        mGraphicsSystem->mRoot->addFrameListener( this );
-//      TODO: if we should consider using update poses properly
-        mGraphicsSystem->mVRWorkspaces[LEFT]->addListener( this );
-        if(mGraphicsSystem->mVRWorkspaces[RIGHT])
-            mGraphicsSystem->mVRWorkspaces[RIGHT]->addListener( this );
 
         mApiTextureType = vr::TextureType_OpenGL;
     }
@@ -58,41 +47,92 @@ namespace esvr2
                  mGraphicsSystem->mVRWorkspaces[RIGHT]->getListener() == this )
              mGraphicsSystem->mVRWorkspaces[RIGHT]->setListener( 0 );
         mGraphicsSystem->mRoot->removeFrameListener( this );
+        if( mHMD )
+        {
+            vr::VR_Shutdown();
+            mHMD = NULL;
+        }
     }
 
-//    void OpenVRCompositorListener::syncCamera(void)
-//    {
-//        if (!mGraphicsSystem->mVRCamerasNode)
-//            LOG << "mCamerasNode does not exist" << LOGEND;
-//         : take pose from mTrackedDevicePose
-//         mTrackedDevicePose();
+    //-----------------------------------------------------------------------------
+    // Purpose: Helper to get a string from a tracked device property and turn it
+    //			into a std::string
+    //-----------------------------------------------------------------------------
+    std::string OpenVRCompositorListener::GetTrackedDeviceString(
+            vr::TrackedDeviceIndex_t unDevice,
+            vr::TrackedDeviceProperty prop,
+            vr::TrackedPropertyError *peError)
+    {
+        vr::IVRSystem *vrSystem = vr::VRSystem();
+        uint32_t unRequiredBufferLen =
+                vrSystem->GetStringTrackedDeviceProperty(
+                        unDevice, prop,
+                        NULL, 0, peError );
+        if( unRequiredBufferLen == 0 )
+            return "";
 
-//         Ogre::Vector3 pos(
-//             -0.0021829536705136577,
-//             -0.04232839038721293,
-//             0.14707343904246845);
-//         Ogre::Quaternion rot(
-//             0.9638096591466656,
-//             -0.23380399717986433,
-//             0.03972169619117772,
-//             0.12177363708948678
-//             );
-//         rot = Ogre::Quaternion::IDENTITY;/*(Ogre::Degree(-45), Ogre::Vector3::UNIT_X);*/
-//         mCamerasNode->setPosition( pos );
-//         mCamerasNode->lookAt( Ogre::Vector3(0,0,0), Ogre::Node::TS_PARENT );
-//         mCamerasNode->setPosition( mCameraPoseState->getPosition());
-//         mCamerasNode->setOrientation( mCameraPoseState->getRotation());
-//    }
+        char *pchBuffer = new char[ unRequiredBufferLen ];
+        unRequiredBufferLen = vrSystem->GetStringTrackedDeviceProperty(
+                unDevice, prop, pchBuffer,
+                unRequiredBufferLen, peError );
+        std::string sResult = pchBuffer;
+        delete [] pchBuffer;
+        return sResult;
+    }
+
+    bool OpenVRCompositorListener::initOpenVR(void)
+    {
+        // Loading the SteamVR via OpenVR Runtime
+        LOG << "initOpenVR" << LOGEND;
+        if(vr::VR_IsHmdPresent())
+        {
+            vr::EVRInitError eError = vr::VRInitError_None;
+            mHMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
+            if( eError != vr::VRInitError_None )
+            {
+                LOG << "VR HMD initialization failed."
+                    << "See log file for details" << LOGEND;
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+
+        if ( mHMD )
+        {
+            mStrDriver = "No Driver";
+            mStrDisplay = "No Display";
+
+            mStrDriver = GetTrackedDeviceString(
+                    vr::k_unTrackedDeviceIndex_Hmd,
+                    vr::Prop_TrackingSystemName_String );
+            mStrDisplay = GetTrackedDeviceString(
+                    vr::k_unTrackedDeviceIndex_Hmd,
+                    vr::Prop_SerialNumber_String );
+            mDeviceModelNumber = GetTrackedDeviceString(
+                    vr::k_unTrackedDeviceIndex_Hmd,
+                    vr::Prop_ModelNumber_String );
+
+            mVRCompositor = vr::VRCompositor();
+            if ( !mVRCompositor )
+            {
+                 LOG << "VR Compositor initialization failed."
+                     << " See log file for details" << LOGEND;
+                 return false;
+            }
+        }
+        return true;
+    }
 
     //-------------------------------------------------------------------------
     void OpenVRCompositorListener::updateHmdTrackingPose(void)
     {
-        if (mCameraPoseState->validPose())
-            syncCamera();
-        if( !mGraphicsSystem->mVRCompositor)
+        if( !mVRCompositor)
             return;
         // we have to call this so we get focus of the application
-        mGraphicsSystem->mVRCompositor->WaitGetPoses(
+        mVRCompositor->WaitGetPoses(
             mTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
 
 
@@ -133,9 +173,9 @@ namespace esvr2
         {
             OGRE_ASSERT_MEDIUM( mTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid );
             Ogre::Vector3 trans = mDevicePose[vr::k_unTrackedDeviceIndex_Hmd].getTrans();
-            mGraphicsSystem->mVRCamerasNode->setPosition( trans );
+            mGameState->mVRCamerasNode->setPosition( trans );
             Ogre::Quaternion orientation = mDevicePose[vr::k_unTrackedDeviceIndex_Hmd].extractQuaternion();
-            mGraphicsSystem->mVRCamerasNode->setOrientation( orientation );
+            mGameState->mVRCamerasNode->setOrientation( orientation );
         }
 
 //        if( mWaitingMode < VrWaitingMode::AfterFrustumCulling )
@@ -144,13 +184,111 @@ namespace esvr2
         mMustSyncAtEndOfFrame = false;
     }
 
+    inline void printMatrix4(Ogre::Matrix4 m)
+    {
+        LOG << m[0][0] << " "
+            << m[0][1] << " "
+            << m[0][2] << " "
+            << m[0][3] << " " << LOGEND
+            << m[1][0] << " "
+            << m[1][1] << " "
+            << m[1][2] << " "
+            << m[1][3] << " " << LOGEND
+            << m[2][0] << " "
+            << m[2][1] << " "
+            << m[2][2] << " "
+            << m[2][3] << " " << LOGEND
+            << m[3][0] << " "
+            << m[3][1] << " "
+            << m[3][2] << " "
+            << m[3][3] << " " << LOGEND;
+
+    }
+
+    //-------------------------------------------------------------------------
+    void OpenVRCompositorListener::syncVRCameraProjection( bool bForceUpdate )
+    {
+        if( bForceUpdate )
+        {
+            Ogre::Matrix4 eyeToHead[2];
+            Ogre::Matrix4 projectionMatrix[2];
+            Ogre::Matrix4 projectionMatrixRS[2];
+            Ogre::Vector4 eyeFrustumExtents[2];
+
+            for( size_t i=0u; i<2u; ++i )
+            {
+                vr::EVREye eyeIdx = static_cast<vr::EVREye>( i );
+                eyeToHead[i] = convertSteamVRMatrixToMatrix(
+                        mHMD->GetEyeToHeadTransform( eyeIdx ) );
+                projectionMatrix[i] =
+                        convertSteamVRMatrixToMatrix(
+                                mHMD->GetProjectionMatrix(
+                                        eyeIdx,
+                                        mGraphicsSystem->mVRCameraNear,
+                                        mGraphicsSystem->mVRCameraFar ) );
+                mHMD->GetProjectionRaw(
+                        eyeIdx,
+                        &eyeFrustumExtents[i].x, &eyeFrustumExtents[i].y,
+                        &eyeFrustumExtents[i].z, &eyeFrustumExtents[i].w );
+
+                mGraphicsSystem->mRoot->getRenderSystem()
+                    ->_convertOpenVrProjectionMatrix(
+                        projectionMatrix[i], projectionMatrixRS[i] );
+
+                LOG<< "eyeToHead"<< LOGEND;
+                printMatrix4(eyeToHead[i]);
+                LOG<< "projectionMatrix"<< LOGEND;
+                printMatrix4(projectionMatrix[i]);
+                LOG<< "projectionMatrixRS"<< LOGEND;
+                printMatrix4(projectionMatrixRS[i]);
+
+                mGraphicsSystem->mVRCameras[i]->setCustomProjectionMatrix(
+                    true, projectionMatrixRS[i]);
+                mGraphicsSystem->mVRCameras[i]->setPosition(
+                        eyeToHead[i].getTrans());
+            }
+//TODO: maybe we can also use instanced stereo
+
+// mVrData.set( eyeToHead, projectionMatrixRS );
+//            if (mGraphicsSystem->)
+//            mGraphicsSystem->mVrData.set( eyeToHead, projectionMatrixRS );
+
+            Ogre::Vector4 cameraCullFrustumExtents;
+            cameraCullFrustumExtents.x = std::min(
+                    eyeFrustumExtents[0].x, eyeFrustumExtents[1].x );
+            cameraCullFrustumExtents.y = std::max(
+                    eyeFrustumExtents[0].y, eyeFrustumExtents[1].y );
+            cameraCullFrustumExtents.z = std::max(
+                    eyeFrustumExtents[0].z, eyeFrustumExtents[1].z );
+            cameraCullFrustumExtents.w = std::min(
+                    eyeFrustumExtents[0].w, eyeFrustumExtents[1].w );
+
+            mGraphicsSystem->mVRCullCamera->setFrustumExtents(
+                    cameraCullFrustumExtents.x,
+                    cameraCullFrustumExtents.y,
+                    cameraCullFrustumExtents.w,
+                    cameraCullFrustumExtents.z,
+                    Ogre::FET_TAN_HALF_ANGLES );
+
+            const float ipd = mGraphicsSystem->mVrData.mLeftToRight.x;
+            Ogre::Vector3 cullCameraOffset = Ogre::Vector3::ZERO;
+            cullCameraOffset.z = (ipd / 2.0f) /
+                                 Ogre::Math::Abs( cameraCullFrustumExtents.x );
+
+            const Ogre::Real offset = cullCameraOffset.length();
+            mGraphicsSystem->mVRCullCamera->setNearClipDistance(
+                    mGraphicsSystem->mVRCameraNear + offset );
+            mGraphicsSystem->mVRCullCamera->setFarClipDistance(
+                    mGraphicsSystem->mVRCameraFar + offset );
+            mGraphicsSystem->mVRCullCamera->lookAt(0,0,-1);
+        }
+    }
 
     //-------------------------------------------------------------------------
     bool OpenVRCompositorListener::frameStarted( const Ogre::FrameEvent& evt )
     {
         if( mWaitingMode == VrWaitingMode::BeforeSceneGraph )
             updateHmdTrackingPose();
-        mFrameCnt++;
 
         return true;
     }
@@ -192,23 +330,23 @@ namespace esvr2
             Ogre::TextureGpu::msFinalTextureBuffer,
             &eyeTexture.handle );
 
-        if (mGraphicsSystem->mHMD)
+        if (mHMD)
         {
             texBounds.uMin = 0;
             texBounds.uMax = 0.5f;
-            mGraphicsSystem->mVRCompositor->Submit( vr::Eye_Left, &eyeTexture, &texBounds );
+            mVRCompositor->Submit( vr::Eye_Left, &eyeTexture, &texBounds );
             texBounds.uMin = 0.5f;
             texBounds.uMax = 1.0f;
-            mGraphicsSystem->mVRCompositor->Submit( vr::Eye_Right, &eyeTexture, &texBounds );
+            mVRCompositor->Submit( vr::Eye_Right, &eyeTexture, &texBounds );
         }
 
         mRenderSystem->flushCommands();
 
-        if (mGraphicsSystem->mHMD)
+        if (mHMD)
         {
 
             vr::VREvent_t event;
-            while( mGraphicsSystem->mHMD->PollNextEvent( &event, sizeof(event) ) )
+            while( mHMD->PollNextEvent( &event, sizeof(event) ) )
             {
                 if( event.trackedDeviceIndex != vr::k_unTrackedDeviceIndex_Hmd &&
                     event.trackedDeviceIndex != vr::k_unTrackedDeviceIndexInvalid )
@@ -221,7 +359,7 @@ namespace esvr2
                     case vr::VREvent_TrackedDeviceUpdated:
                     case vr::VREvent_IpdChanged:
                     case vr::VREvent_ChaperoneDataHasChanged:
-                        mGraphicsSystem->syncVRCameraProjection( true );
+                        syncVRCameraProjection( true );
                         break;
                 }
             }
@@ -232,18 +370,19 @@ namespace esvr2
 
     //-------------------------------------------------------------------------
     bool OpenVRCompositorListener::frameEnded( const Ogre::FrameEvent& evt ) {
-        mGraphicsSystem->syncVRCameraProjection(false);
+        //TODO: do we need this here
+        syncVRCameraProjection(false);
         //TODO: do we need to gueard this
-        if (mGraphicsSystem->mHMD) {
+        if (mHMD) {
             if (mWaitingMode == VrWaitingMode::AfterSwap)
                 updateHmdTrackingPose();
             else
-                mGraphicsSystem->mVRCompositor->PostPresentHandoff();
+                mVRCompositor->PostPresentHandoff();
             if (mMustSyncAtEndOfFrame)
                 syncCamera();
 //            if (mWaitingMode >= VrWaitingMode::AfterFrustumCulling)
 //                syncCullCamera();
-            mGraphicsSystem->mVRCompositor->PostPresentHandoff();
+            mVRCompositor->PostPresentHandoff();
         }
         return true;
     }

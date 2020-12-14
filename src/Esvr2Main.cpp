@@ -3,7 +3,6 @@
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2OpenCvVideoLoader.h"
 #include "Esvr2PoseState.h"
-#include "Esvr2LaparoscopeController.h"
 #include "Esvr2TestPose.h"
 
 #include <memory>
@@ -100,10 +99,6 @@ int main(int argc, char *argv[])
             return 1;
     }
 
-    //TODO: create LaparoscopeController at least a test one
-    std::shared_ptr<esvr2::LaparoscopeController> laparoscopeController;
-    laparoscopeController = nullptr;
-
     //TODO: create poseState
     std::shared_ptr<esvr2::PoseState> poseState;
     poseState = nullptr;
@@ -125,7 +120,7 @@ int main(int argc, char *argv[])
 
     //create esvr2
     esvr2::Esvr2 *esvr2 = new esvr2::Esvr2(
-            config, videoLoader, laparoscopeController, poseState );
+            config, videoLoader, nullptr, poseState );
     // run esvr2
     return esvr2->run();
 }

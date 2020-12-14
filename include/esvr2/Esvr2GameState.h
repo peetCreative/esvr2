@@ -20,21 +20,26 @@ namespace esvr2
     class GameState
     {
     friend GraphicsSystem;
+    friend OpenVRCompositorListener;
     public:
-        GameState( Esvr2 *esvr2 );
+        GameState( Esvr2 *esvr2, GraphicsSystem *graphicsSystem );
 
-        void _notifyStereoGraphicsSystem(
-            std::shared_ptr<GraphicsSystem> graphicsSystem )
-        {
-            mGraphicsSystem = graphicsSystem;
-        }
         void loadDatablocks();
         void createLaparoscopeScene(void);
         void createVRScene(void);
 
     private:
-        Esvr2* mEsvr2;
-        std::shared_ptr<GraphicsSystem> mGraphicsSystem;
+    Esvr2                           *mEsvr2;
+        GraphicsSystem              *mGraphicsSystem;
+
+        Ogre::VrData                mVrData;
+        HmdConfig                   mHmdConfig;
+        StereoCameraConfig          mCameraConfig;
+
+        Ogre::v1::OverlaySystem     *mOverlaySystem;
+
+        Ogre::SceneNode             *mVRCamerasNode;
+        Ogre::SceneNode             *mLaparoscopeCamerasNode;
 
         Ogre::HlmsUnlitDatablock *mVideoDatablock[2];
         Ogre::Rectangle2D        *mProjectionRectangle2D;
@@ -71,15 +76,20 @@ namespace esvr2
         void createVRAxis(void);
         void createTooltips();
         void createPointCloud();
+        void createVROverlays(void);
         void createMesh();
 
-        void generateDebugText( float timeSinceLast, Ogre::String &outText );
+        void generateDebugText(
+                Ogre::uint64 microSecsSinceLast, Ogre::String &outText );
 
+        void createVRCamerasNodes();
+        void createLaparoscopeCameraNodes();
 
+        void updateLaparoscopePoseFromPoseState();
     public:
         void calcAlign( );
 
-        void update( float timeSinceLast );
+        void update( Ogre::uint64 microSecsSinceLast );
 
         //TODO: implement destroyScene
         void destroyScene() {};

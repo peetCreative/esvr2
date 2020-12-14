@@ -77,29 +77,16 @@ get_debug_names(Ogre_LIBRARY_NAMES)
 
 # construct search paths from environmental hints and
 # OS specific guesses
-if (WIN32)
-    set(Ogre_PREFIX_GUESSES
-            ${ENV_PROGRAMFILES}/Ogre
-            C:/OgreSDK
-            )
-elseif (UNIX)
-    set(Ogre_PREFIX_GUESSES
-            /opt/ogre
-            /opt/Ogre
-            /usr/lib${LIB_SUFFIX}/ogre
-            /usr/lib${LIB_SUFFIX}/Ogre
-            /usr/local/lib${LIB_SUFFIX}/ogre
-            /usr/local/lib${LIB_SUFFIX}/Ogre
-            $ENV{HOME}/ogre
-            $ENV{HOME}/Ogre
-            )
-    if (APPLE)
-        set(Ogre_PREFIX_GUESSES
-                ${CMAKE_CURRENT_SOURCE_DIR}/lib/${CMAKE_BUILD_TYPE}
-                ${Ogre_PREFIX_GUESSES}
-                )
-    endif ()
-endif ()
+set(Ogre_PREFIX_GUESSES
+        /opt/ogre
+        /opt/Ogre
+        /usr/lib${LIB_SUFFIX}/ogre
+        /usr/lib${LIB_SUFFIX}/Ogre
+        /usr/local/lib${LIB_SUFFIX}/ogre
+        /usr/local/lib${LIB_SUFFIX}/Ogre
+        $ENV{HOME}/ogre
+        $ENV{HOME}/Ogre
+        )
 set(Ogre_PREFIX_PATH
         ${Ogre_HOME} ${Ogre_SDK} ${ENV_Ogre_HOME} ${ENV_Ogre_SDK}
         ${Ogre_PREFIX_GUESSES}

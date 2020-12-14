@@ -21,9 +21,9 @@
 
 namespace esvr2
 {
-    GameState::GameState(Esvr2 *esvr2):
+    GameState::GameState(Esvr2 *esvr2, GraphicsSystem *graphicsSystem):
             mEsvr2(esvr2),
-            mGraphicsSystem( nullptr ),
+            mGraphicsSystem( graphicsSystem ),
             mVideoDatablock{ nullptr, nullptr },
             mProjectionRectangle{ nullptr, nullptr, nullptr, nullptr },
             mAxis( nullptr ),
@@ -320,7 +320,7 @@ namespace esvr2
         Ogre::DefaultSceneManager::SceneNodeList camerasNodes =
                 mGraphicsSystem->mVRSceneManager
                 ->findSceneNodes ("Cameras Node");
-        mGraphicsSystem->mVRCamerasNode->attachObject(mAxisVRCameras);
+        mVRCamerasNode->attachObject(mAxisVRCameras);
     }
 
     void GameState::createTooltips( void )
@@ -396,6 +396,40 @@ namespace esvr2
         pcEnt->setVisibilityFlags( 0x1 << 2 );
     }
 
+    void GameState::createVROverlays(void)
+    {
+        mOverlaySystem = OGRE_NEW Ogre::v1::OverlaySystem();
+
+        Ogre::v1::OverlayManager &overlayManager =
+                Ogre::v1::OverlayManager::getSingleton();
+        Ogre::v1::Overlay *overlay = overlayManager.create( "DebugText" );
+
+        Ogre::v1::OverlayContainer *panel = dynamic_cast<Ogre::v1::OverlayContainer*>(
+                overlayManager.createOverlayElement("Panel", "DebugPanel"));
+        mDebugText = static_cast<Ogre::v1::TextAreaOverlayElement*>(
+                overlayManager.createOverlayElement( "TextArea", "DebugText" ) );
+        mDebugText->setFontName( "DebugFont" );
+        mDebugText->setCharHeight( 0.025f );
+
+        mDebugTextShadow= dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
+                overlayManager.createOverlayElement( "TextArea", "0DebugTextShadow" ) );
+        mDebugTextShadow->setFontName( "DebugFont" );
+        mDebugTextShadow->setCharHeight( 0.025f );
+        mDebugTextShadow->setColour( Ogre::ColourValue::Black );
+        mDebugTextShadow->setPosition( 0.002f, 0.002f );
+
+        panel->addChild( mDebugTextShadow );
+        panel->addChild( mDebugText );
+        overlay->add2D( panel );
+        overlay->show();
+
+        mGraphicsSystem->mVRSceneManager->addRenderQueueListener( mOverlaySystem );
+        mGraphicsSystem->mVRSceneManager->getRenderQueue()->setSortRenderQueue(
+                Ogre::v1::OverlayManager::getSingleton().mDefaultRenderQueueId,
+                Ogre::RenderQueue::StableSort );
+
+    }
+
     void GameState::loadDatablocks()
     {
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
@@ -403,7 +437,7 @@ namespace esvr2
                 hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
 
         Ogre::HlmsUnlitDatablock* colourdatablock =
-                static_cast<Ogre::HlmsUnlitDatablock*>(
+        dynamic_cast<Ogre::HlmsUnlitDatablock*>(
                         hlmsUnlit->createDatablock(
                                 "Red",
                                 "Red",
@@ -413,7 +447,7 @@ namespace esvr2
         colourdatablock->setUseColour(true);
         colourdatablock->setColour( Ogre::ColourValue(1,0,0,1));
         colourdatablock =
-                static_cast<Ogre::HlmsUnlitDatablock*>(
+                dynamic_cast<Ogre::HlmsUnlitDatablock*>(
                         hlmsUnlit->createDatablock(
                                 "Green",
                                 "Green",
@@ -423,7 +457,7 @@ namespace esvr2
         colourdatablock->setUseColour(true);
         colourdatablock->setColour( Ogre::ColourValue(0,1,0,1));
         colourdatablock =
-                static_cast<Ogre::HlmsUnlitDatablock*>(
+                dynamic_cast<Ogre::HlmsUnlitDatablock*>(
                         hlmsUnlit->createDatablock(
                                 "Blue",
                                 "Blue",
@@ -432,22 +466,10 @@ namespace esvr2
                                 Ogre::HlmsParamVec() ) );
         colourdatablock->setUseColour(true);
         colourdatablock->setColour( Ogre::ColourValue(0,0,1,1));
-        const Ogre::HlmsManager::HlmsDatablockMap datablocks = hlmsManager->getDatablocks();
-        for(auto d = datablocks.begin(); d != datablocks.end(); d++ )
-        {
-            LOG << "HlmsDatablock: " << d->second->getName().getFriendlyText() << LOGEND;
-        }
-    }
-
-    void GameState::createLaparoscopeScene()
-    {
-        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
-        Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
-                hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
 
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
-            mVideoDatablock[eye] = static_cast<Ogre::HlmsUnlitDatablock*>(
+            mVideoDatablock[eye] = dynamic_cast<Ogre::HlmsUnlitDatablock*>(
                     hlmsUnlit->createDatablock(
                             mDatablockName[eye],
                             mDatablockName[eye],
@@ -457,12 +479,59 @@ namespace esvr2
 
             mVideoDatablock[eye]->setTexture( 0, mTextureName[eye] );
         }
+
+        const Ogre::HlmsManager::HlmsDatablockMap datablocks = hlmsManager->getDatablocks();
+        for(auto d = datablocks.begin(); d != datablocks.end(); d++ )
+        {
+            LOG << "HlmsDatablock: " << d->second->getName().getFriendlyText() << LOGEND;
+        }
+    }
+
+    void GameState::createVRCamerasNodes()
+    {
+        mVRCamerasNode = mGraphicsSystem->mVRSceneManager
+                ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
+                ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mVRCamerasNode->setName( "VR Cameras Node" );
+        //TODO if we do not have correct HMD position set a good initial position
+        mVRCamerasNode->setPosition( 0,0,0 );
+
+        mGraphicsSystem->mVRCullCamera->detachFromParent();
+        mVRCamerasNode->attachObject(
+                mGraphicsSystem->mVRCullCamera );
+
+        for(size_t eye = 0; eye < mEyeNum; eye ++)
+        {
+            mGraphicsSystem->mVRCameras[eye]->detachFromParent();
+            mVRCamerasNode->attachObject(
+                    mGraphicsSystem->mVRCameras[eye] );
+        }
+    }
+
+    void GameState::createLaparoscopeCameraNodes()
+    {
+        mLaparoscopeCamerasNode = mGraphicsSystem->mLaparoscopeSceneManager
+                ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
+                ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mLaparoscopeCamerasNode->setName( "Lap Cameras Node" );
+        mGraphicsSystem->mLaparoscopeCameras[LEFT]->detachFromParent();
+        mLaparoscopeCamerasNode->attachObject(
+                mGraphicsSystem->mLaparoscopeCameras[LEFT] );
+        mGraphicsSystem->mLaparoscopeCameras[RIGHT]->detachFromParent();
+        mLaparoscopeCamerasNode->attachObject(
+                mGraphicsSystem->mLaparoscopeCameras[RIGHT] );
+
+    }
+
+    void GameState::createLaparoscopeScene()
+    {
         //Follow the tip make the upper Hemisphere little more blue
         mGraphicsSystem->mLaparoscopeSceneManager->setAmbientLight(
                 Ogre::ColourValue(0.6f, 0.8, 1.0),
                 Ogre::ColourValue(1.0f, 0.8, 0.6),
                 Ogre::Vector3(0.0f, 1.0f, 0.0f));
 
+        createLaparoscopeCameraNodes();
 //        createAxis();
 //        createTooltips();
 //         createPointCloud();
@@ -474,9 +543,7 @@ namespace esvr2
     {
         calcAlign();
 
-        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
-        Ogre::HlmsUnlit *hlmsUnlit = static_cast<Ogre::HlmsUnlit*>( hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
-
+        createVRCamerasNodes();
 //         createProjectionRectangle2D();
          createProjectionPlanes();
         createMesh();
@@ -497,40 +564,16 @@ namespace esvr2
                 Ogre::ColourValue(1.0f, 0.8, 0.6),
                 Ogre::Vector3(0.0f, 1.0f, 0.0f));
 
-        //TODO: write camera Controller
-        //mCameraController = new CameraController( mGraphicsSystem, true );
 
-//        mGraphicsSystem->mVRSceneManager->setVisibilityMask(0xFFFFFF30);
+        mGraphicsSystem->mVRSceneManager->setVisibilityMask(0xFFFFFF30);
 
-        //FROM
-        //TutorialGameState::createScene01();
-        Ogre::v1::OverlayManager &overlayManager =
-                Ogre::v1::OverlayManager::getSingleton();
-        Ogre::v1::Overlay *overlay = overlayManager.create( "DebugText" );
-
-        Ogre::v1::OverlayContainer *panel = static_cast<Ogre::v1::OverlayContainer*>(
-                overlayManager.createOverlayElement("Panel", "DebugPanel"));
-        mDebugText = static_cast<Ogre::v1::TextAreaOverlayElement*>(
-                overlayManager.createOverlayElement( "TextArea", "DebugText" ) );
-        mDebugText->setFontName( "DebugFont" );
-        mDebugText->setCharHeight( 0.025f );
-
-        mDebugTextShadow= static_cast<Ogre::v1::TextAreaOverlayElement*>(
-                overlayManager.createOverlayElement( "TextArea", "0DebugTextShadow" ) );
-        mDebugTextShadow->setFontName( "DebugFont" );
-        mDebugTextShadow->setCharHeight( 0.025f );
-        mDebugTextShadow->setColour( Ogre::ColourValue::Black );
-        mDebugTextShadow->setPosition( 0.002f, 0.002f );
-
-        panel->addChild( mDebugTextShadow );
-        panel->addChild( mDebugText );
-        overlay->add2D( panel );
-        overlay->show();
-
+        //TODO: stopped working because DebugFont is not loaded anymore
+//        createVROverlays();
     }
 
     //-----------------------------------------------------------------------------------
-    void GameState::generateDebugText( float timeSinceLast, Ogre::String &outText )
+    void GameState::generateDebugText(
+            Ogre::uint64 microSecsSinceLast , Ogre::String &outText )
     {
         if( mDisplayHelpMode == 0 )
         {
@@ -546,13 +589,14 @@ namespace esvr2
 
         const Ogre::FrameStats *frameStats = mGraphicsSystem->mRoot->getFrameStats();
 
+        Ogre::Real fps = 1.0 / (microSecsSinceLast * 1000000);
         Ogre::String finalText;
         finalText.reserve( 128 );
         finalText  = "Frame time:\t";
-        finalText += Ogre::StringConverter::toString( timeSinceLast * 1000.0f );
+        finalText += Ogre::StringConverter::toString( microSecsSinceLast * 1000.0f );
         finalText += " ms\n";
         finalText += "Frame FPS:\t";
-        finalText += Ogre::StringConverter::toString( 1.0f / timeSinceLast );
+        finalText += Ogre::StringConverter::toString( fps );
         finalText += "\nAvg time:\t";
         finalText += Ogre::StringConverter::toString( frameStats->getAvgTime() );
         finalText += " ms\n";
@@ -566,16 +610,40 @@ namespace esvr2
         mDebugTextShadow->setCaption( finalText );
     }
 
+    void GameState::updateLaparoscopePoseFromPoseState()
+    {
+        if ( mEsvr2->mPoseState && mEsvr2->mPoseState->validPose() )
+        {
+            Ogre::Quaternion prev_orientation =
+                    mLaparoscopeCamerasNode->getOrientation();
+            Ogre::Vector3 prev_position =
+                    mLaparoscopeCamerasNode->getPosition();
+            Ogre::Quaternion orientation =
+                    mEsvr2->mPoseState->getOrientation();
+            orientation = orientation * Ogre::Quaternion(
+                    Ogre::Degree(180), Ogre::Vector3::UNIT_Z);
+            Ogre::Vector3 position = mEsvr2->mPoseState->getPosition();
+            if ( !prev_orientation.orientationEquals(orientation)
+                 || prev_position != position )
+            {
+//                 LOG << "update orientation and position" << mOvrCompositorListener->getFrameCnt();
+//                 LOG << "Pos: " << position.x << " " << position.y << " " <<position.z;
+//                 LOG << "Orientation: " << orientation.w << " "<< orientation.x << " " << orientation.y << " " <<orientation.z<<LOGEND;
+                mLaparoscopeCamerasNode->setPosition( position );
+                mLaparoscopeCamerasNode->setOrientation( orientation );
+            }
+        }
+    }
 
     //-----------------------------------------------------------------------------------
-    void GameState::update( float timeSinceLast )
+    void GameState::update( Ogre::uint64 microSecsSinceLast )
     {
         //update Pointcloud ?
-        if( mDisplayHelpMode )
+        if( mDisplayHelpMode && mOverlaySystem )
         {
             //Show FPS
             Ogre::String finalText;
-            generateDebugText( timeSinceLast, finalText );
+            generateDebugText( microSecsSinceLast, finalText );
             mDebugText->setCaption( finalText );
             mDebugTextShadow->setCaption( finalText );
         }

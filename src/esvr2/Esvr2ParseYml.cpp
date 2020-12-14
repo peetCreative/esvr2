@@ -220,8 +220,13 @@ namespace esvr2 {
             config->multithreading = param.as<bool>();
         if (YAML::Node param = doc["is_stereo"])
             config->isStereo = param.as<bool>();
+        if (YAML::Node param = doc["debug_screen"])
+            config->debugScreen = param.as<bool>();
         if (YAML::Node param = doc["screen"])
             config->screen = param.as<int>();
+        if (YAML::Node param = doc["controller_type"])
+            config->controllerType =
+                getControllerType(param.as<std::string>());
         if (YAML::Node param = doc["workspace_type"])
             config->workspaceType =
                 getWorkspaceType(param.as<std::string>());

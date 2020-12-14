@@ -3,7 +3,8 @@
 
 #include "Esvr2.h"
 
-//Class to externally control the movements of the camera in our application
+//Class to externally control the movements
+// of the laparoscope camera in our application
 // used for debugging
 
 namespace esvr2 {

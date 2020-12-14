@@ -21,6 +21,10 @@
 #endif
 
 namespace esvr2 {
+    typedef enum {
+        CT_NONE,
+        CT_KEYBOARD
+    } ControllerType;
     //TODO: rename to VideoInput
     typedef enum {
         IT_NONE,
@@ -112,7 +116,9 @@ namespace esvr2 {
         bool showOgreDialog = false;
         bool multithreading = false;
         bool isStereo = true;
+        bool debugScreen = false;
         int screen = 0;
+        ControllerType controllerType = CT_NONE;
         WorkspaceType workspaceType = WS_TWO_CAMERAS_STEREO;
         VideoRenderTarget videoRenderTarget = VRT_TO_SQUARE;
         HmdConfig hmdConfig = HmdConfig();
@@ -128,6 +134,7 @@ namespace esvr2 {
         StereoCameraConfig stereoCameraConfig = StereoCameraConfig();
     } Esvr2VideoInputConfig;
 
+    ControllerType getControllerType(std::string input_str);
     VideoInputType getVideoInputType(std::string input_str);
     RosInputType getRosInputType(std::string input_str);
     InputType getInputType(std::string input_str);
@@ -139,14 +146,17 @@ namespace esvr2 {
     unsigned long logicThread(Ogre::ThreadHandle *threadHandle);
 
     class VideoLoader;
+    class Controller;
     class LaparoscopeController;
     class PoseState;
     class GraphicsSystem;
     class GameState;
+    class OpenVRCompositorListener;
 
     class Esvr2 {
         friend GraphicsSystem;
         friend GameState;
+        friend OpenVRCompositorListener;
         friend unsigned long renderThread(Ogre::ThreadHandle *threadHandle);
         friend unsigned long logicThread(Ogre::ThreadHandle *threadHandle);
     public:
@@ -158,6 +168,7 @@ namespace esvr2 {
         int run();
 
     private:
+        bool getQuit();
         unsigned long renderThread1();
         unsigned long logicThread1();
     private:
@@ -165,6 +176,7 @@ namespace esvr2 {
         bool mIsConfigured;
         std::shared_ptr<Esvr2Config> mConfig;
         std::shared_ptr<VideoLoader> mVideoLoader;
+        std::shared_ptr<Controller> mController;
         std::shared_ptr<LaparoscopeController> mLaparoscopeController;
         std::shared_ptr<PoseState> mPoseState;
 

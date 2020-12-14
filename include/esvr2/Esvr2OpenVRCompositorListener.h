@@ -42,12 +42,20 @@ namespace esvr2
 
     class OpenVRCompositorListener : public Ogre::FrameListener, public Ogre::CompositorWorkspaceListener
     {
+    friend GraphicsSystem;
     private:
         GraphicsSystem          *mGraphicsSystem;
+        GameState               *mGameState;
         Ogre::RenderSystem      *mRenderSystem;
-        std::shared_ptr<PoseState> mCameraPoseState;
 
+        // these are nullptr if there is no SteamVR available through OpenVR
+        vr::IVRSystem *mHMD;
+        vr::IVRCompositor *mVRCompositor;
+        std::string mStrDriver;
+        std::string mStrDisplay;
+        std::string mDeviceModelNumber;
         vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
+
         Ogre::Matrix4           mDevicePose[vr::k_unMaxTrackedDeviceCount];
         vr::ETextureType        mApiTextureType;
         Ogre::Vector3           mCullCameraOffset;
@@ -58,19 +66,25 @@ namespace esvr2
         VrWaitingMode::VrWaitingMode mFirstGlitchFreeMode;
         bool                    mMustSyncAtEndOfFrame;
 
-        int mFrameCnt;
         bool mTrackPose;
         bool mWriteTexture;
 
         void syncCamera(void);
+        void syncVRCameraProjection( bool bForceUpdate );
         void updateHmdTrackingPose(void);
 //      TODO: use these functions, when we go to moving camera
 //         void syncCullCamera(void);
+        std::string GetTrackedDeviceString(
+                vr::TrackedDeviceIndex_t unDevice,
+                vr::TrackedDeviceProperty prop,
+                vr::TrackedPropertyError *peError = nullptr);
+
     public:
         OpenVRCompositorListener(
-                GraphicsSystem *graphicsSystem,
-            std::shared_ptr<PoseState> poseState );
+                GraphicsSystem *graphicsSystem );
         virtual ~OpenVRCompositorListener();
+
+        bool initOpenVR(void);
 
         virtual bool frameStarted( const Ogre::FrameEvent& evt );
         virtual bool frameRenderingQueued( const Ogre::FrameEvent &evt );
@@ -78,7 +92,6 @@ namespace esvr2
 
         virtual void workspacePreUpdate( Ogre::CompositorWorkspace *workspace );
         virtual void passPreExecute( Ogre::CompositorPass *pass );
-
         virtual void passSceneAfterShadowMaps( Ogre::CompositorPassScene *pass );
         virtual void passSceneAfterFrustumCulling( Ogre::CompositorPassScene *pass );
 
@@ -87,7 +100,6 @@ namespace esvr2
         VrWaitingMode::VrWaitingMode getWaitingMode(void)   { return mWaitingMode; }
 
         void triggerWriteTexture(){mWriteTexture = true;};
-        int getFrameCnt(void){return mFrameCnt;};
 
         /** When operating in VrWaitingMode::AfterSceneGraph or later, there's a chance
             graphical artifacts appear if the camera transform is immediately changed after

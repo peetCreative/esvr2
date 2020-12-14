@@ -84,7 +84,8 @@ compositor_node LaparoscopeVideoNode
     //in 0 rt_video_texture
     //TODO: make size variable
     in 0 rt_laparoscope_view_texture
-	texture video_texture 960 540 PFG_RGBA8_UNORM keep_content
+    in 1 video_texture
+	//texture video_texture 960 540 PFG_RGBA8_UNORM keep_content
 
     target rt_laparoscope_view_texture
     {
@@ -106,7 +107,8 @@ compositor_node LaparoscopeVideoNode
 
 workspace LaparoscopeViewWorkspace
 {
-    connect_output LaparoscopeVideoNode 0
+    connect_external 0 LaparoscopeVideoNode 0
+    connect_external 1 LaparoscopeVideoNode 1
 }
 
 compositor_node DebugNode
@@ -162,13 +164,35 @@ compositor_node StereoRenderingNode
 			}
 		}
 
-		//Eye render
+		//left eye render
 		pass render_scene
 		{
 			//Get executed in all eyes
-			execution_mask			0xff
+			execution_mask			0x01
 			//Be affected by the modifier, so we render just to a portion of the screen.
-			viewport_modifier_mask	0xff
+			viewport_modifier_mask	0x01
+            visibility_mask	0x5F
+
+			overlays	off
+
+			// Only write to the MSAA surface (don't resolve!) (see clear pass)
+			store
+			{
+				colour	store
+				depth	store
+				stencil	store
+			}
+		}
+		//right Eye render
+		pass render_scene
+		{
+			//Get executed in all eyes
+			execution_mask			0x02
+			//Be affected by the modifier, so we render just to a portion of the screen.
+			viewport_modifier_mask	0x02
+            visibility_mask	0xAF
+
+            identifier 19088743
 
 			overlays	off
 

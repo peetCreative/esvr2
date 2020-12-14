@@ -23,7 +23,6 @@
 #include <experimental/filesystem>
 #include <RenderSystems/GL3Plus/OgreGL3PlusPlugin.h>
 
-#include <memory>
 
 namespace esvr2
 {
@@ -33,140 +32,111 @@ namespace esvr2
 
     class GraphicsSystem
     {
-    friend Esvr2;
     friend GameState;
     friend OpenVRCompositorListener;
-    public:
-        GraphicsSystem( Esvr2 *esvr2, std::shared_ptr<GameState> gameState );
-        ~GraphicsSystem();
-
-        // we are overwriting initialize
-        void initialize( const Ogre::String &windowTitle );
-        void deinitialize(void);
-
-        bool getShowVideo( void ) { return mShowVideo; };
-        void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
-        void setDistortion(Distortion dist);
-
-        Ogre::Real getZoom();
-        void setZoom( Ogre::Real );
-
-        void beginFrameParallel(void);
-        void finishFrameParallel(void) {};
-    public:
-        Ogre::Window *getRenderWindow();
-
-        void setQuit();
-        bool getQuit();
-
     private:
+        Esvr2 *mEsvr2;
+
+        //Esvr2 Components
+        GameState *mGameState;
+        OpenVRCompositorListener    *mOvrCompositorListener;
+
+        //Ogre
+        Ogre::Root                  *mRoot;
+        Ogre::GL3PlusPlugin         *mGL3PlusPlugin;
+        Ogre::Window                *mWindow;
+        Ogre::String                mWindowTitle;
+
+        //Other Ogre stuff
+        Ogre::String                mPluginsFolder;
+        Ogre::String                mWriteAccessFolder;
+        Ogre::String                mResourcePath;
+        bool mUseMicrocodeCache;
+        bool mUseHlmsDiskCache;
+
+        //Ogre Workspaces
+        Ogre::CompositorWorkspace   *mLaparoscopeWorkspaces[2];
+        Ogre::CompositorWorkspace   *mVRWorkspaces[2];
+        Ogre::CompositorWorkspace   *mMirrorWorkspace;
+
+        //Ogre SceneManger
+        Ogre::SceneManager          *mLaparoscopeSceneManager;
+        Ogre::SceneManager          *mVRSceneManager;
+
+        //Ogre Cameras
+        //two real cameras and two workspaces (two cameras rendering) or
+        //only use one VR Camera and workspace (Instanced Rendering)
+        Ogre::Camera                *mLaparoscopeCameras[2];
+        Ogre::Real                  mVRCameraNear, mVRCameraFar;
+        Ogre::Camera                *mVRCameras[2];
+        Ogre::Camera                *mVRCullCamera;
+        Ogre::VrData                mVrData;
+
+        //Ogre Textures
+        Ogre::TextureGpu            *mVRTexture;
+        Ogre::TextureGpu            *mVideoTexture[2];
+        Ogre::TextureGpu            *mLaparoscopeViewTexture[2];
+        Ogre::StagingTexture        *mStagingTextures[2];
+
+        //Ogre Debug stuff
+        Ogre::Window *mDebugWindow;
+        Ogre::CompositorWorkspace *mDebugWS;
+        Ogre::Camera *mDebugCamera;
+        Ogre::SceneNode *mDebugCameraNode;
+
+        //Class Variables
+        bool mQuit;
+        size_t mEyeNum;
+        bool mShowVideo;
+
+        int mFrameCnt;
+        int mLastFrameUpdate;
+        int mVideoUpdateFrames;
+
+        //intern functions
         void setupResources(void);
         void loadResources(void);
         void registerHlms(void);
         void loadTextureCache(void);
         void loadHlmsDiskCache(void);
         void chooseSceneManager(void);
-        void update(float timesincelast);
-    private:
-        Esvr2 *mEsvr2;
-        std::shared_ptr<GameState> mGameState;
-
-        Ogre::SceneManager          *mLaparoscopeSceneManager;
-        Ogre::SceneManager          *mVRSceneManager;
-        Ogre::Root                  *mRoot;
-        // TODO: do we need two windows
-        Ogre::Window                *mRenderWindow;
-        Ogre::String                mPluginsFolder;
-        Ogre::String                mWriteAccessFolder;
-        Ogre::String                mResourcePath;
-
-        Ogre::GL3PlusPlugin         *mGL3PlusPlugin;
-
-        Ogre::v1::OverlaySystem     *mOverlaySystem;
-
-        Ogre::SceneNode             *mLaparoscopeCamerasNode;
-        Ogre::SceneNode             *mVRCamerasNode;
-        //two real cameras and two workspaces (two cameras rendering) or
-        //only use one VR Camera and workspace (Instanced Rendering)
-        Ogre::Camera                *mLaparoscopeCameras[2];
-        Ogre::Camera                *mVRCameras[2];
-        Ogre::Real                  mZoom;
-        Ogre::Real                  mCamNear;
-        Ogre::Real                  mCamFar;
-        Ogre::CompositorWorkspace   *mLaparoscopeWorkspaces[2];
-        Ogre::CompositorWorkspace   *mVRWorkspaces[2];
-        Ogre::CompositorWorkspace   *mMirrorWorkspace;
-        Ogre::Camera                *mVRCullCamera;
-        Ogre::TextureGpu            *mVRTexture;
-        Ogre::TextureGpu            *mVideoTexture[2];
-        Ogre::TextureGpu            *mLaparoscopeViewTexture[2];
-        Ogre::VrData                mVrData;
-        HmdConfig                   mHmdConfig;
-        StereoCameraConfig          mCameraConfig;
-
-        OpenVRCompositorListener    *mOvrCompositorListener;
-
-        // these are nullptr if there is no SteamVR available through OpenVR
-        vr::IVRSystem *mHMD;
-        vr::IVRCompositor *mVRCompositor;
-        std::string mStrDriver;
-        std::string mStrDisplay;
-        std::string mDeviceModelNumber;
-        vr::TrackedDevicePose_t mTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];
-
-        Ogre::Vector4 mVrOffsetScalesRaw[2], mVrOffsetScalesUndistRect[2];
-        Ogre::StagingTexture *mStagingTexture[2];
-
-        int mScreen;
-        bool mIsStereo;
-        size_t mEyeNum;
-        bool mShowVideo;
-
-        bool mQuit;
-
-        int mLastFrameUpdate;
-        int mVideoUpdateFrames;
-
-        bool mUseMicrocodeCache;
-        bool mUseHlmsDiskCache;
-
-        //------------------------------------
-        // function
-        //------------------------------------
         void createLaparoscopeCameras(void);
         void createVRCameras(void);
+        void setupImageData(void);
+        void setupDebugScreen();
+
+        void uploadVideoData2GPU(void);
+        void setupVRTextures(void);
         void setupVRCompositor(void);
+        void setupLaparoscopeTextures();
         void setupLaparoscopeCompositors(void);
-
-        std::string GetTrackedDeviceString(
-            vr::TrackedDeviceIndex_t unDevice,
-            vr::TrackedDeviceProperty prop,
-            vr::TrackedPropertyError *peError = nullptr);
-        void initCompositorVR(void);
-        void initOpenVR(void);
-        void createTwoWorkspaces();
-        void setupImageData();
-
-        void syncVRCameraProjection( bool bForceUpdate );
-
-        Ogre::Vector4 getVpOffset( Distortion dist, size_t eye);
 
         bool configureLaparoscopeCamera(void);
         bool configureVRCamera(void);
 
-        bool isRenderWindowVisible();
-
-    //Debug
-    private:
-        Ogre::Window *mDebugWindow;
-        Ogre::CompositorWorkspace *mDebugWS;
-        Ogre::Camera *mDebugCamera;
-        Ogre::SceneNode *mDebugCameraNode;
     public:
-        void createDebugScreen(
-                std::string windowTitle,
-               bool fullscreen,
-               Ogre::NameValuePairList *params);
+        GraphicsSystem( Esvr2 *esvr2);
+        ~GraphicsSystem() {};
+
+        void initialize( );
+        void deinitialize(void);
+
+        void update(Ogre::uint64 microSecsSinceLast);
+
+        //Project getters and setters
+        GameState *getGameState();
+
+        //Ogre getters and setters
+
+        //get variables
+        bool getQuit();
+        bool isRenderWindowVisible( void );
+        bool getShowVideo( void ) { return mShowVideo; };
+        void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
+        void setDistortion(Distortion dist);
+
+        Ogre::Real getZoom();
+        void setZoom( Ogre::Real );
     };
 }
 

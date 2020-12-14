@@ -4,7 +4,7 @@
 #include "Esvr2VideoLoader.h"
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2TestPose.h"
-#include "Esvr2LaparoscopeController.h"
+#include "Esvr2KeyboardController.h"
 
 #include "OgreCamera.h"
 #include "OgreWindow.h"
@@ -24,17 +24,24 @@ namespace esvr2 {
     THREAD_DECLARE( renderThread );
     THREAD_DECLARE( logicThread );
 
+    ControllerType getControllerType(std::string input_str)
+    {
+        ControllerType controllerType = CT_NONE;
+        if (input_str == "KEYBOARD")
+            controllerType = CT_KEYBOARD;
+        return controllerType;
+    }
 
     VideoInputType getVideoInputType(std::string input_str)
     {
         VideoInputType input = VIT_NONE;
-        if (input_str.compare("MONO") == 0)
+        if (input_str =="MONO")
             input = VIT_MONO;
-        if (input_str.compare("STEREO_SLICED") == 0)
+        if (input_str  =="STEREO_SLICED")
             input = VIT_STEREO_SLICED;
-        if (input_str.compare("STEREO_VERTICAL_SPLIT") == 0)
+        if (input_str =="STEREO_VERTICAL_SPLIT")
             input = VIT_STEREO_VERTICAL_SPLIT;
-        if (input_str.compare("STEREO_HORIZONTAL_SPLIT") == 0)
+        if (input_str =="STEREO_HORIZONTAL_SPLIT")
             input = VIT_STEREO_HORIZONTAL_SPLIT;
         return input;
     }
@@ -42,13 +49,13 @@ namespace esvr2 {
     RosInputType getRosInputType(std::string input_str)
     {
         RosInputType input = RIT_NONE;
-        if (input_str.compare("MONO") == 0)
+        if (input_str == "MONO")
             input = RIT_MONO;
-        if (input_str.compare("STEREO_SLICED") == 0)
+        if (input_str == "STEREO_SLICED")
             input = RIT_STEREO_SLICED;
-        if (input_str.compare("STEREO_SPLIT") == 0)
+        if (input_str == "STEREO_SPLIT")
             input = RIT_STEREO_SPLIT;
-        if (input_str.compare("STEREO_SPLIT_RAW") == 0)
+        if (input_str == "STEREO_SPLIT_RAW")
             input = RIT_STEREO_SPLIT_RAW;
         return input;
     }
@@ -56,11 +63,11 @@ namespace esvr2 {
     InputType getInputType(std::string input_str)
     {
         InputType input = IT_NONE;
-        if (input_str.compare("VIDEO_OPENCV") == 0)
+        if (input_str == "VIDEO_OPENCV")
             input = IT_VIDEO_OPENCV;
-        if (input_str.compare("VIDEO_LOW_LATENCY") == 0)
+        if (input_str == "VIDEO_LOW_LATENCY")
             input = IT_VIDEO_LOW_LATENCY;
-        if (input_str.compare("VIDEO_BLACKMAGIC") == 0)
+        if (input_str == "VIDEO_BLACKMAGIC")
             input = IT_VIDEO_BLACKMAGIC;
         return input;
     }
@@ -68,9 +75,9 @@ namespace esvr2 {
     VideoRenderTarget getRenderVideoTarget(std::string input_str)
     {
         VideoRenderTarget input = VRT_TO_SQUARE;
-        if (input_str.compare("TO_SQUARE") == 0)
+        if (input_str == "TO_SQUARE")
             input = VRT_TO_SQUARE;
-        if (input_str.compare("TO_2D_RECTANGLE") == 0)
+        if (input_str == "TO_2D_RECTANGLE")
             input = VRT_TO_2D_RECTANGLE;
         return input;
     }
@@ -78,9 +85,9 @@ namespace esvr2 {
     WorkspaceType getWorkspaceType(std::string workspace_str)
     {
         WorkspaceType workspace = WS_TWO_CAMERAS_STEREO;
-        if( workspace_str.compare( "TWO_CAMERAS_STEREO" ) )
+        if( workspace_str == "TWO_CAMERAS_STEREO" )
             workspace = WS_TWO_CAMERAS_STEREO;
-        if( workspace_str.compare( "INSTANCED_STEREO" ) )
+        if( workspace_str == "INSTANCED_STEREO" )
             workspace = WS_INSTANCED_STEREO;
         return workspace;
     }
@@ -88,11 +95,11 @@ namespace esvr2 {
     Distortion getDistortionType( std::string distortion_str )
     {
         Distortion distortion = DIST_RAW;
-        if( distortion_str.compare( "RAW" ) )
+        if( distortion_str == "RAW" )
             distortion = DIST_RAW;
-        if( distortion_str.compare( "UNDISTORT" ) )
+        if( distortion_str == "UNDISTORT" )
             distortion = DIST_UNDISTORT;
-        if( distortion_str.compare( "UNDISTORT_RECTIFY" ) )
+        if( distortion_str == "UNDISTORT_RECTIFY" )
             distortion = DIST_UNDISTORT_RECTIFY;
         return distortion;
     }
@@ -104,11 +111,12 @@ namespace esvr2 {
         std::shared_ptr<PoseState> poseState):
             mConfig(config),
             mVideoLoader(videoLoader),
+            mController(nullptr),
             mLaparoscopeController(laparoscopeController),
             mPoseState(poseState),
             mBarrier(2)
     {
-        if ( !videoLoader || ! videoLoader->initialize() )
+        if ( !mVideoLoader || ! mVideoLoader->initialize() )
         {
             LOG << "no videoloader or could not be initialized, Quitting" << LOGEND;
             return;
@@ -121,7 +129,7 @@ namespace esvr2 {
         }
 
         // cycle until videoLoader is finished or quits
-        while( !videoLoader->isReady() )
+        while( !mVideoLoader->isReady() )
         {
             //TODO: look we can quit here
             Ogre::Threads::Sleep( 50 );
@@ -133,16 +141,24 @@ namespace esvr2 {
             }
         }
 
-        mGameState = std::make_shared<GameState>(this);
 
-        mGraphicsSystem = std::make_shared<GraphicsSystem>( this, mGameState );
+        mGraphicsSystem = std::make_shared<GraphicsSystem>( this );
 
-        mGameState->_notifyStereoGraphicsSystem( mGraphicsSystem );
+        //TODO implement UI
+        //mUi =
 
-        mGraphicsSystem->initialize( "esvr2" );
-        mGameState->loadDatablocks();
-//        mGameState->createLaparoscopeScene();
-        mGameState->createVRScene();
+        mGraphicsSystem->initialize();
+
+        switch(mConfig->controllerType)
+        {
+            case CT_KEYBOARD:
+                mController =
+                        std::make_shared<KeyboardController>(mLaparoscopeController);
+                break;
+//            case LC_OPT1:
+//                mLaparoscopeController =
+        }
+
 
         //TODO: check configuration
         mIsConfigured = true;
@@ -154,6 +170,12 @@ namespace esvr2 {
     Esvr2::~Esvr2()
     {
 
+    }
+
+    bool Esvr2::getQuit()
+    {
+        return mGraphicsSystem->getQuit() ||
+            mVideoLoader->getQuit();
     }
 
     int Esvr2::run()
@@ -187,11 +209,8 @@ namespace esvr2 {
 
             while( !mGraphicsSystem->getQuit() )
             {
-                mGraphicsSystem->beginFrameParallel();
                 mVideoLoader->update();
-                mGameState->update(timeSinceLast);
                 mGraphicsSystem->update( timeSinceLast );
-                mGraphicsSystem->finishFrameParallel();
 
                 if( !mGraphicsSystem->isRenderWindowVisible() )
                 {
@@ -227,23 +246,20 @@ namespace esvr2 {
 
         Ogre::uint64 startTime = timer.getMicroseconds();
 
-        double timeSinceLast = 1.0 / 60.0;
+        Ogre::uint64 timeSinceLast = 1;
 
-        while( !mGraphicsSystem->getQuit() && !mVideoLoader->getQuit() )
+        while( !getQuit() )
         {
-            mGraphicsSystem->beginFrameParallel();
             mGraphicsSystem->update( timeSinceLast );
-            mGraphicsSystem->finishFrameParallel();
 
-            if( !mGraphicsSystem->getRenderWindow()->isVisible() )
+            if( !mGraphicsSystem->isRenderWindowVisible() )
             {
                 //Don't burn CPU cycles unnecessary when we're minimized.
                 Ogre::Threads::Sleep( 500 );
             }
 
             Ogre::uint64 endTime = timer.getMicroseconds();
-            timeSinceLast = (endTime - startTime) / 1000000.0;
-            timeSinceLast = std::min( 1.0, timeSinceLast ); //Prevent from going haywire.
+            timeSinceLast = endTime - startTime;
             startTime = endTime;
         }
         LOG << "END GRAPHICS" << LOGEND;
@@ -267,8 +283,6 @@ namespace esvr2 {
     //---------------------------------------------------------------------
     unsigned long Esvr2::logicThread1()
     {
-        Ogre::Window *renderWindow = mGraphicsSystem->getRenderWindow();
-
         Ogre::Timer timer;
         //TODO: compansate YieldTimer
         //    Demo::YieldTimer yieldTimer( &timer );
@@ -279,7 +293,7 @@ namespace esvr2 {
         {
             mVideoLoader->update( );
 
-            if( !renderWindow->isVisible() )
+            if( !mGraphicsSystem->isRenderWindowVisible() )
             {
                 //Don't burn CPU cycles unnecessary when we're minimized.
                 Ogre::Threads::Sleep( 500 );
