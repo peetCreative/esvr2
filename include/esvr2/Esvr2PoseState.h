@@ -3,6 +3,9 @@
 
 #include "Esvr2.h"
 
+#include "OgreMatrix4.h"
+#include "OgreVector3.h"
+#include "OgreQuaternion.h"
 //Class to externally control the movements
 // of the laparoscope camera in our application
 // used for debugging

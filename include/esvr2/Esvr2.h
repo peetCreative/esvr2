@@ -1,11 +1,10 @@
 #ifndef _Esvr2_H_
 #define _Esvr2_H_
 
-#include "OgreMatrix4.h"
-#include "openvr.h"
-#include "opencv2/opencv.hpp"
-#include <Threading/OgreThreads.h>
-#include <Threading/OgreBarrier.h>
+#include <vector>
+#include <string>
+#include <memory>
+#include <iostream>
 
 #define LEFT 0
 #define RIGHT 1
@@ -45,13 +44,6 @@ namespace esvr2 {
         VIT_STEREO_HORIZONTAL_SPLIT
     } VideoInputType;
     typedef enum {
-        RIT_NONE,
-        RIT_MONO,
-        RIT_STEREO_SLICED,
-        RIT_STEREO_SPLIT,
-        RIT_STEREO_SPLIT_RAW
-    } RosInputType;
-    typedef enum {
         DIST_RAW,
         DIST_UNDISTORT,
         DIST_UNDISTORT_RECTIFY
@@ -64,13 +56,13 @@ namespace esvr2 {
         WS_TWO_CAMERAS_STEREO,
         WS_INSTANCED_STEREO
     } WorkspaceType;
-    typedef struct {
-        Ogre::Matrix4 eyeToHead[2];
-        Ogre::Matrix4 projectionMatrix[2];
-        Ogre::Vector4 tan[2];
-        Ogre::uint32 width;
-        Ogre::uint32 height;
-    } HmdConfig;
+//    typedef struct {
+//        Ogre::Matrix4 eyeToHead[2];
+//        Ogre::Matrix4 projectionMatrix[2];
+//        Ogre::Vector4 tan[2];
+//        Ogre::uint32 width;
+//        Ogre::uint32 height;
+//    } HmdConfig;
     typedef struct {
         std::string eye_str = "";
         int width = 0;
@@ -99,7 +91,7 @@ namespace esvr2 {
         size_t height = 0;
         size_t width = 0;
         size_t depth = 0;
-        Ogre::uint8 *data = nullptr;
+        unsigned char *data = nullptr;
         bool valid()
         {
             return seq != -1 && length != 0 &&
@@ -121,7 +113,7 @@ namespace esvr2 {
         ControllerType controllerType = CT_NONE;
         WorkspaceType workspaceType = WS_TWO_CAMERAS_STEREO;
         VideoRenderTarget videoRenderTarget = VRT_TO_SQUARE;
-        HmdConfig hmdConfig = HmdConfig();
+//        HmdConfig hmdConfig = HmdConfig();
     } Esvr2Config;
 
     typedef struct {
@@ -136,14 +128,10 @@ namespace esvr2 {
 
     ControllerType getControllerType(std::string input_str);
     VideoInputType getVideoInputType(std::string input_str);
-    RosInputType getRosInputType(std::string input_str);
     InputType getInputType(std::string input_str);
     VideoRenderTarget getRenderVideoTarget(std::string input_str);
     WorkspaceType getWorkspaceType(std::string workspace_str);
     Distortion getDistortionType( std::string distortion_str );
-
-    unsigned long renderThread(Ogre::ThreadHandle *threadHandle);
-    unsigned long logicThread(Ogre::ThreadHandle *threadHandle);
 
     class VideoLoader;
     class Controller;
@@ -152,25 +140,29 @@ namespace esvr2 {
     class GraphicsSystem;
     class GameState;
     class OpenVRCompositorListener;
+    //Really dirty wrapping Ogre::Barrier so we don't need to put Ogre in Esvr2.h
+    class Barrier;
 
     class Esvr2 {
         friend GraphicsSystem;
         friend GameState;
         friend OpenVRCompositorListener;
-        friend unsigned long renderThread(Ogre::ThreadHandle *threadHandle);
-        friend unsigned long logicThread(Ogre::ThreadHandle *threadHandle);
     public:
+        Esvr2( Esvr2Config *config,
+               VideoLoader *videoLoader,
+               LaparoscopeController *laparoscopeController,
+               PoseState *poseState);
         Esvr2( std::shared_ptr<Esvr2Config> config,
                std::shared_ptr<VideoLoader> videoLoader,
                std::shared_ptr<LaparoscopeController> laparoscopeController,
                std::shared_ptr<PoseState> poseState);
         ~Esvr2();
         int run();
+        unsigned long renderThread1();
+        unsigned long logicThread1();
 
     private:
         bool getQuit();
-        unsigned long renderThread1();
-        unsigned long logicThread1();
     private:
 
         bool mIsConfigured;
@@ -183,13 +175,8 @@ namespace esvr2 {
         std::shared_ptr<GraphicsSystem> mGraphicsSystem;
         std::shared_ptr<GameState> mGameState;
 
-        Ogre::Barrier mBarrier;
-        Ogre::ThreadHandlePtr mThreadHandles[2];
+        Barrier *mBarrier;
     };
-
-    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose );
-    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix44_t matPose );
-
 }
 
 #endif

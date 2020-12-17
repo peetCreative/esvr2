@@ -55,7 +55,7 @@ bool readCalibrationYml(const std::string& file_name, std::string& camera_name,
                         CameraConfig& cam_info);
 bool readConfigYml(const std::string& file_name,
                    std::shared_ptr<Esvr2Config> config,
-                   std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig);
+                   std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig = nullptr);
 
 } //namespace esvr2
 

@@ -33,7 +33,7 @@ namespace esvr2
         GraphicsSystem              *mGraphicsSystem;
 
         Ogre::VrData                mVrData;
-        HmdConfig                   mHmdConfig;
+//        HmdConfig                   mHmdConfig;
         StereoCameraConfig          mCameraConfig;
 
         Ogre::v1::OverlaySystem     *mOverlaySystem;

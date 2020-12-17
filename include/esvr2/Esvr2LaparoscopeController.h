@@ -24,9 +24,11 @@ namespace esvr2
     class LaparoscopeController {
     public:
         virtual bool moveLaparoscopeTo(
-                LaparoscopeDOFPose) {};
-        virtual LaparoscopeDOFPose getLaparoscopePose() {};
-        virtual LaparoscopeDOFBoundaries getLaparoscopeBoundary() {};
+                LaparoscopeDOFPose) = 0;
+        virtual bool getLaparoscopePose(
+                LaparoscopeDOFPose &laparoscopeDofPose) = 0;
+        virtual bool getLaparoscopeBoundaries(
+                LaparoscopeDOFBoundaries &laparoscopeDofBoundaries) = 0;
     };
 }
 

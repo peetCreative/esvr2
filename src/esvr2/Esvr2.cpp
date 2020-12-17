@@ -5,6 +5,7 @@
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2TestPose.h"
 #include "Esvr2KeyboardController.h"
+#include "Esvr2Barrier.h"
 
 #include "OgreCamera.h"
 #include "OgreWindow.h"
@@ -20,6 +21,18 @@
 namespace esvr2 {
     extern const double cFrametime;
     const double cFrametime = 1.0 / 25.0;
+
+    unsigned long renderThread(Ogre::ThreadHandle *threadHandle)
+    {
+        Esvr2 *esvr2 = reinterpret_cast<Esvr2*>( threadHandle->getUserParam() );
+        return esvr2->renderThread1();
+    };
+
+    unsigned long logicThread(Ogre::ThreadHandle *threadHandle)
+    {
+        Esvr2 *esvr2 = reinterpret_cast<Esvr2*>( threadHandle->getUserParam() );
+        return esvr2->logicThread1();
+    };
 
     THREAD_DECLARE( renderThread );
     THREAD_DECLARE( logicThread );
@@ -43,20 +56,6 @@ namespace esvr2 {
             input = VIT_STEREO_VERTICAL_SPLIT;
         if (input_str =="STEREO_HORIZONTAL_SPLIT")
             input = VIT_STEREO_HORIZONTAL_SPLIT;
-        return input;
-    }
-
-    RosInputType getRosInputType(std::string input_str)
-    {
-        RosInputType input = RIT_NONE;
-        if (input_str == "MONO")
-            input = RIT_MONO;
-        if (input_str == "STEREO_SLICED")
-            input = RIT_STEREO_SLICED;
-        if (input_str == "STEREO_SPLIT")
-            input = RIT_STEREO_SPLIT;
-        if (input_str == "STEREO_SPLIT_RAW")
-            input = RIT_STEREO_SPLIT_RAW;
         return input;
     }
 
@@ -105,6 +104,22 @@ namespace esvr2 {
     }
 
     Esvr2::Esvr2(
+            Esvr2Config *config,
+            VideoLoader *videoLoader,
+            LaparoscopeController *laparoscopeController,
+            PoseState *poseState)
+    {
+        std::shared_ptr<Esvr2Config> sConfig(config);
+        std::shared_ptr<VideoLoader> sVideoLoader(videoLoader);
+        std::shared_ptr<LaparoscopeController> sLaparoscopeController(laparoscopeController);
+        std::shared_ptr<PoseState> sPoseState(poseState);
+        Esvr2(sConfig, sVideoLoader,
+              sLaparoscopeController,
+              sPoseState );
+    }
+
+
+    Esvr2::Esvr2(
         std::shared_ptr<Esvr2Config> config,
         std::shared_ptr<VideoLoader> videoLoader,
         std::shared_ptr<LaparoscopeController> laparoscopeController,
@@ -114,7 +129,7 @@ namespace esvr2 {
             mController(nullptr),
             mLaparoscopeController(laparoscopeController),
             mPoseState(poseState),
-            mBarrier(2)
+            mBarrier(new Barrier())
     {
         if ( !mVideoLoader || ! mVideoLoader->initialize() )
         {
@@ -155,8 +170,6 @@ namespace esvr2 {
                 mController =
                         std::make_shared<KeyboardController>(mLaparoscopeController);
                 break;
-//            case LC_OPT1:
-//                mLaparoscopeController =
         }
 
 
@@ -234,11 +247,6 @@ namespace esvr2 {
         return 0;
     }
 
-    unsigned long renderThread(Ogre::ThreadHandle *threadHandle)
-    {
-        Esvr2 *esvr2 = reinterpret_cast<Esvr2*>( threadHandle->getUserParam() );
-        return esvr2->renderThread1();
-    }
     //---------------------------------------------------------------------
     unsigned long Esvr2::renderThread1()
     {
@@ -265,20 +273,13 @@ namespace esvr2 {
         LOG << "END GRAPHICS" << LOGEND;
 
         mGameState->destroyScene();
-        mBarrier.sync();
+        mBarrier->sync();
 
         mGraphicsSystem->deinitialize();
-        mBarrier.sync();
+        mBarrier->sync();
 
         return 0;
     };
-
-    unsigned long logicThread(Ogre::ThreadHandle *threadHandle)
-    {
-        Esvr2 *esvr2 = reinterpret_cast<Esvr2*>( threadHandle->getUserParam() );
-        return esvr2->logicThread1();
-    }
-
 
     //---------------------------------------------------------------------
     unsigned long Esvr2::logicThread1()
@@ -304,33 +305,11 @@ namespace esvr2 {
     //        startTime = yieldTimer.yield( cFrametime, startTime );
         }
 
-        mBarrier.sync();
+        mBarrier->sync();
 
         mVideoLoader->deinitialize();
-        mBarrier.sync();
+        mBarrier->sync();
 
         return 0;
     };
-
-    //-------------------------------------------------------------------------
-    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose )
-    {
-        Ogre::Matrix4 matrixObj(
-                matPose.m[0][0], matPose.m[0][1], matPose.m[0][2], matPose.m[0][3],
-                matPose.m[1][0], matPose.m[1][1], matPose.m[1][2], matPose.m[1][3],
-                matPose.m[2][0], matPose.m[2][1], matPose.m[2][2], matPose.m[2][3],
-                0.0f,            0.0f,            0.0f,            1.0f );
-        return matrixObj;
-    }
-
-    //-------------------------------------------------------------------------
-    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix44_t matPose )
-    {
-        Ogre::Matrix4 matrixObj(
-                matPose.m[0][0], matPose.m[0][1], matPose.m[0][2], matPose.m[0][3],
-                matPose.m[1][0], matPose.m[1][1], matPose.m[1][2], matPose.m[1][3],
-                matPose.m[2][0], matPose.m[2][1], matPose.m[2][2], matPose.m[2][3],
-                matPose.m[3][0], matPose.m[3][1], matPose.m[3][2], matPose.m[3][3] );
-        return matrixObj;
-    }
 }

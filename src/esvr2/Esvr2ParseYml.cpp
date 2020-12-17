@@ -176,36 +176,36 @@ namespace esvr2 {
     }
 
 
-    bool readHmdConfigYmlIntern(YAML::Node doc, HmdConfig& hmdConfig)
-    {
-        bool succ = true;
-        if (YAML::Node widthNode = doc["width"])
-            hmdConfig.width = widthNode.as<int>();
-        else return false;
-        if (YAML::Node heightNode = doc["height"])
-            hmdConfig.height = heightNode.as<int>();
-        else return false;
-        std::vector<std::string> eye = {"left", "right"};
-        for (auto it = eye.begin(); it != eye.end(); it++ )
-        {
-            if (YAML::Node eyeNode = doc[*it])
-            {
-                YAML::Node e2hNode = eyeNode["eye_to_head"];
-                YAML::Node pmNode = eyeNode["projection_matrix"];
-                YAML::Node tanNode = eyeNode["tan"];
-                if(!(e2hNode && pmNode && tanNode &&
-                    readSequence<Ogre::Matrix4>(
-                            e2hNode, hmdConfig.eyeToHead[LEFT], 16) &&
-                    readSequence<Ogre::Matrix4>(
-                            pmNode, hmdConfig.projectionMatrix[LEFT], 16) &&
-                     readSequence<Ogre::Vector4>(
-                            tanNode, hmdConfig.tan[LEFT], 4)
-                        ))
-                    return false;
-            }
-        }
-        return succ;
-    }
+//    bool readHmdConfigYmlIntern(YAML::Node doc, HmdConfig& hmdConfig)
+//    {
+//        bool succ = true;
+//        if (YAML::Node widthNode = doc["width"])
+//            hmdConfig.width = widthNode.as<int>();
+//        else return false;
+//        if (YAML::Node heightNode = doc["height"])
+//            hmdConfig.height = heightNode.as<int>();
+//        else return false;
+//        std::vector<std::string> eye = {"left", "right"};
+//        for (auto it = eye.begin(); it != eye.end(); it++ )
+//        {
+//            if (YAML::Node eyeNode = doc[*it])
+//            {
+//                YAML::Node e2hNode = eyeNode["eye_to_head"];
+//                YAML::Node pmNode = eyeNode["projection_matrix"];
+//                YAML::Node tanNode = eyeNode["tan"];
+//                if(!(e2hNode && pmNode && tanNode &&
+//                    readSequence<Ogre::Matrix4>(
+//                            e2hNode, hmdConfig.eyeToHead[LEFT], 16) &&
+//                    readSequence<Ogre::Matrix4>(
+//                            pmNode, hmdConfig.projectionMatrix[LEFT], 16) &&
+//                     readSequence<Ogre::Vector4>(
+//                            tanNode, hmdConfig.tan[LEFT], 4)
+//                        ))
+//                    return false;
+//            }
+//        }
+//        return succ;
+//    }
 
     bool readConfigYmlIntern(std::istream& in,
                        std::shared_ptr<Esvr2Config> config,
@@ -233,7 +233,8 @@ namespace esvr2 {
         if (YAML::Node param = doc["render_video_target"])
             config->videoRenderTarget =
                 getRenderVideoTarget(param.as<std::string>());
-        if (YAML::Node doc_video = doc["video"])
+        YAML::Node doc_video = doc["video"];
+        if (doc_video && videoInputConfig)
         {
             if (YAML::Node param = doc_video["is_stereo"])
             {
@@ -256,17 +257,18 @@ namespace esvr2 {
                         param.as<bool>();
         }
         bool succ = true;
-        if (YAML::Node param = doc["stereo_camera_config_left"])
+        YAML::Node param = doc["stereo_camera_config_left"];
+        if (param && videoInputConfig)
             succ = succ && readStereoCameraConfigNodeIntern(
                     param,
                     videoInputConfig->stereoCameraConfig.leftCameraConfig);
-
-        if (YAML::Node param = doc["stereo_camera_config_right"])
+        param = doc["stereo_camera_config_right"];
+        if (param && videoInputConfig)
             succ = succ && readStereoCameraConfigNodeIntern(
                     param,
                     videoInputConfig->stereoCameraConfig.rightCameraConfig);
-        if (YAML::Node param = doc["hmd_info"])
-            succ = succ && readHmdConfigYmlIntern(param, config->hmdConfig);
+//        if (YAML::Node param = doc["hmd_info"])
+//            succ = succ && readHmdConfigYmlIntern(param, config->hmdConfig);
         return succ;
     }
 

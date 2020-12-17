@@ -20,11 +20,11 @@ int main(int argc, char *argv[])
     std::shared_ptr<esvr2::Esvr2VideoInputConfig> videoInputConfig =
             std::make_shared<esvr2::Esvr2VideoInputConfig>();
 
-    config->hmdConfig = {
-            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
-            { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45}},
-            1920, 1080 };
+//    config->hmdConfig = {
+//            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+//            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
+//            { {-1.3,1.3,-1.45,1.45}, {-1.3,1.3,-1.45,1.45}},
+//            1920, 1080 };
 
     for (int i = 1; i < argc; i++)
     {

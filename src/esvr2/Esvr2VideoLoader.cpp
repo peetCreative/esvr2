@@ -1,6 +1,7 @@
 #include "Esvr2VideoLoader.h"
 
 #include "Esvr2.h"
+#include <Ogre.h>
 
 namespace esvr2
 {

@@ -4,6 +4,7 @@
 
 #include "Esvr2.h"
 
+#include "opencv2/opencv.hpp"
 #include <mutex>
 
 namespace esvr2 {
@@ -22,7 +23,7 @@ namespace esvr2 {
         size_t mDestinationWidth, mDestinationHeight;
         size_t mDestinationDepth, mDestinationLength;
 
-        Ogre::uint8 *mBuffers[2][2];
+        unsigned char *mBuffers[2][2];
         StereoCameraConfig mCameraConfig;
 
         cv::Mat mUndistortMap1[2], mUndistortMap2[2];

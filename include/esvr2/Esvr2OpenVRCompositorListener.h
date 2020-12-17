@@ -40,6 +40,9 @@ namespace esvr2
         };
     }
 
+    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose );
+    Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix44_t matPose );
+
     class OpenVRCompositorListener : public Ogre::FrameListener, public Ogre::CompositorWorkspaceListener
     {
     friend GraphicsSystem;
