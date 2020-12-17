@@ -2,7 +2,7 @@
 Zip=@OGRE_MEDIA_DIR@/packs/DebugPack.zip
 
 [Popular]
-FileSystem=@CMAKE_CURRENT_SOURCE_DIR@/media
+FileSystem=@ESVR2_MEDIA_DIR_DEST@
 FileSystem=@OGRE_MEDIA_DIR@
 FileSystem=@OGRE_MEDIA_DIR@/2.0/scripts/materials/Common
 FileSystem=@OGRE_MEDIA_DIR@/2.0/scripts/materials/Common/GLSL

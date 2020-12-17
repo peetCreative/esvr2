@@ -18,7 +18,8 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
     set( CMAKE_CXX_FLAGS_DEBUG		"${CMAKE_CXX_FLAGS_DEBUG}			-fno-limit-debug-info"		)
 endif()
 
-set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin/${CMAKE_BUILD_TYPE}" )
+set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin" )
+set( LIBRARY_OUTPUT_PATH  "${CMAKE_CURRENT_BINARY_DIR}/lib" )
 
 SET(OGRE_HOME /opt/ogre)
 macro(SUBDIRLIST result curdir)
@@ -97,6 +98,8 @@ if(BlackMagic_FOUND)
     add_definitions(-DUSE_BLACKMAGICCAMERA)
 endif()
 
+SET(ESVR2_MEDIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/media)
+SET(ESVR2_MEDIA_DIR_DEST ${ESVR2_MEDIA_DIR})
 configure_file(
         "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Templates/Resources.cfg.in"
         ${EXECUTABLE_OUTPUT_PATH}/Resources.cfg
@@ -118,7 +121,9 @@ include_directories(
 
 link_libraries(stdc++fs)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/esvr2)
+SET(ESVR2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/esvr2)
+
+include_directories(${ESVR2_INCLUDE_DIR})
 
 add_library(
     ${PROJECT_NAME}_lib
@@ -143,3 +148,19 @@ target_link_libraries(
     ${PROJECT_NAME}
     ${PROJECT_NAME}_lib
 )
+
+SET(ESVR2_MEDIA_DIR_DEST ${CMAKE_INSTALL_PREFIX}/media)
+configure_file(
+        "${CMAKE_CURRENT_SOURCE_DIR}/CMake/Templates/Resources.cfg.in"
+        ${CMAKE_BINARY_DIR}/Resource/Resources.cfg
+)
+
+install( TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_lib
+        RUNTIME DESTINATION bin
+        LIBRARY DESTINATION lib)
+install( DIRECTORY ${ESVR2_INCLUDE_DIR}
+        DESTINATION include)
+install( DIRECTORY ${ESVR2_MEDIA_DIR}
+        DESTINATION media)
+install( FILES  ${CMAKE_BINARY_DIR}/Resource/Resources.cfg
+        DESTINATION bin)
