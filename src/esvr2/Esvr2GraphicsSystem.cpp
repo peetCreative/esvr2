@@ -44,7 +44,6 @@ namespace esvr2
             mWindowTitle("Esvr2"),
             mPluginsFolder(),
             mWriteAccessFolder(),
-            mResourcePath(),
             mUseHlmsDiskCache(true),
             mUseMicrocodeCache(true),
             mLaparoscopeWorkspaces{ nullptr, nullptr },
@@ -68,7 +67,7 @@ namespace esvr2
             mShowVideo(true),
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
             mLastFrameUpdate(0),
-            mVideoUpdateFrames(2)
+            mVideoUpdateFrames(0)
     {
         const Ogre::Matrix4 id[2] =
                 { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY };
@@ -83,7 +82,7 @@ namespace esvr2
     {
         // Load resource paths from config file
         Ogre::ConfigFile cf;
-        cf.load(mResourcePath + "Resources.cfg");
+        cf.load( mEsvr2->mConfig->resourcePath );
 
         // Go through all sections & settings in the file
         Ogre::ConfigFile::SectionIterator seci = cf.getSectionIterator();
@@ -141,11 +140,9 @@ namespace esvr2
     void GraphicsSystem::registerHlms(void)
     {
         Ogre::ConfigFile cf;
-        cf.load( mResourcePath + "Resources.cfg" );
+        cf.load( mEsvr2->mConfig->resourcePath );
 
         Ogre::String rootHlmsFolder = cf.getSetting( "DoNotUseAsResource", "Hlms", "" );
-        if ( *(rootHlmsFolder.begin()) != '/' )
-            rootHlmsFolder = mResourcePath + rootHlmsFolder;
 
         if( rootHlmsFolder.empty() )
             rootHlmsFolder = "./";
@@ -363,24 +360,24 @@ namespace esvr2
 
 //         mCamerasNode->setPosition(pos);
 
-        if ( mEsvr2->mConfig->workspaceType == WS_TWO_CAMERAS_STEREO )
+//        if ( mEsvr2->mConfig->workspaceType == WS_TWO_CAMERAS_STEREO )
+//        {
+        std::string cameraNames[2] = {"VR Left Eye", "VR Right Eye"};
+        for(size_t eye = 0; eye < mEyeNum; eye++)
         {
-            std::string cameraNames[2] = {"VR Left Eye", "VR Right Eye"};
-            for(size_t eye = 0; eye < mEyeNum; eye++)
-            {
-                mVRCameras[eye] = mVRSceneManager->createCamera(cameraNames[eye]);
-                mVRCameras[eye]->setFarClipDistance(mVRCameraFar);
-                mVRCameras[eye]->setNearClipDistance(mVRCameraNear);
-                mVRCameras[eye]->lookAt(0,0,-1);
-            }
+            mVRCameras[eye] = mVRSceneManager->createCamera(cameraNames[eye]);
+            mVRCameras[eye]->setFarClipDistance(mVRCameraFar);
+            mVRCameras[eye]->setNearClipDistance(mVRCameraNear);
+            mVRCameras[eye]->lookAt(0,0,-1);
+        }
 
-            if(mOvrCompositorListener)
-            {
-                mOvrCompositorListener->syncVRCameraProjection( true );
-            }
+        if(mOvrCompositorListener)
+        {
+            mOvrCompositorListener->syncVRCameraProjection( true );
+        }
 //             const Ogre::Real eyeDistance        = 0.06f;
 //             const Ogre::Real eyeFocusDistance   = 0.06f;
-        }
+//        }
     }
 
     //-------------------------------------------------------------------------------
@@ -389,10 +386,10 @@ namespace esvr2
         //Use one node to control both cameras
         mLaparoscopeCameras[LEFT] = mLaparoscopeSceneManager->createCamera("Lap Left Eye" );
         mLaparoscopeCameras[RIGHT] = mLaparoscopeSceneManager->createCamera("Lap Right Eye" );
-        mVRCameras[LEFT]->setFarClipDistance(30);
-        mVRCameras[RIGHT]->setFarClipDistance(30);
-        mVRCameras[LEFT]->setNearClipDistance(0.3);
-        mVRCameras[RIGHT]->setNearClipDistance(0.3);
+        mLaparoscopeCameras[LEFT]->setFarClipDistance(30);
+        mLaparoscopeCameras[RIGHT]->setFarClipDistance(30);
+        mLaparoscopeCameras[LEFT]->setNearClipDistance(0.3);
+        mLaparoscopeCameras[RIGHT]->setNearClipDistance(0.3);
 
 //             const Ogre::Real eyeDistance        = 0.06f;
 //             const Ogre::Real eyeFocusDistance   = 0.06f;
@@ -507,6 +504,12 @@ namespace esvr2
             delete mOvrCompositorListener;
             mOvrCompositorListener = nullptr;
         }
+
+        Ogre::CompositorManager2 *compositorManager =
+        mRoot->getCompositorManager2();
+        // for some reason we can only update every n frames.
+        //which is limited by this function
+        mVideoUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
 
         //create Scene
         chooseSceneManager();
@@ -935,7 +938,9 @@ namespace esvr2
 
         const Ogre::uint64 second = 1000000;
         if (microSecsSinceLast > second)
+        {
             uploadVideoData2GPU();
+        }
 
         mGameState->update(microSecsSinceLast);
 

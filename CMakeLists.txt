@@ -161,6 +161,6 @@ install( TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_lib
 install( DIRECTORY ${ESVR2_INCLUDE_DIR}
         DESTINATION include)
 install( DIRECTORY ${ESVR2_MEDIA_DIR}
-        DESTINATION media)
+        DESTINATION ${CMAKE_INSTALL_PREFIX})
 install( FILES  ${CMAKE_BINARY_DIR}/Resource/Resources.cfg
         DESTINATION bin)

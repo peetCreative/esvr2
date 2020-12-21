@@ -209,7 +209,7 @@ namespace esvr2 {
 
     bool readConfigYmlIntern(std::istream& in,
                        std::shared_ptr<Esvr2Config> config,
-                       std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig)
+                       std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig = nullptr)
     {
         YAML::Node doc = YAML::Load(in);
         if (YAML::Node param = doc["show_video"])
@@ -233,6 +233,8 @@ namespace esvr2 {
         if (YAML::Node param = doc["render_video_target"])
             config->videoRenderTarget =
                 getRenderVideoTarget(param.as<std::string>());
+        if (YAML::Node param = doc["resource_path"])
+            config->resourcePath = param.as<std::string>();
         YAML::Node doc_video = doc["video"];
         if (doc_video && videoInputConfig)
         {
@@ -276,9 +278,10 @@ namespace esvr2 {
                        std::shared_ptr<Esvr2Config> config,
                        std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig)
     {
+        LOG << "file_name:" << file_name << LOGEND;
         std::ifstream fin(file_name.c_str());
         if (!fin.good()) {
-            LOG << "Unable to open camera calibration file [" << file_name << "]" << LOGEND;
+            LOG << "Unable to open Config file [" << file_name << "]" << LOGEND;
             return false;
         }
         bool success = readConfigYmlIntern(fin, config, videoInputConfig);

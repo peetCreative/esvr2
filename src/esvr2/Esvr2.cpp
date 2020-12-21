@@ -2,19 +2,16 @@
 #include "Esvr2GameState.h"
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2VideoLoader.h"
+#include "Esvr2LaparoscopeController.h"
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2TestPose.h"
 #include "Esvr2KeyboardController.h"
 #include "Esvr2Barrier.h"
 
-#include "OgreCamera.h"
-#include "OgreWindow.h"
-
 #include "OgreTimer.h"
 
 #include "Threading/OgreThreads.h"
 
-#include <experimental/filesystem>
 #include <mutex>
 #include <memory>
 

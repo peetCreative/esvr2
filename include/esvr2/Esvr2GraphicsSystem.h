@@ -50,7 +50,6 @@ namespace esvr2
         //Other Ogre stuff
         Ogre::String                mPluginsFolder;
         Ogre::String                mWriteAccessFolder;
-        Ogre::String                mResourcePath;
         bool mUseMicrocodeCache;
         bool mUseHlmsDiskCache;
 

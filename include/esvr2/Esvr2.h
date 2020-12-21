@@ -110,6 +110,7 @@ namespace esvr2 {
         bool isStereo = true;
         bool debugScreen = false;
         int screen = 0;
+        std::string resourcePath = "Resources.cfg";
         ControllerType controllerType = CT_NONE;
         WorkspaceType workspaceType = WS_TWO_CAMERAS_STEREO;
         VideoRenderTarget videoRenderTarget = VRT_TO_SQUARE;

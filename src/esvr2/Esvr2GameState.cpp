@@ -235,7 +235,7 @@ namespace esvr2
             mProjectionRectangle[eye]->end();
 
             sceneNodesProjectionPlanes[eye%2]->attachObject(mProjectionRectangle[eye]);
-//            mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
+            mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
         }
     }
 
@@ -350,7 +350,7 @@ namespace esvr2
                     AUTODETECT_RESOURCE_GROUP_NAME,
                     Ogre::SCENE_DYNAMIC );
 
-//        mCube->setVisibilityFlags( 0x1 << 2 );
+        mCube->setVisibilityFlags( 0x1 << 2 );
         mVRSceneNodeMesh = mGraphicsSystem->mVRSceneManager
             ->getRootSceneNode( Ogre::SCENE_DYNAMIC )
             ->createChildSceneNode( Ogre::SCENE_DYNAMIC );
