@@ -2,6 +2,7 @@
 
 #include "Esvr2.h"
 #include "Esvr2PointCloud.h"
+#include "Esvr2Helper.h"
 
 #include "OgreSceneManager.h"
 #include "OgreItem.h"
@@ -505,6 +506,13 @@ namespace esvr2
             mGraphicsSystem->mVRCameras[eye]->detachFromParent();
             mVRCamerasNode->attachObject(
                     mGraphicsSystem->mVRCameras[eye] );
+        }
+        HmdConfig hmdConfig = mEsvr2->mConfig->hmdConfig;
+        if (hmdConfig.valid())
+        {
+            RealVector vec1 = hmdConfig.initialPose;
+            Ogre::Vector3 initialPose = RealVectorToVector3(vec1);
+            mVRCamerasNode->setPosition(initialPose);
         }
     }
 

@@ -56,21 +56,42 @@ namespace esvr2 {
         WS_TWO_CAMERAS_STEREO,
         WS_INSTANCED_STEREO
     } WorkspaceType;
-//    typedef struct {
-//        Ogre::Matrix4 eyeToHead[2];
-//        Ogre::Matrix4 projectionMatrix[2];
-//        Ogre::Vector4 tan[2];
-//        Ogre::uint32 width;
-//        Ogre::uint32 height;
-//    } HmdConfig;
+    typedef std::vector<float> RealVector;
+    typedef struct {
+        RealVector initialPose = RealVector(3);
+        RealVector eyeToHeadLeft = RealVector(3);
+        RealVector eyeToHeadRight = RealVector(3);
+        RealVector *eyeToHeadPtr[2] =  {&eyeToHeadLeft, &eyeToHeadRight};
+        RealVector projectionMatrixLeft = RealVector(16);
+        RealVector projectionMatrixRight = RealVector(16);
+        RealVector *projectionMatrixPtr[2] =
+                {&projectionMatrixLeft, &projectionMatrixRight};
+        RealVector tanLeft = RealVector(4);
+        RealVector tanRight = RealVector(4);
+        RealVector *tanPtr[2] = {&tanLeft, &tanRight};
+        unsigned int width, height;
+        bool valid()
+        {
+          return  projectionMatrixLeft[0] && projectionMatrixLeft[2] &&
+                  projectionMatrixLeft[5] && projectionMatrixLeft[6] &&
+                  projectionMatrixLeft[10] && projectionMatrixLeft[11] &&
+                  projectionMatrixLeft[14] &&
+                  projectionMatrixRight[0] && projectionMatrixRight[2] &&
+                  projectionMatrixRight[5] && projectionMatrixRight[6] &&
+                  projectionMatrixRight[10] && projectionMatrixRight[11] &&
+                  projectionMatrixRight[14] &&
+                  tanLeft[0] && tanLeft[1] && tanLeft[2] && tanLeft[3] &&
+                  tanRight[0] && tanRight[1] && tanRight[2] && tanRight[3];
+        };
+    } HmdConfig;
     typedef struct {
         std::string eye_str = "";
         int width = 0;
         int height = 0;
-        std::vector<float> D = { 0, 0, 0, 0, 0 };
-        std::vector<float> K = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        std::vector<float> R = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        std::vector<float> P = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        RealVector D = { 0, 0, 0, 0, 0 };
+        RealVector K = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        RealVector R = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        RealVector P = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         bool valid()
         {
             //TODO: check maybe also the other parameters
@@ -114,7 +135,7 @@ namespace esvr2 {
         ControllerType controllerType = CT_NONE;
         WorkspaceType workspaceType = WS_TWO_CAMERAS_STEREO;
         VideoRenderTarget videoRenderTarget = VRT_TO_SQUARE;
-//        HmdConfig hmdConfig = HmdConfig();
+        HmdConfig hmdConfig = HmdConfig();
     } Esvr2Config;
 
     typedef struct {

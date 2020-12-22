@@ -3,6 +3,7 @@
 #include "Esvr2.h"
 #include "Esvr2GameState.h"
 #include "Esvr2OpenVRCompositorListener.h"
+#include "Esvr2Helper.h"
 
 #include "Ogre.h"
 #include "OgrePlatform.h"
@@ -30,6 +31,7 @@
 #include <sstream>
 #include <cmath>
 #include <mutex>
+#include <vector>
 
 namespace esvr2
 {
@@ -369,6 +371,16 @@ namespace esvr2
             mVRCameras[eye]->setFarClipDistance(mVRCameraFar);
             mVRCameras[eye]->setNearClipDistance(mVRCameraNear);
             mVRCameras[eye]->lookAt(0,0,-1);
+            HmdConfig hmdConfig = mEsvr2->mConfig->hmdConfig;
+            if(hmdConfig.valid())
+            {
+                RealVector *vec = hmdConfig.projectionMatrixPtr[eye];
+                Ogre::Matrix4 projMat = RealVectorToMatrix4(*vec);
+                mVRCameras[eye]->setCustomProjectionMatrix(true, projMat);
+                RealVector *vec1 = hmdConfig.eyeToHeadPtr[eye];
+                Ogre::Vector3 pose = RealVectorToVector3(*vec1);
+                mVRCameras[eye]->setPosition(pose);
+            }
         }
 
         if(mOvrCompositorListener)

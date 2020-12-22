@@ -157,55 +157,49 @@ namespace esvr2 {
         return success;
     }
 
-    template<class T>
-    bool readSequence(YAML::Node node, T& vec,
-                     int length)
+    bool readSequence(YAML::Node node, RealVector *vec, int length)
     {
+        if (!node.IsSequence())
+            return false;
         int i = 0;
-        float v[length];
         for (YAML::iterator it = node.begin(); it != node.end(); ++it)
         {
             if (i >= length)
                 return false;
-            v[i++] = it->as<float>();
+            vec->at(i++) = it->as<float>();
         }
         if (i != length)
             return false;
-        vec = T(v);
         return true;
     }
 
 
-//    bool readHmdConfigYmlIntern(YAML::Node doc, HmdConfig& hmdConfig)
-//    {
-//        bool succ = true;
-//        if (YAML::Node widthNode = doc["width"])
-//            hmdConfig.width = widthNode.as<int>();
-//        else return false;
-//        if (YAML::Node heightNode = doc["height"])
-//            hmdConfig.height = heightNode.as<int>();
-//        else return false;
-//        std::vector<std::string> eye = {"left", "right"};
-//        for (auto it = eye.begin(); it != eye.end(); it++ )
-//        {
-//            if (YAML::Node eyeNode = doc[*it])
-//            {
-//                YAML::Node e2hNode = eyeNode["eye_to_head"];
-//                YAML::Node pmNode = eyeNode["projection_matrix"];
-//                YAML::Node tanNode = eyeNode["tan"];
-//                if(!(e2hNode && pmNode && tanNode &&
-//                    readSequence<Ogre::Matrix4>(
-//                            e2hNode, hmdConfig.eyeToHead[LEFT], 16) &&
-//                    readSequence<Ogre::Matrix4>(
-//                            pmNode, hmdConfig.projectionMatrix[LEFT], 16) &&
-//                     readSequence<Ogre::Vector4>(
-//                            tanNode, hmdConfig.tan[LEFT], 4)
-//                        ))
-//                    return false;
-//            }
-//        }
-//        return succ;
-//    }
+    bool readHmdConfigYmlIntern(YAML::Node doc, HmdConfig* hmdConfig)
+    {
+        bool succ = true;
+        YAML::Node initialPose = doc["initial_pose"];
+        readSequence(initialPose, &(hmdConfig->initialPose), 3);
+        if (YAML::Node widthNode = doc["width"])
+            hmdConfig->width = widthNode.as<int>();
+        else return false;
+        if (YAML::Node heightNode = doc["height"])
+            hmdConfig->height = heightNode.as<int>();
+        else return false;
+        std::vector<std::string> eyeStr = {"left", "right"};
+        for (size_t eye = 0; eye < 2; eye++ )
+        {
+            if (YAML::Node eyeNode = doc[eyeStr[eye]])
+            {
+                YAML::Node e2hNode = eyeNode["eye_to_head"];
+                YAML::Node pmNode = eyeNode["projection_matrix"];
+                YAML::Node tanNode = eyeNode["tan"];
+                succ = succ && e2hNode && readSequence(e2hNode, hmdConfig->eyeToHeadPtr[eye], 3);
+                succ = succ && pmNode && readSequence(pmNode, hmdConfig->projectionMatrixPtr[eye], 16);
+                succ = succ && tanNode && readSequence(tanNode, hmdConfig->tanPtr[eye], 4);
+            }
+        }
+        return succ && hmdConfig->valid();
+    }
 
     bool readConfigYmlIntern(std::istream& in,
                        std::shared_ptr<Esvr2Config> config,
@@ -269,8 +263,8 @@ namespace esvr2 {
             succ = succ && readStereoCameraConfigNodeIntern(
                     param,
                     videoInputConfig->stereoCameraConfig.rightCameraConfig);
-//        if (YAML::Node param = doc["hmd_info"])
-//            succ = succ && readHmdConfigYmlIntern(param, config->hmdConfig);
+        if (YAML::Node param = doc["hmd_info"])
+            succ = succ && readHmdConfigYmlIntern(param, &(config->hmdConfig));
         return succ;
     }
 
