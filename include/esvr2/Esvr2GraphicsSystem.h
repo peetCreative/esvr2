@@ -18,6 +18,8 @@
 
 #include "OgreMatrix4.h"
 
+#include <SDL.h>
+
 #include "opencv2/opencv.hpp"
 
 #include <experimental/filesystem>
@@ -83,6 +85,9 @@ namespace esvr2
         Ogre::Camera *mDebugCamera;
         Ogre::SceneNode *mDebugCameraNode;
 
+        //SDL for input and output
+        SDL_Window *mSdlWindow;
+
         //Class Variables
         bool mQuit;
         size_t mEyeNum;
@@ -109,6 +114,9 @@ namespace esvr2
         void setupVRCompositor(void);
         void setupLaparoscopeTextures();
         void setupLaparoscopeCompositors(void);
+
+        void handleWindowEvent( const SDL_Event& evt );
+        void pumpSDLEvents();
 
         bool configureLaparoscopeCamera(void);
         bool configureVRCamera(void);

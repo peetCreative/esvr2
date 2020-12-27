@@ -27,6 +27,9 @@
 #include "Hlms/Unlit/OgreHlmsUnlit.h"
 #include "Hlms/Pbs/OgreHlmsPbs.h"
 
+#include <SDL.h>
+#include <SDL_syswm.h>
+
 #include "opencv2/opencv.hpp"
 #include <sstream>
 #include <cmath>
@@ -65,6 +68,7 @@ namespace esvr2
             mDebugWS(nullptr),
             mDebugCamera(nullptr),
             mDebugCameraNode(nullptr),
+            mSdlWindow(nullptr),
             mQuit(false),
             mShowVideo(true),
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
@@ -423,6 +427,11 @@ namespace esvr2
         pluginsPath = mPluginsFolder + "plugins.cfg";
 #endif
 #endif
+        if( SDL_Init( SDL_INIT_TIMER | SDL_INIT_VIDEO | SDL_INIT_EVENTS ) != 0 )
+        {
+            OGRE_EXCEPT( Ogre::Exception::ERR_INTERNAL_ERROR, "Cannot initialize SDL2!",
+                         "GraphicsSystem::initialize" );
+        }
 
         mRoot = OGRE_NEW Ogre::Root( pluginsPath,
                                      mWriteAccessFolder + "ogre.cfg",
@@ -478,6 +487,42 @@ namespace esvr2
         Ogre::NameValuePairList params;
         bool fullscreen = Ogre::StringConverter::parseBool(
                 cfgOpts["Full Screen"].currentValue );
+
+        //needed fro sdl2
+        int screen = 0;
+        int posX = SDL_WINDOWPOS_CENTERED_DISPLAY(screen);
+        int posY = SDL_WINDOWPOS_CENTERED_DISPLAY(screen);
+
+        if(fullscreen)
+        {
+            posX = SDL_WINDOWPOS_UNDEFINED_DISPLAY(screen);
+            posY = SDL_WINDOWPOS_UNDEFINED_DISPLAY(screen);
+        }
+
+        mSdlWindow = SDL_CreateWindow(
+                mWindowTitle.c_str(),    // window title
+                posX,               // initial x position
+                posY,               // initial y position
+                width,              // width, in pixels
+                height,             // height, in pixels
+                SDL_WINDOW_SHOWN
+                | (fullscreen ? SDL_WINDOW_FULLSCREEN : 0) | SDL_WINDOW_RESIZABLE );
+
+        //Get the native whnd
+        SDL_SysWMinfo wmInfo;
+        SDL_VERSION( &wmInfo.version );
+
+        if( SDL_GetWindowWMInfo( mSdlWindow, &wmInfo ) == SDL_FALSE )
+        {
+            OGRE_EXCEPT( Ogre::Exception::ERR_INTERNAL_ERROR,
+                         "Couldn't get WM Info! (SDL2)",
+                         "GraphicsSystem::initialize" );
+        }
+        Ogre::String winHandle =
+                Ogre::StringConverter::toString( (uintptr_t)wmInfo.info.x11.window );
+        params.insert( std::make_pair(
+                "SDL2x11", Ogre::StringConverter::toString( (uintptr_t)&wmInfo.info.x11 ) ) );
+        params.insert( std::make_pair("parentWindowHandle",  winHandle) );
 
         params.insert( std::make_pair("title", mWindowTitle) );
         params.insert( std::make_pair("gamma", cfgOpts["sRGB Gamma Conversion"].currentValue) );
@@ -600,6 +645,16 @@ namespace esvr2
 
         //TODO: deinitialize
 //        GraphicsSystem::deinitialize();
+
+        if( mSdlWindow )
+        {
+            // Restore desktop resolution on exit
+            SDL_SetWindowFullscreen( mSdlWindow, 0 );
+            SDL_DestroyWindow( mSdlWindow );
+            mSdlWindow = 0;
+        }
+
+        SDL_Quit();
     }
 
     //configure Laparoscope Cameras according to CameraConfig
@@ -944,10 +999,73 @@ namespace esvr2
         return mQuit;
     }
 
+    void GraphicsSystem::handleWindowEvent( const SDL_Event& evt )
+    {
+        switch( evt.window.event )
+        {
+            case SDL_WINDOWEVENT_SIZE_CHANGED:
+                int w,h;
+                SDL_GetWindowSize( mSdlWindow, &w, &h );
+                mWindow->requestResolution( w, h );
+                mWindow->windowMovedOrResized();
+                break;
+            case SDL_WINDOWEVENT_RESIZED:
+                mWindow->requestResolution( evt.window.data1, evt.window.data2 );
+                mWindow->windowMovedOrResized();
+                break;
+            case SDL_WINDOWEVENT_CLOSE:
+                mQuit = true;
+                break;
+            case SDL_WINDOWEVENT_SHOWN:
+                mWindow->_setVisible( true );
+                break;
+            case SDL_WINDOWEVENT_HIDDEN:
+                mWindow->_setVisible( false );
+                break;
+            case SDL_WINDOWEVENT_ENTER:
+                mGameState->mMouseInWindow = true;
+                break;
+            case SDL_WINDOWEVENT_LEAVE:
+                mGameState->mMouseInWindow = false;
+                break;
+            case SDL_WINDOWEVENT_FOCUS_GAINED:
+                mGameState->mWindowHasFocus = true;
+                mWindow->setFocused( true );
+                break;
+            case SDL_WINDOWEVENT_FOCUS_LOST:
+                mGameState->mWindowHasFocus = false;
+                mWindow->setFocused( false );
+                break;
+        }
+    }
+
+     void GraphicsSystem::pumpSDLEvents()
+     {
+         SDL_Event evt;
+         while( SDL_PollEvent( &evt ) )
+         {
+             switch( evt.type )
+             {
+                 case SDL_WINDOWEVENT:
+                     handleWindowEvent( evt );
+                     break;
+                 case SDL_QUIT:
+                     mQuit = true;
+                     break;
+                 default:
+                     break;
+             }
+
+             mGameState->handleSdlEvent( evt );
+         }
+     }
+
     void GraphicsSystem::update( Ogre::uint64 microSecsSinceLast)
     {
         mFrameCnt++;
 
+        Ogre::WindowEventUtilities::messagePump();
+        pumpSDLEvents();
         const Ogre::uint64 second = 1000000;
         if (microSecsSinceLast > second)
         {
@@ -957,7 +1075,6 @@ namespace esvr2
         mGameState->update(microSecsSinceLast);
 
         //TODO: manage Window Messages
-        Ogre::WindowEventUtilities::messagePump();
         if(isRenderWindowVisible())
             mQuit |= !mRoot->renderOneFrame();
 

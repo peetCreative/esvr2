@@ -20,6 +20,8 @@
 #include "Overlay/OgreOverlayContainer.h"
 #include "Overlay/OgreTextAreaOverlayElement.h"
 
+#include "SDL.h"
+
 namespace esvr2
 {
     GameState::GameState(Esvr2 *esvr2, GraphicsSystem *graphicsSystem):
@@ -45,10 +47,27 @@ namespace esvr2
             mTop{ 0, 0 },
             mBottom{ 0, 0 },
             mScale( 1.0f ),
+            //Window
+            mWindowHasFocus(false),
+            mMouseInWindow(false),
+            mGrabPointer(false),
+            mIsMouseRelative(false),
+            mWrapPointerManually(false),
+            mWarpCompensate(false),
+            mWarpX(0),
+            mWarpY(0),
+            //
             mDisplayHelpMode(true),
             mDebugText(nullptr),
             mDebugTextShadow(nullptr),
-            mHelpDescription("")
+            mHelpDescription(""),
+            mWantRelative(false),
+            mWantMouseVisible(true),
+            mMouseManipulate(MM_NONE),
+            mVRCameraNodeYaw(0),
+            mVRCameraNodePitch(0),
+            mVRCameraNodeTransZ(0),
+            mVRCameraNodeTransX(0)
     {
         if( mIsStereo )
         {
@@ -69,7 +88,7 @@ namespace esvr2
 
     }
 
-    void GameState::calcAlign()
+    void GameState::calcAlign(bool center)
     {
         float projPlaneDistance = 1.0f;
         StereoCameraConfig cameraConfig =
@@ -81,25 +100,29 @@ namespace esvr2
             CameraConfig *cfg = cameraConfig.cfg [eye%2];
             Ogre::Real width = cfg->width;
             Ogre::Real height = cfg->height;
-            Ogre::Real f_x, f_y, c_x, c_y;
+            Ogre::Real c_x = width/2;
+            Ogre::Real c_y = height/2;
+            Ogre::Real f_x, f_y;
             if (eye < mEyeNum)
             {
                 f_x = cfg->K[0];
                 f_y = cfg->K[4];
-//                 c_x = width/2;
-//                 c_y = height/2;
-                c_x = cfg->K[2];
-                c_y = cfg->K[5];
+                if (!center)
+                {
+                    c_x = cfg->K[2];
+                    c_y = cfg->K[5];
+                }
                 mProjPlaneDistance[eye] = projPlaneDistance;
             }
             else
             {
                 f_x = cfg->P[0];
                 f_y = cfg->P[5];
-//                 c_x = width/2;
-//                 c_y = height/2;
-                c_x = cfg->P[2];
-                c_y = cfg->P[6];
+                if(!center)
+                {
+                    c_x = cfg->P[2];
+                    c_y = cfg->P[6];
+                }
 
                 mProjPlaneDistance[eye] =
                     mGraphicsSystem->mVrData.mLeftToRight.length() * f_x /
@@ -215,19 +238,19 @@ namespace esvr2
 
             // Back
             edge = Ogre::Vector4( mLeft[eye], mTop[eye],
-                               -mProjPlaneDistance[eye], 1.0f );
+                               0, 1.0f );
             mProjectionRectangle[eye]->position( edge.xyz() );
             mProjectionRectangle[eye]->textureCoord(0 , 0);
             edge = Ogre::Vector4( mRight[eye], mTop[eye],
-                               -mProjPlaneDistance[eye], 1.0f );
+                               0, 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(1 , 0);
             edge = Ogre::Vector4( mRight[eye], mBottom[eye],
-                               -mProjPlaneDistance[eye], 1.0f );
+                               0, 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(1 , 1);
             edge = Ogre::Vector4( mLeft[eye], mBottom[eye],
-                               -mProjPlaneDistance[eye], 1.0f );
+                               0, 1.0f );
             mProjectionRectangle[eye]->position(edge.xyz());
             mProjectionRectangle[eye]->textureCoord(0 , 1);
             mProjectionRectangle[eye]->quad(0, 1, 2, 3);
@@ -235,7 +258,7 @@ namespace esvr2
 
             mProjectionRectangle[eye]->end();
 
-            sceneNodesProjectionPlanes[eye%2]->attachObject(mProjectionRectangle[eye]);
+            sceneNodesProjectionPlanes[eye/2]->attachObject(mProjectionRectangle[eye]);
             mProjectionRectangle[eye]->setVisibilityFlags( 0x10 << eye );
         }
     }
@@ -549,11 +572,12 @@ namespace esvr2
     //-----------------------------------------------------------------------------------
     void GameState::createVRScene(void)
     {
-        calcAlign();
+        calcAlign(true);
 
         createVRCamerasNodes();
 //         createProjectionRectangle2D();
          createProjectionPlanes();
+        mVRSceneNodesProjectionPlaneRaw->setPosition(0, 1.5, -mProjPlaneDistance[DIST_RAW] );
         createMesh();
         createVRAxis();
 
@@ -643,9 +667,275 @@ namespace esvr2
         }
     }
 
+
+    //-----------------------------------------------------------------------------------
+    void GameState::setMouseRelative( bool relative )
+    {
+//        mWantMouseGrab = relative;
+        mWantRelative = relative;
+        updateMouseSettings();
+    }
+    //-----------------------------------------------------------------------------------
+    void GameState::setMouseVisible( bool visible )
+    {
+        mWantMouseVisible = visible;
+        updateMouseSettings();
+    }
+    void GameState::updateMouseSettings(void)
+    {
+        mGrabPointer = mMouseInWindow && mWindowHasFocus;
+        SDL_SetWindowGrab( mGraphicsSystem->mSdlWindow, mGrabPointer ? SDL_TRUE : SDL_FALSE );
+
+        SDL_ShowCursor( mWantMouseVisible || !mWindowHasFocus );
+
+        bool relative = mWantRelative && mMouseInWindow && mWindowHasFocus;
+        if( mIsMouseRelative == relative )
+            return;
+
+        mIsMouseRelative = relative;
+
+        mWrapPointerManually = false;
+
+        //Input driver doesn't support relative positioning. Do it manually.
+        int success = SDL_SetRelativeMouseMode( relative ? SDL_TRUE : SDL_FALSE );
+        if( !relative || (relative && success != 0) )
+            mWrapPointerManually = true;
+
+        //Remove all pending mouse events that were queued with the old settings.
+        SDL_PumpEvents();
+        SDL_FlushEvent( SDL_MOUSEMOTION );
+    }
+
+    void GameState::mouseMovedRelative(const SDL_Event &arg)
+    {
+        if(mMouseManipulate == MM_NONE)
+            return;
+
+        int width;
+        int height;
+        SDL_GetWindowSize( mGraphicsSystem->mSdlWindow, &width, &height );
+
+
+        if (mMouseManipulate == MM_ORIENTATION)
+        {
+            mVRCameraNodeYaw   += -arg.motion.xrel /
+                    static_cast<Ogre::Real>(width);
+            mVRCameraNodePitch += -arg.motion.yrel /
+                    static_cast<Ogre::Real>(height);
+        }
+        if (mMouseManipulate == MM_TRANSLATION)
+        {
+            mVRCameraNodeTransX   += -arg.motion.xrel /
+                    static_cast<Ogre::Real>(width);
+            mVRCameraNodeTransZ += -arg.motion.yrel /
+                    static_cast<Ogre::Real>(height);
+        }
+    }
+
+    void GameState::mousePressed( const SDL_MouseButtonEvent &arg )
+    {
+        if ( arg.button == SDL_BUTTON_LEFT)
+        {
+            LOG << "Manipulate Orientation" << LOGEND;
+            setMouseRelative(true);
+            mMouseManipulate = MM_ORIENTATION;
+        }
+        if ( arg.button == SDL_BUTTON_RIGHT)
+        {
+            LOG << "Manipulate Trans" << LOGEND;
+            setMouseRelative(true);
+            mMouseManipulate = MM_TRANSLATION;
+        }
+    }
+
+    void GameState::mouseReleased( const SDL_MouseButtonEvent &arg )
+    {
+        setMouseRelative(false);
+        mMouseManipulate = MM_NONE;
+    }
+    //-----------------------------------------------------------------------------------
+    void GameState::warpMouse( int x, int y )
+    {
+        SDL_WarpMouseInWindow( mGraphicsSystem->mSdlWindow, x, y );
+        mWarpCompensate = true;
+        mWarpX = x;
+        mWarpY = y;
+    }
+    //-----------------------------------------------------------------------------------
+    void GameState::wrapMousePointer( const SDL_MouseMotionEvent& evt )
+    {
+        //Don't wrap if we don't want relative movements, support
+        //relative movements natively, or aren't grabbing anyways
+        if( mIsMouseRelative || !mWrapPointerManually  )
+            return;
+
+        int width = 0;
+        int height = 0;
+
+        SDL_GetWindowSize( mGraphicsSystem->mSdlWindow, &width, &height );
+
+        const int centerScreenX = width >> 1;
+        const int centerScreenY = height >> 1;
+
+        const int FUDGE_FACTOR_X = (width >> 2) - 1;
+        const int FUDGE_FACTOR_Y = (height >> 2) - 1;
+
+        //Warp the mouse if it's about to go outside the window
+        if( evt.x <= centerScreenX - FUDGE_FACTOR_X || evt.x >= centerScreenX + FUDGE_FACTOR_X ||
+            evt.y <= centerScreenY - FUDGE_FACTOR_Y || evt.y >= centerScreenY + FUDGE_FACTOR_Y )
+        {
+            warpMouse( centerScreenX, centerScreenY );
+        }
+    }
+
+    void GameState::handleSdlEvent( const SDL_Event& evt )
+    {
+        switch( evt.type )
+        {
+            case SDL_MOUSEMOTION:
+                // Ignore this if it happened due to a warp
+//                if( !handleWarpMotion(evt.motion) ) {
+                    // If in relative mode, don't trigger events unless window has focus
+                    if (!mWantRelative || mWindowHasFocus)
+                        mouseMovedRelative(evt);
+                    // Try to keep the mouse inside the window
+                    if (mWindowHasFocus)
+                        wrapMousePointer(evt.motion);
+//                }
+                break;
+            case SDL_MOUSEWHEEL:
+//                mouseMoved( evt );
+                break;
+            case SDL_MOUSEBUTTONDOWN:
+                LOG << "Button down" << LOGEND;
+                mousePressed( evt.button );
+                break;
+            case SDL_MOUSEBUTTONUP:
+                LOG << "Button up" << LOGEND;
+                mouseReleased( evt.button );
+                break;
+            case SDL_KEYDOWN:
+                if( !evt.key.repeat )
+                    keyPressed( evt.key );
+                break;
+            case SDL_KEYUP:
+                if( !evt.key.repeat )
+                    keyReleased( evt.key );
+                break;
+        }
+    }
+
+    void GameState::keyPressed( const SDL_KeyboardEvent &arg )
+    {
+
+    }
+
+    void GameState::keyReleased( const SDL_KeyboardEvent &arg )
+    {
+        if( arg.keysym.scancode == SDL_SCANCODE_ESCAPE )
+        {
+            mGraphicsSystem->mQuit = true;
+            return;
+        }
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->mVRSceneManager;
+        Ogre::uint32 flipMask = 0x0;
+        Ogre::uint32 setMask = 0x0;
+        Ogre::uint32 unsetMask = 0x0;
+
+        if( arg.keysym.scancode == SDL_SCANCODE_Y )
+        {
+            mEsvr2->mVideoLoader->setDistortion(DIST_RAW);
+        }
+        if( arg.keysym.scancode == SDL_SCANCODE_X )
+        {
+            mEsvr2->mVideoLoader->setDistortion(DIST_UNDISTORT);
+        }
+//        if( arg.keysym.scancode == SDL_SCANCODE_A )
+//        {
+//            Ogre::Real zoom = mGraphicsSystem->getZoom();
+//            zoom += arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL) ? 0.1 : -0.1;
+//            mGraphicsSystem->setZoom( zoom );
+//        }
+        if( arg.keysym.scancode == SDL_SCANCODE_C )
+        {
+            mEsvr2->mVideoLoader->setDistortion(DIST_UNDISTORT_RECTIFY);
+        }
+        if( arg.keysym.scancode == SDL_SCANCODE_1 &&
+            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+        {
+            Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
+            if (visibilityMask & 0xF0)
+                unsetMask = 0xF0;
+            else
+            {
+                Distortion dist = mEsvr2->mVideoLoader->getDistortion();
+                if (dist == DIST_UNDISTORT_RECTIFY)
+                {
+                    setMask = 0x40 | 0x80;
+                    unsetMask = 0x10 | 0x20;
+                }
+                else
+                {
+                    setMask = 0x10 | 0x20;
+                    unsetMask = 0x40 | 0x80;
+                }
+            }
+        }
+        //strg + 2 axis
+        if( arg.keysym.scancode == SDL_SCANCODE_2 &&
+            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+        {
+            flipMask = 0x1;
+        }
+        //strg + 4 mesh
+        if( arg.keysym.scancode == SDL_SCANCODE_3 &&
+            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+        {
+            flipMask = 0x1 << 1;
+        }
+        //strg + 3 point cloud
+        if( arg.keysym.scancode == SDL_SCANCODE_4 &&
+            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
+        {
+            flipMask = 0x1 << 2;
+        }
+
+        //TODO: It's too complicated for just flipping certain bits
+        Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
+        visibilityMask &= ~flipMask;
+        visibilityMask |= ~sceneManager->getVisibilityMask() & flipMask;
+        visibilityMask |= setMask;
+        visibilityMask &= ~unsetMask;
+        sceneManager->setVisibilityMask( visibilityMask );
+
+        // stop Video
+        if( arg.keysym.scancode == SDL_SCANCODE_SPACE )
+        {
+            mGraphicsSystem->toggleShowVideo();
+        }
+    }
+
+    void GameState::updateVRCamerasNode(void)
+    {
+        mVRCamerasNode->_getFullTransformUpdated();
+        mVRCamerasNode->yaw(Ogre::Radian(mVRCameraNodeYaw));
+        mVRCamerasNode->pitch(Ogre::Radian(mVRCameraNodePitch));
+        Ogre::Vector3 pos = mVRCamerasNode->getPosition();
+        Ogre::Vector3 newPos = Ogre::Vector3(
+                pos.x + mVRCameraNodeTransX,
+                pos.y,
+                pos.z + mVRCameraNodeTransZ);
+        mVRCamerasNode->setPosition(newPos);
+        mVRCameraNodeYaw = 0;
+        mVRCameraNodePitch = 0;
+        mVRCameraNodeTransX = 0;
+        mVRCameraNodeTransZ = 0;
+    }
+
     //-----------------------------------------------------------------------------------
     void GameState::update( Ogre::uint64 microSecsSinceLast )
     {
+        updateVRCamerasNode();
         //update Pointcloud ?
         if( mDisplayHelpMode && mOverlaySystem )
         {

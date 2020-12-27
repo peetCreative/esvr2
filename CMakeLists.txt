@@ -72,6 +72,8 @@ else()
     message(INFO "OGRE_LIBRARY_REL:${OGRE_LIBRARY_REL}")
 endif()
 
+find_package(SDL2 REQUIRED)
+
 find_package( OpenCV REQUIRED )
 message("OpenCV Libs: ${OpenCV_LIBS}")
 message("OpenCV Include : ${OpenCV_INCLUDE_DIRS}")
@@ -115,6 +117,7 @@ add_recursive( ${CMAKE_CURRENT_SOURCE_DIR}/include/esvr2 HEADERS_LIB )
 
 include_directories(
         ${OGRE_INCLUDE_DIRS}
+        ${SDL2_INCLUDE_DIR}
         ${OpenVR_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIRS}
         ${BLACKMAGIC_INCLUDE_DIRS} )
@@ -137,6 +140,7 @@ add_executable(
 target_link_libraries(
     ${PROJECT_NAME}_lib
     ${OGRE_LIBRARIES}
+    ${SDL2_LIBRARY}
     ${OpenVR_LIBRARIES}
     ${OpenCV_LIBS}
     ${YAML_CPP_LIBRARIES}

@@ -17,6 +17,13 @@
 
 namespace esvr2
 {
+    //Define what is modified when the mouse is moved
+    typedef enum {
+        MM_NONE,
+        MM_ORIENTATION,
+        MM_TRANSLATION
+    } MouseManipulationType;
+
     class GameState
     {
     friend GraphicsSystem;
@@ -69,6 +76,18 @@ namespace esvr2
             mLeft[4], mRight[4], mTop[4], mBottom[4];
         Ogre::Real mScale;
         Ogre::String mTextureName[2], mDatablockName[2];
+
+        bool mWindowHasFocus;
+        bool mMouseInWindow;
+
+        bool mGrabPointer, mIsMouseRelative, mWrapPointerManually, mWarpCompensate;
+
+        int mWarpX, mWarpY;
+        bool mWantRelative, mWantMouseVisible;
+        MouseManipulationType mMouseManipulate;
+        Ogre::Real mVRCameraNodeYaw, mVRCameraNodePitch;
+        Ogre::Real mVRCameraNodeTransZ, mVRCameraNodeTransX;
+
         void createProjectionRectangle2D();
         void createProjectionPlanes();
         Ogre::ManualObject *createAxisIntern( Ogre::SceneManager *sceneManager );
@@ -86,13 +105,28 @@ namespace esvr2
         void createLaparoscopeCameraNodes();
 
         void updateLaparoscopePoseFromPoseState();
+
+        void setMouseRelative( bool relative );
+        void setMouseVisible( bool visible );
+        void updateMouseSettings(void);
+        void mouseMovedRelative(const SDL_Event &arg);
+        void mousePressed( const SDL_MouseButtonEvent &arg );
+        void mouseReleased( const SDL_MouseButtonEvent &arg );
+        void warpMouse( int x, int y );
+        void wrapMousePointer( const SDL_MouseMotionEvent& evt );
+
+        void keyPressed( const SDL_KeyboardEvent &arg );
+        void keyReleased( const SDL_KeyboardEvent &arg );
+
+        void updateVRCamerasNode(void);
+        void calcAlign( bool center);
     public:
-        void calcAlign( );
 
         void update( Ogre::uint64 microSecsSinceLast );
 
         //TODO: implement destroyScene
         void destroyScene() {};
+        void handleSdlEvent( const SDL_Event& evt );
 //        void keyReleased( const SDL_KeyboardEvent &arg );
 
     };
