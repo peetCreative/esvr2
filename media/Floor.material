@@ -1,0 +1,7 @@
+hlms Marble pbs
+{
+        roughness       1.0
+        detail_map0                             MRAMOR6X6.jpg
+        detail_offset_scale0    0 0 5 5
+        roughness_map                   MRAMOR-bump.jpg
+}

@@ -129,6 +129,7 @@ namespace esvr2
         void handleSdlEvent( const SDL_Event& evt );
 //        void keyReleased( const SDL_KeyboardEvent &arg );
 
+        void createVRFloor();
     };
 }
 

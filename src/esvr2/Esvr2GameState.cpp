@@ -15,6 +15,7 @@
 #include "OgreBillboard.h"
 #include "OgreEntity.h"
 #include "OgreFrameStats.h"
+#include "OgreMeshManager2.h"
 #include "Overlay/OgreOverlay.h"
 #include "Overlay/OgreOverlayManager.h"
 #include "Overlay/OgreOverlayContainer.h"
@@ -575,6 +576,7 @@ namespace esvr2
         calcAlign(true);
 
         createVRCamerasNodes();
+        createVRFloor();
 //         createProjectionRectangle2D();
          createProjectionPlanes();
         mVRSceneNodesProjectionPlaneRaw->setPosition(0, 1.5, -mProjPlaneDistance[DIST_RAW] );
@@ -951,90 +953,41 @@ namespace esvr2
 //            mCameraController->update( timeSinceLast );
     }
 
-//    void GameState::keyReleased( const SDL_KeyboardEvent &arg )
-//    {
-//        if( arg.keysym.scancode == SDL_SCANCODE_ESCAPE )
-//        {
-//            mGraphicsSystem->setQuit();
-//            return;
-//        }
-//        Ogre::SceneManager *sceneManager = mGraphicsSystem->getSceneManager();
-//        Ogre::uint32 flipMask = 0x0;
-//        Ogre::uint32 setMask = 0x0;
-//        Ogre::uint32 unsetMask = 0x0;
-//
-//        if( arg.keysym.scancode == SDL_SCANCODE_Y )
-//        {
-//            mGraphicsSystem->setDistortion(DIST_RAW);
-//        }
-//        if( arg.keysym.scancode == SDL_SCANCODE_X )
-//        {
-//            mGraphicsSystem->setDistortion(DIST_UNDISTORT);
-//        }
-//        if( arg.keysym.scancode == SDL_SCANCODE_A )
-//        {
-//            Ogre::Real zoom = mGraphicsSystem->getZoom();
-//            zoom += arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL) ? 0.1 : -0.1;
-//            mGraphicsSystem->setZoom( zoom );
-//        }
-//        if( arg.keysym.scancode == SDL_SCANCODE_C )
-//        {
-//            mGraphicsSystem->setDistortion(DIST_UNDISTORT_RECTIFY);
-//        }
-//        if( arg.keysym.scancode == SDL_SCANCODE_1 &&
-//            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
-//        {
-//            Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
-//            if (visibilityMask & 0xF0)
-//                unsetMask = 0xF0;
-//            else
-//            {
-//                Distortion dist = mEsvr2->mVideoLoader->getDistortion();
-//                if (dist == DIST_UNDISTORT_RECTIFY)
-//                {
-//                    setMask = 0x40 | 0x80;
-//                    unsetMask = 0x10 | 0x20;
-//                }
-//                else
-//                {
-//                    setMask = 0x10 | 0x20;
-//                    unsetMask = 0x40 | 0x80;
-//                }
-//            }
-//        }
-//        //strg + 2 axis
-//        if( arg.keysym.scancode == SDL_SCANCODE_2 &&
-//            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
-//        {
-//            flipMask = 0x1;
-//        }
-//        //strg + 4 mesh
-//        if( arg.keysym.scancode == SDL_SCANCODE_3 &&
-//            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
-//        {
-//            flipMask = 0x1 << 1;
-//        }
-//        //strg + 3 point cloud
-//        if( arg.keysym.scancode == SDL_SCANCODE_4 &&
-//            (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
-//        {
-//            flipMask = 0x1 << 2;
-//        }
-//
-//        //TODO: It's too complicated for just flipping certain bits
-//        Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask();
-//        visibilityMask &= ~flipMask;
-//        visibilityMask |= ~sceneManager->getVisibilityMask() & flipMask;
-//        visibilityMask |= setMask;
-//        visibilityMask &= ~unsetMask;
-//        sceneManager->setVisibilityMask( visibilityMask );
-//
-//        // stop Video
-//        if( arg.keysym.scancode == SDL_SCANCODE_SPACE )
-//        {
-//            mGraphicsSystem->toggleShowVideo();
-//        }
-//
-//        TutorialGameState::keyReleased( arg );
-//    }
+    void GameState::createVRFloor()
+    {
+        Ogre::v1::MeshPtr planeMeshV1 = Ogre::v1::MeshManager::getSingleton().createPlane( "Plane v1",
+                                                                                           Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                                                                                           Ogre::Plane( Ogre::Vector3::UNIT_Y, 1.0f ), 50.0f, 50.0f,
+                                                                                           1, 1, true, 1, 4.0f, 4.0f, Ogre::Vector3::UNIT_Z,
+                                                                                           Ogre::v1::HardwareBuffer::HBU_STATIC,
+                                                                                           Ogre::v1::HardwareBuffer::HBU_STATIC );
+
+        Ogre::MeshPtr planeMesh = Ogre::MeshManager::getSingleton().createByImportingV1(
+                "Plane", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                planeMeshV1.get(), true, true, true );
+
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->mVRSceneManager;
+        Ogre::Item *item = sceneManager->createItem( planeMesh, Ogre::SCENE_DYNAMIC );
+
+        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
+        item->setDatablock( "Marble" );
+        Ogre::SceneNode *sceneNode = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
+                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        sceneNode->setPosition( 0, 0, 0 );
+        sceneNode->attachObject( item );
+
+        //Change the addressing mode of the roughness map to wrap via code.
+        //Detail maps default to wrap, but the rest to clamp.
+//            assert( dynamic_cast<Ogre::HlmsPbsDatablock*>( item->getSubItem(0)->getDatablock() ) );
+//            Ogre::HlmsPbsDatablock *datablock = static_cast<Ogre::HlmsPbsDatablock*>(
+//                    item->getSubItem(0)->getDatablock() );
+//            //Make a hard copy of the sampler block
+//            Ogre::HlmsSamplerblock samplerblock( *datablock->getSamplerblock( Ogre::PBSM_ROUGHNESS ) );
+//            samplerblock.mU = Ogre::TAM_WRAP;
+//            samplerblock.mV = Ogre::TAM_WRAP;
+//            samplerblock.mW = Ogre::TAM_WRAP;
+//            //Set the new samplerblock. The Hlms system will
+//            //automatically create the API block if necessary
+//            datablock->setSamplerblock( Ogre::PBSM_ROUGHNESS, samplerblock );
+    }
 }
