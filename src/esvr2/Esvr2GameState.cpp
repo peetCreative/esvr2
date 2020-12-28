@@ -201,19 +201,25 @@ namespace esvr2
         if ( !alldata )
             return;
 
-        mVRSceneNodesProjectionPlaneRaw =
-                mGraphicsSystem->mVRSceneManager
+        mVRSceneNodeProjectionPlanesOrigin = mGraphicsSystem->mVRSceneManager
                 ->getRootSceneNode()
                 ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
-        mVRSceneNodesProjectionPlaneRaw->setName("VR Node Projection Plane Raw");
+        mVRSceneNodeProjectionPlanesOrigin->setPosition(
+                0, mEsvr2->mConfig->headHight, 0);
+        mVRSceneNodeProjectionPlanesOrigin->pitch(
+                Ogre::Radian(Ogre::Degree(-30)), Ogre::Node::TS_LOCAL);
 
-        mVRSceneNodesProjectionPlaneRect =
-                mGraphicsSystem->mVRSceneManager
-                ->getRootSceneNode()
+        mVRSceneNodesProjectionPlaneRaw = mVRSceneNodeProjectionPlanesOrigin
+                ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
+        mVRSceneNodesProjectionPlaneRaw->setName("VR Node Projection Plane Raw");
+        mVRSceneNodesProjectionPlaneRaw->translate(0, 0, -mProjPlaneDistance[DIST_RAW] );
+
+        mVRSceneNodesProjectionPlaneRect = mVRSceneNodeProjectionPlanesOrigin
                 ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
         mVRSceneNodesProjectionPlaneRect->setName("VR Node Projection Plane Rect");
         Ogre::SceneNode *sceneNodesProjectionPlanes[2] =
                 {mVRSceneNodesProjectionPlaneRaw, mVRSceneNodesProjectionPlaneRect};
+        mVRSceneNodesProjectionPlaneRaw->translate(0, 0, -mProjPlaneDistance[DIST_UNDISTORT_RECTIFY] );
         Ogre::Vector4 edge;
         //we need to create two planes for raw and recitified
         for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
