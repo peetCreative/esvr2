@@ -54,8 +54,11 @@ namespace esvr2
             mLaparoscopeWorkspaces{ nullptr, nullptr },
             mVRWorkspaces{ nullptr, nullptr },
             mMirrorWorkspace( nullptr ),
+            mInfoScreenWorkspace(nullptr),
             mLaparoscopeSceneManager(nullptr),
             mVRSceneManager(nullptr),
+            mEmptySceneManager(nullptr),
+            mOverlaySystem(nullptr),
             mLaparoscopeCameras{nullptr, nullptr },
             mVRCameraNear(0.3),
             mVRCameraFar(30.0),
@@ -63,6 +66,7 @@ namespace esvr2
             mVRCullCamera( nullptr ),
             mVRTexture( nullptr ),
             mVideoTexture{nullptr, nullptr },
+            mInfoScreenTexture(nullptr),
             mStagingTextures{nullptr, nullptr },
             mDebugWindow(nullptr),
             mDebugWS(nullptr),
@@ -348,6 +352,10 @@ namespace esvr2
         mVRSceneManager = mRoot->createSceneManager( Ogre::ST_GENERIC,
                                                      numThreads,
                                                      "VRView" );
+        // Even though this scene will be empty we need this
+        mEmptySceneManager = mRoot->createSceneManager( Ogre::ST_GENERIC,
+                                                     1,
+                                                     "Empty" );
 
 
         //Set sane defaults for proper shadow mapping
@@ -542,12 +550,23 @@ namespace esvr2
                     mWindowTitle, width, height, fullscreen, &params );
         }
 
+        //we need to do this before setup resources,
+        //for no reason
+        chooseSceneManager();
+        mOverlaySystem = OGRE_NEW Ogre::v1::OverlaySystem();
+        mEmptySceneManager->addRenderQueueListener( mOverlaySystem );
+        mEmptySceneManager->getRenderQueue()->setSortRenderQueue(
+                Ogre::v1::OverlayManager::getSingleton().mDefaultRenderQueueId,
+                Ogre::RenderQueue::StableSort );
+
+
         //Resources
         setupResources();
         loadResources();
 
         //we need to create them here because SceneManager needs them
         setupLaparoscopeTextures();
+        setupInfoScreenTextures();
 
         mOvrCompositorListener =
                 new OpenVRCompositorListener(this);
@@ -569,7 +588,6 @@ namespace esvr2
         mVideoUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
 
         //create Scene
-        chooseSceneManager();
         createVRCameras();
         createLaparoscopeCameras();
         //create Gamestate
@@ -586,6 +604,7 @@ namespace esvr2
         {
             setupVRCompositor();
         }
+        setupInfoScreenCompositor();
         setupLaparoscopeCompositors();
 
 
@@ -1084,4 +1103,36 @@ namespace esvr2
         //alt 3: right after GameState hase updated, so late
         uploadVideoData2GPU();
     }
+
+    void GraphicsSystem::setupInfoScreenCompositor()
+    {
+        Ogre::CompositorManager2 *compositorManager =
+                mRoot->getCompositorManager2();
+
+        Ogre::Camera *emptyCamera =
+                mEmptySceneManager->createCamera("EmptyCamera");
+        mInfoScreenWorkspace = compositorManager->addWorkspace(
+                mEmptySceneManager,
+                mInfoScreenTexture,
+                emptyCamera, "InfoScreenWorkspace",
+                true );
+    }
+
+    void GraphicsSystem::setupInfoScreenTextures()
+    {
+        Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
+        //Radial Density Mask requires the VR texture to be UAV & reinterpretable
+        mInfoScreenTexture = textureManager->createOrRetrieveTexture(
+                "OpenVR Both Eyes",
+                Ogre::GpuPageOutStrategy::Discard,
+                Ogre::TextureFlags::RenderToTexture|
+                Ogre::TextureFlags::Uav|
+                Ogre::TextureFlags::Reinterpretable,
+                Ogre::TextureTypes::Type2D );
+        mInfoScreenTexture->setResolution( 1080, 720 );
+        mInfoScreenTexture->setPixelFormat( Ogre::PFG_RGBA8_UNORM );
+        mInfoScreenTexture->scheduleTransitionTo(
+                Ogre::GpuResidency::Resident );
+    }
+
 }

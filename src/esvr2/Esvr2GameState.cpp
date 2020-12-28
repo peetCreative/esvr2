@@ -29,6 +29,7 @@ namespace esvr2
             mEsvr2(esvr2),
             mGraphicsSystem( graphicsSystem ),
             mVideoDatablock{ nullptr, nullptr },
+            mInfoScreenDatablock(nullptr),
             mProjectionRectangle{ nullptr, nullptr, nullptr, nullptr },
             mAxis( nullptr ),
             mAxisCameras( nullptr ),
@@ -36,6 +37,7 @@ namespace esvr2
             mPointCloud( nullptr ),
             mVRSceneNodeLight( nullptr ),
             mVRSceneNodeMesh( nullptr ),
+            mVRSceneNodeProjectionPlanesOrigin(nullptr),
             mVRSceneNodesProjectionPlaneRaw(nullptr),
             mVRSceneNodesProjectionPlaneRect(nullptr),
             mLaparoscopeSceneNodePointCloud( nullptr ),
@@ -423,8 +425,6 @@ namespace esvr2
 
     void GameState::createVROverlays(void)
     {
-        mOverlaySystem = OGRE_NEW Ogre::v1::OverlaySystem();
-
         Ogre::v1::OverlayManager &overlayManager =
                 Ogre::v1::OverlayManager::getSingleton();
         Ogre::v1::Overlay *overlay = overlayManager.create( "DebugText" );
@@ -433,13 +433,13 @@ namespace esvr2
                 overlayManager.createOverlayElement("Panel", "DebugPanel"));
         mDebugText = static_cast<Ogre::v1::TextAreaOverlayElement*>(
                 overlayManager.createOverlayElement( "TextArea", "DebugText" ) );
-        mDebugText->setFontName( "DebugFont" );
-        mDebugText->setCharHeight( 0.025f );
+        mDebugText->setFontName( "FreeSans" );
+        mDebugText->setCharHeight( 0.1f );
 
         mDebugTextShadow= dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
                 overlayManager.createOverlayElement( "TextArea", "0DebugTextShadow" ) );
-        mDebugTextShadow->setFontName( "DebugFont" );
-        mDebugTextShadow->setCharHeight( 0.025f );
+        mDebugTextShadow->setFontName( "FreeSans" );
+        mDebugTextShadow->setCharHeight( 0.1f );
         mDebugTextShadow->setColour( Ogre::ColourValue::Black );
         mDebugTextShadow->setPosition( 0.002f, 0.002f );
 
@@ -447,12 +447,6 @@ namespace esvr2
         panel->addChild( mDebugText );
         overlay->add2D( panel );
         overlay->show();
-
-        mGraphicsSystem->mVRSceneManager->addRenderQueueListener( mOverlaySystem );
-        mGraphicsSystem->mVRSceneManager->getRenderQueue()->setSortRenderQueue(
-                Ogre::v1::OverlayManager::getSingleton().mDefaultRenderQueueId,
-                Ogre::RenderQueue::StableSort );
-
     }
 
     void GameState::loadDatablocks()
@@ -504,6 +498,19 @@ namespace esvr2
 
             mVideoDatablock[eye]->setTexture( 0, mTextureName[eye] );
         }
+
+        Ogre::String infoScreenDatablockName = "InfoScreenDatablock";
+        mInfoScreenDatablock = dynamic_cast<Ogre::HlmsUnlitDatablock*>(
+                hlmsUnlit->createDatablock(
+                        infoScreenDatablockName,
+                        infoScreenDatablockName,
+                        Ogre::HlmsMacroblock(),
+                        Ogre::HlmsBlendblock(),
+                        Ogre::HlmsParamVec() ) );
+
+        // THis should work as well
+//        mInfoScreenDatablock->setTexture(Ogre::TextureTypes::Type2D, mGraphicsSystem->mInfoScreenTexture);
+        mInfoScreenDatablock->setTexture( 0, mGraphicsSystem->mInfoScreenTexture->getNameStr() );
 
         const Ogre::HlmsManager::HlmsDatablockMap datablocks = hlmsManager->getDatablocks();
         for(auto d = datablocks.begin(); d != datablocks.end(); d++ )
@@ -577,6 +584,7 @@ namespace esvr2
 
         createVRCamerasNodes();
         createVRFloor();
+        createVRInfoScreen();
 //         createProjectionRectangle2D();
          createProjectionPlanes();
         mVRSceneNodesProjectionPlaneRaw->setPosition(0, 1.5, -mProjPlaneDistance[DIST_RAW] );
@@ -602,7 +610,7 @@ namespace esvr2
         mGraphicsSystem->mVRSceneManager->setVisibilityMask(0xFFFFFF30);
 
         //TODO: stopped working because DebugFont is not loaded anymore
-//        createVROverlays();
+        createVROverlays();
     }
 
     //-----------------------------------------------------------------------------------
@@ -939,7 +947,7 @@ namespace esvr2
     {
         updateVRCamerasNode();
         //update Pointcloud ?
-        if( mDisplayHelpMode && mOverlaySystem )
+        if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem )
         {
             //Show FPS
             Ogre::String finalText;
@@ -953,11 +961,42 @@ namespace esvr2
 //            mCameraController->update( timeSinceLast );
     }
 
+    void GameState::createVRInfoScreen(void)
+    {
+        const Ogre::Real dimx = 1.28f;
+        const Ogre::Real dimy = 0.72f;
+        Ogre::v1::MeshPtr planeMeshV1 = Ogre::v1::MeshManager::getSingleton().createPlane(
+                "InfoScreenV1",
+                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                Ogre::Plane( Ogre::Vector3::UNIT_Z, 0.0f ), dimx, dimy,
+                1, 1, true, 1, 1.0f, 1.0f, Ogre::Vector3::UNIT_Y,
+                Ogre::v1::HardwareBuffer::HBU_STATIC,
+                Ogre::v1::HardwareBuffer::HBU_STATIC );
+
+        Ogre::MeshPtr planeMesh = Ogre::MeshManager::getSingleton().createByImportingV1(
+                "InfoScreenV1", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+                planeMeshV1.get(), true, true, true );
+
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->mVRSceneManager;
+        Ogre::Item *item = sceneManager->createItem( planeMesh, Ogre::SCENE_DYNAMIC );
+
+        item->setDatablock( mInfoScreenDatablock );
+        mInfoScreenSceneNode = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
+                createChildSceneNode( Ogre::SCENE_DYNAMIC );
+        mInfoScreenSceneNode->setName("InfoScreenNode");
+        mInfoScreenSceneNode->attachObject( item );
+        //for debugging
+//        mInfoScreenSceneNode->attachObject( createAxisIntern(sceneManager));
+        mInfoScreenSceneNode->translate( 0, mEsvr2->mConfig->headHight, -1,
+                                         Ogre::Node::TS_WORLD);
+    }
+
     void GameState::createVRFloor()
     {
-        Ogre::v1::MeshPtr planeMeshV1 = Ogre::v1::MeshManager::getSingleton().createPlane( "Plane v1",
-                                                                                           Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                                                                                           Ogre::Plane( Ogre::Vector3::UNIT_Y, 1.0f ), 50.0f, 50.0f,
+        Ogre::v1::MeshPtr planeMeshV1 = Ogre::v1::MeshManager::getSingleton().createPlane(
+                "Plane v1",
+                Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
+               Ogre::Plane( Ogre::Vector3::UNIT_Y, 0.0f ), 50.0f, 50.0f,
                                                                                            1, 1, true, 1, 4.0f, 4.0f, Ogre::Vector3::UNIT_Z,
                                                                                            Ogre::v1::HardwareBuffer::HBU_STATIC,
                                                                                            Ogre::v1::HardwareBuffer::HBU_STATIC );

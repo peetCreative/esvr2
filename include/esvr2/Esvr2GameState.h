@@ -43,12 +43,11 @@ namespace esvr2
 //        HmdConfig                   mHmdConfig;
         StereoCameraConfig          mCameraConfig;
 
-        Ogre::v1::OverlaySystem     *mOverlaySystem;
-
         Ogre::SceneNode             *mVRCamerasNode;
         Ogre::SceneNode             *mLaparoscopeCamerasNode;
 
         Ogre::HlmsUnlitDatablock *mVideoDatablock[2];
+        Ogre::HlmsUnlitDatablock *mInfoScreenDatablock;
         Ogre::Rectangle2D        *mProjectionRectangle2D;
         Ogre::ManualObject       *mProjectionRectangle[4];
         Ogre::ManualObject       *mAxis;
@@ -60,10 +59,12 @@ namespace esvr2
         PointCloud               *mPointCloud;
         Ogre::SceneNode          *mVRSceneNodeLight;
         Ogre::SceneNode          *mVRSceneNodeMesh;
+        Ogre::SceneNode          *mVRSceneNodeProjectionPlanesOrigin;
         Ogre::SceneNode          *mVRSceneNodesProjectionPlaneRaw;
         Ogre::SceneNode          *mVRSceneNodesProjectionPlaneRect;
         Ogre::SceneNode          *mLaparoscopeSceneNodePointCloud;
         Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
+        Ogre::SceneNode          *mInfoScreenSceneNode;
         bool                     mIsStereo;
         size_t                   mEyeNum;
 
@@ -89,7 +90,7 @@ namespace esvr2
         Ogre::Real mVRCameraNodeTransZ, mVRCameraNodeTransX;
 
         void createProjectionRectangle2D();
-        void createProjectionPlanes();
+        void createVRProjectionPlanes();
         Ogre::ManualObject *createAxisIntern( Ogre::SceneManager *sceneManager );
         void createAxis( void );
         void createVRAxis(void);
@@ -120,6 +121,9 @@ namespace esvr2
 
         void updateVRCamerasNode(void);
         void calcAlign( bool center);
+
+        void createVRInfoScreen(void);
+
     public:
 
         void update( Ogre::uint64 microSecsSinceLast );

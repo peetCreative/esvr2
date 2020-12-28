@@ -59,10 +59,14 @@ namespace esvr2
         Ogre::CompositorWorkspace   *mLaparoscopeWorkspaces[2];
         Ogre::CompositorWorkspace   *mVRWorkspaces[2];
         Ogre::CompositorWorkspace   *mMirrorWorkspace;
+        Ogre::CompositorWorkspace   *mInfoScreenWorkspace;
 
         //Ogre SceneManger
         Ogre::SceneManager          *mLaparoscopeSceneManager;
         Ogre::SceneManager          *mVRSceneManager;
+        Ogre::SceneManager          *mEmptySceneManager;
+
+        Ogre::v1::OverlaySystem     *mOverlaySystem;
 
         //Ogre Cameras
         //two real cameras and two workspaces (two cameras rendering) or
@@ -77,6 +81,7 @@ namespace esvr2
         Ogre::TextureGpu            *mVRTexture;
         Ogre::TextureGpu            *mVideoTexture[2];
         Ogre::TextureGpu            *mLaparoscopeViewTexture[2];
+        Ogre::TextureGpu            *mInfoScreenTexture;
         Ogre::StagingTexture        *mStagingTextures[2];
 
         //Ogre Debug stuff
@@ -120,6 +125,9 @@ namespace esvr2
 
         bool configureLaparoscopeCamera(void);
         bool configureVRCamera(void);
+
+        void setupInfoScreenTextures();
+        void setupInfoScreenCompositor();
 
     public:
         GraphicsSystem( Esvr2 *esvr2);

@@ -45,6 +45,33 @@ compositor_node InstancedStereoNode
 	target stereo_output : main_stereo_render	{}
 }
 
+compositor_node InfoScreenNode
+{
+    in 0 rt_info_screen
+    target rt_info_screen
+    {
+        pass clear
+        {
+			colour_value			0.0 0.4 0.9 1
+			store
+			{
+				colour	store
+				depth	dont_care
+				stencil	dont_care
+			}
+        }
+		pass render_scene
+		{
+			overlays	on
+        }
+    }
+}
+
+workspace InfoScreenWorkspace
+{
+	connect_output InfoScreenNode 0
+}
+
 compositor_node StereoMirrorWindowNode
 {
 	in 0 rt_renderwindow

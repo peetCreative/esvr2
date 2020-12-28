@@ -218,6 +218,8 @@ namespace esvr2 {
             config->debugScreen = param.as<bool>();
         if (YAML::Node param = doc["screen"])
             config->screen = param.as<int>();
+        if (YAML::Node param = doc["head_hight"])
+            config->headHight = param.as<double>();
         if (YAML::Node param = doc["controller_type"])
             config->controllerType =
                 getControllerType(param.as<std::string>());
