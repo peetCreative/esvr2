@@ -767,13 +767,11 @@ namespace esvr2
     {
         if ( arg.button == SDL_BUTTON_LEFT)
         {
-            LOG << "Manipulate Orientation" << LOGEND;
             setMouseRelative(true);
             mMouseManipulate = MM_ORIENTATION;
         }
         if ( arg.button == SDL_BUTTON_RIGHT)
         {
-            LOG << "Manipulate Trans" << LOGEND;
             setMouseRelative(true);
             mMouseManipulate = MM_TRANSLATION;
         }
@@ -838,11 +836,9 @@ namespace esvr2
 //                mouseMoved( evt );
                 break;
             case SDL_MOUSEBUTTONDOWN:
-                LOG << "Button down" << LOGEND;
                 mousePressed( evt.button );
                 break;
             case SDL_MOUSEBUTTONUP:
-                LOG << "Button up" << LOGEND;
                 mouseReleased( evt.button );
                 break;
             case SDL_KEYDOWN:
@@ -976,10 +972,6 @@ namespace esvr2
             mDebugText->setCaption( finalText );
             mDebugTextShadow->setCaption( finalText );
         }
-
-        //TODO: move Camera here
-//        if( mCameraController )
-//            mCameraController->update( timeSinceLast );
     }
 
     void GameState::createVRInfoScreen(void)
