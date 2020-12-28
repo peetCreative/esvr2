@@ -658,11 +658,13 @@ namespace esvr2
 
         if( mVRCullCamera )
         {
-            mLaparoscopeSceneManager->destroyCamera( mVRCullCamera );
+            mVRSceneManager->destroyCamera( mVRCullCamera );
             mVRCullCamera = 0;
         }
 
-        //TODO: deinitialize
+        Ogre::CompositorManager2 *compositorManager2 =
+                mRoot->getCompositorManager2();
+        compositorManager2->removeAllWorkspaces();
 //        GraphicsSystem::deinitialize();
 
         if( mSdlWindow )
