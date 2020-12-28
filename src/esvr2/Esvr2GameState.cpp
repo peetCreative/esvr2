@@ -188,7 +188,7 @@ namespace esvr2
         }
     }
 
-    void GameState::createProjectionPlanes()
+    void GameState::createVRProjectionPlanes()
     {
         bool alldata =
 //             mVrData.mHeadToEye[LEFT] != Ogre::Matrix4::IDENTITY &&
@@ -324,7 +324,7 @@ namespace esvr2
         return axis;
     }
 
-    void GameState::createAxis(void)
+    void GameState::createLaparoscopeAxisCamera(void)
     {
         mAxis = createAxisIntern(mGraphicsSystem->mLaparoscopeSceneManager);
         mAxis->setName("AxisOrigin");
@@ -340,7 +340,7 @@ namespace esvr2
         camerasNode->attachObject(mAxisCameras);
     }
 
-    void GameState::createVRAxis(void)
+    void GameState::createVRAxisCamera(void)
     {
         mAxisVROrigin = createAxisIntern(mGraphicsSystem->mVRSceneManager);
         mAxisVROrigin->setName("Axis VR Origin");
@@ -592,10 +592,9 @@ namespace esvr2
         createVRFloor();
         createVRInfoScreen();
 //         createProjectionRectangle2D();
-         createProjectionPlanes();
-        mVRSceneNodesProjectionPlaneRaw->setPosition(0, 1.5, -mProjPlaneDistance[DIST_RAW] );
+        createVRProjectionPlanes();
         createMesh();
-        createVRAxis();
+//        createVRAxisCamera();
 
         Ogre::Light *light = mGraphicsSystem->mVRSceneManager->createLight();
         mVRSceneNodeLight = mGraphicsSystem->mVRSceneManager

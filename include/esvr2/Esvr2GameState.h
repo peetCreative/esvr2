@@ -92,8 +92,8 @@ namespace esvr2
         void createProjectionRectangle2D();
         void createVRProjectionPlanes();
         Ogre::ManualObject *createAxisIntern( Ogre::SceneManager *sceneManager );
-        void createAxis( void );
-        void createVRAxis(void);
+        void createLaparoscopeAxisCamera(void );
+        void createVRAxisCamera(void);
         void createTooltips();
         void createPointCloud();
         void createVROverlays(void);
