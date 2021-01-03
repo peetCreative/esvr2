@@ -171,14 +171,22 @@ namespace esvr2 {
 
         mGraphicsSystem->initialize();
 
-        switch(mConfig->controllerType)
+        if(mLaparoscopeController)
         {
-            case CT_KEYBOARD:
-                mController =
-                        std::make_shared<KeyboardController>(mLaparoscopeController);
-                break;
+            switch(mConfig->controllerType)
+            {
+                case CT_KEYBOARD:
+                    mController =
+                            std::make_shared<KeyboardController>(
+                                    mLaparoscopeController,
+                                    mGraphicsSystem->getGameState());
+                    break;
+            }
         }
-
+        else
+        {
+            LOG << "no laparoscope Controller defined, do not load Controller" << LOGEND;
+        }
 
         //TODO: check configuration
         mIsConfigured = true;
