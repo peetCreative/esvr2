@@ -1,0 +1,7 @@
+FreeSans
+{
+	type 		truetype
+	source 		FreeSans.ttf
+	size 		15
+	resolution 	192
+}
