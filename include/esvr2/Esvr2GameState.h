@@ -136,6 +136,10 @@ namespace esvr2
         void destroyScene() {};
         void handleSdlEvent( const SDL_Event& evt );
 
+        Ogre::Quaternion getHeadOrientation();
+        Ogre::Quaternion getProjectionPlanesOrientation();
+        Ogre::Vector3 getHeadPosition();
+
         void setDebugText(Ogre::String debugText);
     };
 }

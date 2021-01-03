@@ -1090,6 +1090,21 @@ namespace esvr2
         mIntersectsInfoScreen = pairIntersections.first;
     }
 
+    Ogre::Quaternion GameState::getHeadOrientation()
+    {
+        return mVRCamerasNode->getOrientation();
+    }
+
+    Ogre::Quaternion GameState::getProjectionPlanesOrientation()
+    {
+        return mVRSceneNodeProjectionPlanesOrigin->getOrientation();
+    }
+
+    Ogre::Vector3 GameState::getHeadPosition()
+    {
+        return mVRCamerasNode->getPosition();
+    }
+
     void GameState::setDebugText(Ogre::String debugText)
     {
         mDebugText = debugText;
