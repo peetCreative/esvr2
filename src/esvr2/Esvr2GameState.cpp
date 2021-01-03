@@ -63,8 +63,9 @@ namespace esvr2
             mWarpY(0),
             //
             mDisplayHelpMode(true),
-            mDebugText(nullptr),
-            mDebugTextShadow(nullptr),
+            mDebugTextField(nullptr),
+            mDebugTextFieldShadow(nullptr),
+            mDebugText(),
             mHelpDescription(""),
             mWantRelative(false),
             mWantMouseVisible(true),
@@ -439,20 +440,20 @@ namespace esvr2
 
         Ogre::v1::OverlayContainer *panel = dynamic_cast<Ogre::v1::OverlayContainer*>(
                 overlayManager.createOverlayElement("Panel", "DebugPanel"));
-        mDebugText = static_cast<Ogre::v1::TextAreaOverlayElement*>(
+        mDebugTextField = static_cast<Ogre::v1::TextAreaOverlayElement*>(
                 overlayManager.createOverlayElement( "TextArea", "DebugText" ) );
-        mDebugText->setFontName( "FreeSans" );
-        mDebugText->setCharHeight( 0.1f );
+        mDebugTextField->setFontName("FreeSans" );
+        mDebugTextField->setCharHeight(0.1f );
 
-        mDebugTextShadow= dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
+        mDebugTextFieldShadow= dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
                 overlayManager.createOverlayElement( "TextArea", "0DebugTextShadow" ) );
-        mDebugTextShadow->setFontName( "FreeSans" );
-        mDebugTextShadow->setCharHeight( 0.1f );
-        mDebugTextShadow->setColour( Ogre::ColourValue::Black );
-        mDebugTextShadow->setPosition( 0.002f, 0.002f );
+        mDebugTextFieldShadow->setFontName("FreeSans" );
+        mDebugTextFieldShadow->setCharHeight(0.1f );
+        mDebugTextFieldShadow->setColour(Ogre::ColourValue::Black );
+        mDebugTextFieldShadow->setPosition(0.002f, 0.002f );
 
-        panel->addChild( mDebugTextShadow );
-        panel->addChild( mDebugText );
+        panel->addChild(mDebugTextFieldShadow );
+        panel->addChild(mDebugTextField );
         overlay->add2D( panel );
         overlay->show();
     }
@@ -672,8 +673,8 @@ namespace esvr2
 
         outText.swap( finalText );
 
-        mDebugText->setCaption( finalText );
-        mDebugTextShadow->setCaption( finalText );
+        mDebugTextField->setCaption(finalText );
+        mDebugTextFieldShadow->setCaption(finalText );
     }
 
     void GameState::updateLaparoscopePoseFromPoseState()
@@ -970,11 +971,19 @@ namespace esvr2
         //update Pointcloud ?
         if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem )
         {
-            //Show FPS
-            Ogre::String finalText;
-            generateDebugText( microSecsSinceLast, finalText );
-            mDebugText->setCaption( finalText );
-            mDebugTextShadow->setCaption( finalText );
+            if (mDebugText != "")
+            {
+                mDebugTextField->setCaption(mDebugText );
+                mDebugTextFieldShadow->setCaption(mDebugText );
+            }
+            else
+            {
+                //Show FPS
+                Ogre::String finalText;
+                generateDebugText( microSecsSinceLast, finalText );
+                mDebugTextField->setCaption(finalText );
+                mDebugTextFieldShadow->setCaption(finalText );
+            }
         }
     }
 
@@ -1057,5 +1066,10 @@ namespace esvr2
         std::pair<bool, Ogre::Real> pairIntersections =
                 Ogre::Math::intersects(viewingDirection, axisAlignedBox);
         mIntersectsInfoScreen = pairIntersections.first;
+    }
+
+    void GameState::setDebugText(Ogre::String debugText)
+    {
+        mDebugText = debugText;
     }
 }

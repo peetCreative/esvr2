@@ -69,8 +69,9 @@ namespace esvr2
         size_t                   mEyeNum;
 
         bool mDisplayHelpMode;
-        Ogre::v1::TextAreaOverlayElement* mDebugText;
-        Ogre::v1::TextAreaOverlayElement* mDebugTextShadow;
+        Ogre::v1::TextAreaOverlayElement* mDebugTextField;
+        Ogre::v1::TextAreaOverlayElement* mDebugTextFieldShadow;
+        Ogre::String mDebugText;
         Ogre::String mHelpDescription;
 
         Ogre::Real mProjPlaneDistance[4],
@@ -135,6 +136,7 @@ namespace esvr2
         void destroyScene() {};
         void handleSdlEvent( const SDL_Event& evt );
 
+        void setDebugText(Ogre::String debugText);
     };
 }
 
