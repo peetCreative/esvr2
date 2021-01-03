@@ -39,6 +39,7 @@ endmacro()
 #SUBDIRLIST( OGRE_INCLUDE_DIRS ${OGRE_HOME}/include)
 SET(OGRE_INCLUDE_DIR ${OGRE_HOME}/include/OGRE)
 SET(OGRE_INCLUDE_DIRS "${OGRE_INCLUDE_DIR}"
+        "${OGRE_INCLUDE_DIR}/Overlay"
         "${OGRE_INCLUDE_DIR}/RenderSystems/GL3Plus"
         "${OGRE_INCLUDE_DIR}/Hlms/Unlit"
         "${OGRE_INCLUDE_DIR}/Hlms/Common"
