@@ -196,7 +196,6 @@ namespace esvr2 {
         std::shared_ptr<PoseState> mPoseState;
 
         std::shared_ptr<GraphicsSystem> mGraphicsSystem;
-        std::shared_ptr<GameState> mGameState;
 
         Barrier *mBarrier;
     };

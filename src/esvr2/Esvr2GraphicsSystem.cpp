@@ -1137,4 +1137,9 @@ namespace esvr2
                 Ogre::GpuResidency::Resident );
     }
 
+    GameState *GraphicsSystem::getGameState()
+    {
+        return mGameState;
+    }
+
 }

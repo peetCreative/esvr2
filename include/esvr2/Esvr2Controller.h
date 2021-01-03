@@ -6,10 +6,12 @@
 #define ESVR2_ESVR2CONTROLLER_H
 
 #include <memory>
+#include "SDL.h"
 
 namespace esvr2
 {
     class LaparoscopeController;
+    class GameState;
     /* This class is to be overwritten to implement different
      * modalities to control the Laparoscope.
      * It can use the OpenVR transforms, add things to the VR scene
@@ -17,10 +19,16 @@ namespace esvr2
      */
     class Controller
     {
-    private:
+    protected:
         std::shared_ptr<LaparoscopeController> mLaparoscopeController;
+        GameState *mGameState;
     public:
-        Controller(std::shared_ptr<LaparoscopeController> laparoscopeController);
+        Controller(
+                std::shared_ptr<LaparoscopeController> laparoscopeController,
+                GameState *gameState);
+        virtual bool keyPressed( const SDL_KeyboardEvent &arg ) = 0;
+        virtual bool keyReleased( const SDL_KeyboardEvent &arg ) = 0;
+        virtual void headPoseUpdated() = 0;
     };
 }
 

@@ -3,6 +3,7 @@
 #include "Esvr2.h"
 #include "Esvr2PointCloud.h"
 #include "Esvr2Helper.h"
+#include "Esvr2Controller.h"
 
 #include "OgreSceneManager.h"
 #include "OgreItem.h"
@@ -847,27 +848,36 @@ namespace esvr2
                 break;
             case SDL_KEYDOWN:
                 if( !evt.key.repeat )
-                    keyPressed( evt.key );
+                {
+                    bool handled = keyPressed(evt.key);
+                    if (!handled && mEsvr2->mController)
+                        mEsvr2->mController->keyPressed(evt.key);
+                }
                 break;
             case SDL_KEYUP:
                 if( !evt.key.repeat )
-                    keyReleased( evt.key );
+                {
+                    bool handled = keyReleased( evt.key );
+                    if (!handled && mEsvr2->mController)
+                        mEsvr2->mController->keyReleased(evt.key);
+                }
                 break;
         }
     }
 
-    void GameState::keyPressed( const SDL_KeyboardEvent &arg )
+    bool GameState::keyPressed( const SDL_KeyboardEvent &arg )
     {
-
+        return false;
     }
 
-    void GameState::keyReleased( const SDL_KeyboardEvent &arg )
+    bool GameState::keyReleased( const SDL_KeyboardEvent &arg )
     {
         if( arg.keysym.scancode == SDL_SCANCODE_ESCAPE )
         {
             mGraphicsSystem->mQuit = true;
-            return;
+            return true;
         }
+        bool succ = false;
         Ogre::SceneManager *sceneManager = mGraphicsSystem->mVRSceneManager;
         Ogre::uint32 flipMask = 0x0;
         Ogre::uint32 setMask = 0x0;
@@ -876,20 +886,24 @@ namespace esvr2
         if( arg.keysym.scancode == SDL_SCANCODE_Y )
         {
             mEsvr2->mVideoLoader->setDistortion(DIST_RAW);
+            succ = true;
         }
         if( arg.keysym.scancode == SDL_SCANCODE_X )
         {
             mEsvr2->mVideoLoader->setDistortion(DIST_UNDISTORT);
+            succ = true;
         }
 //        if( arg.keysym.scancode == SDL_SCANCODE_A )
 //        {
 //            Ogre::Real zoom = mGraphicsSystem->getZoom();
 //            zoom += arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL) ? 0.1 : -0.1;
 //            mGraphicsSystem->setZoom( zoom );
+//            succ = true;
 //        }
         if( arg.keysym.scancode == SDL_SCANCODE_C )
         {
             mEsvr2->mVideoLoader->setDistortion(DIST_UNDISTORT_RECTIFY);
+            succ = true;
         }
         if( arg.keysym.scancode == SDL_SCANCODE_1 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
@@ -911,24 +925,28 @@ namespace esvr2
                     unsetMask = 0x40 | 0x80;
                 }
             }
+            succ = true;
         }
         //strg + 2 axis
         if( arg.keysym.scancode == SDL_SCANCODE_2 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
         {
             flipMask = 0x1;
+            succ = true;
         }
         //strg + 4 mesh
         if( arg.keysym.scancode == SDL_SCANCODE_3 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
         {
             flipMask = 0x1 << 1;
+            succ = true;
         }
         //strg + 3 point cloud
         if( arg.keysym.scancode == SDL_SCANCODE_4 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
         {
             flipMask = 0x1 << 2;
+            succ = true;
         }
 
         //TODO: It's too complicated for just flipping certain bits
@@ -943,7 +961,9 @@ namespace esvr2
         if( arg.keysym.scancode == SDL_SCANCODE_SPACE )
         {
             mGraphicsSystem->toggleShowVideo();
+            succ = true;
         }
+        return succ;
     }
 
     void GameState::updateVRCamerasNode(void)
@@ -968,6 +988,8 @@ namespace esvr2
     {
         updateVRCamerasNode();
         readHeadGestures();
+        if (mEsvr2->mController )
+            mEsvr2->mController->headPoseUpdated();
         //update Pointcloud ?
         if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem )
         {

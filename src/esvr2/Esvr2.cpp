@@ -247,7 +247,6 @@ namespace esvr2 {
             LOG << "END GRAPHICS" << LOGEND;
 
             //This is not doing any thing
-            mGameState->destroyScene();
             mGraphicsSystem->deinitialize();
             mVideoLoader->deinitialize();
         }
@@ -279,7 +278,6 @@ namespace esvr2 {
         }
         LOG << "END GRAPHICS" << LOGEND;
 
-        mGameState->destroyScene();
         mBarrier->sync();
 
         mGraphicsSystem->deinitialize();

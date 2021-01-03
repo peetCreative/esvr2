@@ -7,13 +7,20 @@
 
 #include "Esvr2Controller.h"
 
+#include "SDL.h"
 namespace esvr2
 {
     class KeyboardController : public Controller
     {
     private:
+        bool mMoveMode;
     public:
-        KeyboardController(std::shared_ptr<LaparoscopeController> laparoscopeController);
+        KeyboardController(
+                std::shared_ptr<LaparoscopeController> laparoscopeController,
+                GameState *gameState);
+        bool keyPressed( const SDL_KeyboardEvent &arg ) override;
+        bool keyReleased( const SDL_KeyboardEvent &arg ) override;
+        void headPoseUpdated() override;
     };
 }
 

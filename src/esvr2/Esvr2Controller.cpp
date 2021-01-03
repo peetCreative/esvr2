@@ -6,7 +6,9 @@
 namespace esvr2
 {
     Controller::Controller(
-            std::shared_ptr<LaparoscopeController> laparoscopeController):
-            mLaparoscopeController(laparoscopeController)
+            std::shared_ptr<LaparoscopeController> laparoscopeController,
+            GameState *gameState):
+            mLaparoscopeController(laparoscopeController),
+            mGameState(gameState)
     {}
 }
