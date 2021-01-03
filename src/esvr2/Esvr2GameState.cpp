@@ -42,6 +42,8 @@ namespace esvr2
             mVRSceneNodesProjectionPlaneRect(nullptr),
             mLaparoscopeSceneNodePointCloud( nullptr ),
             mLaparoscopeSceneNodeTooltips( nullptr ),
+            mInfoScreenSceneNode(nullptr),
+            mIntersectsInfoScreen(false),
             mIsStereo( esvr2->mConfig->isStereo ),
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
             mProjPlaneDistance{ 0, 0, 0, 0 },
@@ -655,7 +657,8 @@ namespace esvr2
         Ogre::Real fps = 1.0 / (microSecsSinceLast * 1000000);
         Ogre::String finalText;
         finalText.reserve( 128 );
-        finalText  = "Frame time:\t";
+        finalText = mIntersectsInfoScreen ? "View Intersects" : "View not Intersects";
+        finalText += "Frame time:\t";
         finalText += Ogre::StringConverter::toString( microSecsSinceLast * 1000.0f );
         finalText += " ms\n";
         finalText += "Frame FPS:\t";
@@ -963,6 +966,7 @@ namespace esvr2
     void GameState::update( Ogre::uint64 microSecsSinceLast )
     {
         updateVRCamerasNode();
+        readHeadGestures();
         //update Pointcloud ?
         if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem )
         {
@@ -1041,5 +1045,17 @@ namespace esvr2
 //            //Set the new samplerblock. The Hlms system will
 //            //automatically create the API block if necessary
 //            datablock->setSamplerblock( Ogre::PBSM_ROUGHNESS, samplerblock );
+    }
+
+    void GameState::readHeadGestures()
+    {
+        Ogre::Vector3 origin = mVRCamerasNode->getPosition();
+        Ogre::Vector3 direction = mVRCamerasNode->getOrientation() * (- Ogre::Vector3::UNIT_Z);
+        Ogre::Ray viewingDirection = Ogre::Ray(origin, direction);
+        Ogre::Aabb aabb = mInfoScreenSceneNode->getAttachedObject(0)->getWorldAabbUpdated();
+        Ogre::AxisAlignedBox axisAlignedBox(aabb.getMinimum(), aabb.getMaximum());
+        std::pair<bool, Ogre::Real> pairIntersections =
+                Ogre::Math::intersects(viewingDirection, axisAlignedBox);
+        mIntersectsInfoScreen = pairIntersections.first;
     }
 }

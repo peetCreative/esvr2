@@ -64,6 +64,7 @@ namespace esvr2
         Ogre::SceneNode          *mLaparoscopeSceneNodePointCloud;
         Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
         Ogre::SceneNode          *mInfoScreenSceneNode;
+        bool                     mIntersectsInfoScreen;
         bool                     mIsStereo;
         size_t                   mEyeNum;
 
@@ -125,6 +126,7 @@ namespace esvr2
 
         void createVRFloor();
 
+        void readHeadGestures();
     public:
 
         void update( Ogre::uint64 microSecsSinceLast );
