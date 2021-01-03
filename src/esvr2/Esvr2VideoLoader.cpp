@@ -78,7 +78,7 @@ namespace esvr2
     {
         if ( !isReady() )
         {
-            LOG << "video loader is not fully configured" << LOGEND;
+            LOG << "VideoLoader::setImageDataFromSplitSliced: not fully configured" << LOGEND;
             return;
         }
         int outputRows = img->rows/2;
@@ -119,7 +119,7 @@ namespace esvr2
     {
         if(!isReady())
         {
-            LOG << "video loader is not fully configured" << LOGEND;
+            LOG << "VideoLoader::setImageDataFromRaw: not fully configured" << LOGEND;
             return;
         }
         size_t eyeNum = mStereo ? 2 : 1;
@@ -158,7 +158,7 @@ namespace esvr2
     {
         if(!isReady())
         {
-            LOG << "video loader is not fully configured" << LOGEND;
+            LOG << "VideoLoader::setImageData: not fully configured" << LOGEND;
             return;
         }
         size_t eyeNum = mStereo ? 2 : 1;

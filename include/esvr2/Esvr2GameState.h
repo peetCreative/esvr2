@@ -115,13 +115,15 @@ namespace esvr2
         void warpMouse( int x, int y );
         void wrapMousePointer( const SDL_MouseMotionEvent& evt );
 
-        void keyPressed( const SDL_KeyboardEvent &arg );
-        void keyReleased( const SDL_KeyboardEvent &arg );
+        bool keyPressed( const SDL_KeyboardEvent &arg );
+        bool keyReleased( const SDL_KeyboardEvent &arg );
 
         void updateVRCamerasNode(void);
         void calcAlign( bool center);
 
         void createVRInfoScreen(void);
+
+        void createVRFloor();
 
     public:
 
@@ -130,9 +132,7 @@ namespace esvr2
         //TODO: implement destroyScene
         void destroyScene() {};
         void handleSdlEvent( const SDL_Event& evt );
-//        void keyReleased( const SDL_KeyboardEvent &arg );
 
-        void createVRFloor();
     };
 }
 
