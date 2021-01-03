@@ -951,6 +951,13 @@ namespace esvr2
             mLastFrameUpdate = mFrameCnt;
 //             LOG << "update" << LOGEND;
             StereoImageData imgData = mEsvr2->mVideoLoader->getCurStereoImageData();
+            if (!imgData.img[LEFT].valid() ||
+                (mEsvr2->mConfig->isStereo && !imgData.img[RIGHT].valid()))
+            {
+                LOG << "skip non valid memory" << LOGEND;
+                return;
+            }
+
             for( size_t eye = 0; eye < mEyeNum; eye++ )
             {
                 const size_t bytesPerRow =
