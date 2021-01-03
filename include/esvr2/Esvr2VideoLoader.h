@@ -3,6 +3,7 @@
 #define _Esvr2_VideoLoader_H_
 
 #include "Esvr2.h"
+#include "Esvr2Component.h"
 
 #include "opencv2/opencv.hpp"
 #include <mutex>
@@ -10,7 +11,7 @@
 namespace esvr2 {
     class GraphicsSystem;
 
-    class VideoLoader
+    class VideoLoader : virtual public Component
     {
     protected:
         Distortion mDistortion;
@@ -18,7 +19,6 @@ namespace esvr2 {
         bool mStereo;
         int mCur, mLoad;
         int mSeq;
-        bool mQuit, mReady;
 
         size_t mDestinationWidth, mDestinationHeight;
         size_t mDestinationDepth, mDestinationLength;
@@ -46,17 +46,10 @@ namespace esvr2 {
         VideoLoader( Distortion distortion, bool stereo );
         ~VideoLoader();
 
-        //to be overwritten by implementations
-        virtual bool initialize( void );
-        virtual void deinitialize(void);
-        virtual void update( );
-
         Distortion getDistortion( void ) { return mDistortion; };
         virtual void setDistortion( Distortion distortion )
             { mDistortion = distortion; };
 
-        void quit() {mQuit = true;};
-        virtual bool getQuit() {return mQuit;};
 
         bool isReady();
 

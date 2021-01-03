@@ -5,6 +5,8 @@
 #ifndef ESVR2_ESVR2LAPAROSCOPECONTROLLER_H
 #define ESVR2_ESVR2LAPAROSCOPECONTROLLER_H
 
+#include "Esvr2Component.h"
+
 namespace esvr2
 {
     typedef struct {
@@ -21,7 +23,10 @@ namespace esvr2
         float rotZMax, rotZMin;
     } LaparoscopeDOFBoundaries;
 
-    class LaparoscopeController {
+    class LaparoscopeController : virtual public Component {
+    protected:
+        bool mLaparoscopeDofPoseReady = false;
+        bool mLaparoscopeDofBoundariesReady = false;
     public:
         virtual bool moveLaparoscopeTo(
                 LaparoscopeDOFPose) = 0;
@@ -29,6 +34,8 @@ namespace esvr2
                 LaparoscopeDOFPose &laparoscopeDofPose) = 0;
         virtual bool getLaparoscopeBoundaries(
                 LaparoscopeDOFBoundaries &laparoscopeDofBoundaries) = 0;
+        bool isReady() {
+            return mLaparoscopeDofBoundariesReady && mLaparoscopeDofPoseReady;};
     };
 }
 

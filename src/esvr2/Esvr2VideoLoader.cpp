@@ -10,7 +10,6 @@ namespace esvr2
         mStereo(stereo),
         mCur(0), mLoad(0),
         mSeq(-1),
-        mReady(false), mQuit(false),
         mDestinationWidth(0), mDestinationHeight(0),
         mDestinationDepth(0), mDestinationLength(0),
         mBuffers{{nullptr, nullptr},{nullptr, nullptr}}
@@ -314,9 +313,4 @@ namespace esvr2
                 mUndistortRectifyMap1[eye], mUndistortRectifyMap2[eye] );
         }
     }
-
-    //TODO: do we realy need this?
-    bool VideoLoader::initialize(void) { return false; }
-    void VideoLoader::deinitialize(void) {}
-    void VideoLoader::update( ) {}
 }
