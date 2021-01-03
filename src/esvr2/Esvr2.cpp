@@ -152,6 +152,16 @@ namespace esvr2 {
                 return;
             }
         }
+        while( !mLaparoscopeController->isReady() )
+        {
+            Ogre::Threads::Sleep( 50 );
+            mLaparoscopeController->update();
+            if (mLaparoscopeController->getQuit())
+            {
+                LOG << "could not get laparoscopeController ready" << LOGEND;
+                return;
+            }
+        }
 
 
         mGraphicsSystem = std::make_shared<GraphicsSystem>( this );
