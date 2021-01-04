@@ -21,7 +21,6 @@ endif()
 set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin" )
 set( LIBRARY_OUTPUT_PATH  "${CMAKE_CURRENT_BINARY_DIR}/lib" )
 
-SET(OGRE_HOME /opt/ogre)
 macro(SUBDIRLIST result curdir)
     FILE(GLOB_RECURSE children LIST_DIRECTORIES true ${curdir}/*)
     SET(dirlist "")
