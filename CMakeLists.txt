@@ -130,7 +130,7 @@ SET(ESVR2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/esvr2)
 include_directories(${ESVR2_INCLUDE_DIR})
 
 add_library(
-    ${PROJECT_NAME}_lib
+    ${PROJECT_NAME}_lib SHARED
     ${SOURCES_LIB} ${HEADERS_LIB} ${RESOURCES})
 
 add_executable(
