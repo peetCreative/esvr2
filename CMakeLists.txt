@@ -18,8 +18,30 @@ if( CMAKE_CXX_COMPILER_ID MATCHES "Clang" )
     set( CMAKE_CXX_FLAGS_DEBUG		"${CMAKE_CXX_FLAGS_DEBUG}			-fno-limit-debug-info"		)
 endif()
 
+# FROM: https://gitlab.kitware.com/cmake/community/-/wikis/doc/cmake/RPATH-handling
+# use, i.e. don't skip the full RPATH for the build tree
+set(CMAKE_SKIP_BUILD_RPATH FALSE)
+
+# when building, don't use the install RPATH already
+# (but later on when installing)
+set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+
+# add the automatically determined parts of the RPATH
+# which point to directories outside the build tree to the install RPATH
+set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+
+# the RPATH to be used when installing, but only if it's not a system directory
+list(FIND CMAKE_PLATFORM_IMPLICIT_LINK_DIRECTORIES "${CMAKE_INSTALL_PREFIX}/lib" isSystemDir)
+if("${isSystemDir}" STREQUAL "-1")
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib")
+endif("${isSystemDir}" STREQUAL "-1")
+
 set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin" )
 set( LIBRARY_OUTPUT_PATH  "${CMAKE_CURRENT_BINARY_DIR}/lib" )
+
+
 
 macro(SUBDIRLIST result curdir)
     FILE(GLOB_RECURSE children LIST_DIRECTORIES true ${curdir}/*)
@@ -160,7 +182,7 @@ configure_file(
 )
 
 install( TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_lib
-        RUNTIME DESTINATION bin
+        DESTINATION bin
         LIBRARY DESTINATION lib)
 install( DIRECTORY ${ESVR2_INCLUDE_DIR}
         DESTINATION include)
