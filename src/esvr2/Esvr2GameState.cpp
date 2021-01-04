@@ -606,7 +606,7 @@ namespace esvr2
     //-----------------------------------------------------------------------------------
     void GameState::createVRScene(void)
     {
-        calcAlign(true);
+        calcAlign(mEsvr2->mConfig->centerProjectionPlane);
 
         createVRCamerasNodes();
         createVRFloor();

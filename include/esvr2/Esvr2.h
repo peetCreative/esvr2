@@ -133,6 +133,7 @@ namespace esvr2 {
         int screen = 0;
         double headHight = 1.7f;
         std::string resourcePath = "Resources.cfg";
+        bool centerProjectionPlane = false;
         ControllerType controllerType = CT_NONE;
         WorkspaceType workspaceType = WS_TWO_CAMERAS_STEREO;
         VideoRenderTarget videoRenderTarget = VRT_TO_SQUARE;
