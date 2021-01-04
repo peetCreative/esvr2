@@ -43,7 +43,6 @@ namespace esvr2
     OpenVRCompositorListener::OpenVRCompositorListener(
             GraphicsSystem *graphicsSystem ) :
         mGraphicsSystem(graphicsSystem),
-        mGameState(graphicsSystem->mGameState),
         mRenderSystem(graphicsSystem->mRoot->getRenderSystem()),
         mApiTextureType( vr::TextureType_Invalid ),
         mWaitingMode( VrWaitingMode::BeforeSceneGraph ),
@@ -62,12 +61,7 @@ namespace esvr2
     //-------------------------------------------------------------------------
     OpenVRCompositorListener::~OpenVRCompositorListener()
     {
-         if( mGraphicsSystem->mVRWorkspaces[LEFT] &&
-                 mGraphicsSystem->mVRWorkspaces[LEFT]->getListener() == this )
-             mGraphicsSystem->mVRWorkspaces[LEFT]->setListener( 0 );
-         if( mGraphicsSystem->mVRWorkspaces[RIGHT] &&
-                 mGraphicsSystem->mVRWorkspaces[RIGHT]->getListener() == this )
-             mGraphicsSystem->mVRWorkspaces[RIGHT]->setListener( 0 );
+//        mGraphicsSystem->mVRWorkspaces[RIGHT]->removeListener(this);
         mGraphicsSystem->mRoot->removeFrameListener( this );
         if( mHMD )
         {
@@ -195,9 +189,9 @@ namespace esvr2
         {
             OGRE_ASSERT_MEDIUM( mTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid );
             Ogre::Vector3 trans = mDevicePose[vr::k_unTrackedDeviceIndex_Hmd].getTrans();
-            mGameState->mVRCamerasNode->setPosition( trans );
+            mGraphicsSystem->mGameState->mVRCamerasNode->setPosition( trans );
             Ogre::Quaternion orientation = mDevicePose[vr::k_unTrackedDeviceIndex_Hmd].extractQuaternion();
-            mGameState->mVRCamerasNode->setOrientation( orientation );
+            mGraphicsSystem->mGameState->mVRCamerasNode->setOrientation( orientation );
         }
 
 //        if( mWaitingMode < VrWaitingMode::AfterFrustumCulling )

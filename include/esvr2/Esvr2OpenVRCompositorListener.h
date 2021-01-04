@@ -48,7 +48,6 @@ namespace esvr2
     friend GraphicsSystem;
     private:
         GraphicsSystem          *mGraphicsSystem;
-        GameState               *mGameState;
         Ogre::RenderSystem      *mRenderSystem;
 
         // these are nullptr if there is no SteamVR available through OpenVR
