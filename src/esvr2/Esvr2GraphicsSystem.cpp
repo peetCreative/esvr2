@@ -1132,7 +1132,7 @@ namespace esvr2
         Ogre::TextureGpuManager *textureManager = mRoot->getRenderSystem()->getTextureGpuManager();
         //Radial Density Mask requires the VR texture to be UAV & reinterpretable
         mInfoScreenTexture = textureManager->createOrRetrieveTexture(
-                "OpenVR Both Eyes",
+                "Info Screen Texture",
                 Ogre::GpuPageOutStrategy::Discard,
                 Ogre::TextureFlags::RenderToTexture|
                 Ogre::TextureFlags::Uav|
