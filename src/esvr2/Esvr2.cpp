@@ -152,14 +152,17 @@ namespace esvr2 {
                 return;
             }
         }
-        while( !mLaparoscopeController->isReady() )
+        if (mLaparoscopeController)
         {
-            Ogre::Threads::Sleep( 50 );
-            mLaparoscopeController->update();
-            if (mLaparoscopeController->getQuit())
+            while( !mLaparoscopeController->isReady() )
             {
-                LOG << "could not get laparoscopeController ready" << LOGEND;
-                return;
+                Ogre::Threads::Sleep( 50 );
+                mLaparoscopeController->update();
+                if (mLaparoscopeController->getQuit())
+                {
+                    LOG << "could not get laparoscopeController ready" << LOGEND;
+                    return;
+                }
             }
         }
 
