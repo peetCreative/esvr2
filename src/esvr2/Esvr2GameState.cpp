@@ -31,6 +31,7 @@ namespace esvr2
             mGraphicsSystem( graphicsSystem ),
             mVideoDatablock{ nullptr, nullptr },
             mInfoScreenDatablock(nullptr),
+            mVRInfoScreen(nullptr),
             mProjectionRectangle{ nullptr, nullptr, nullptr, nullptr },
             mAxis( nullptr ),
             mAxisCameras( nullptr ),
@@ -45,6 +46,7 @@ namespace esvr2
             mLaparoscopeSceneNodeTooltips( nullptr ),
             mInfoScreenSceneNode(nullptr),
             mIntersectsInfoScreen(false),
+            mInfoScreenUV( 0, 0 ),
             mIsStereo( esvr2->mConfig->isStereo ),
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
             mProjPlaneDistance{ 0, 0, 0, 0 },
@@ -68,6 +70,7 @@ namespace esvr2
             mDebugTextFieldShadow(nullptr),
             mDebugText(),
             mHelpDescription(""),
+            mViewingDirectionIndicator(nullptr),
             mWantRelative(false),
             mWantMouseVisible(true),
             mMouseManipulate(MM_NONE),
@@ -456,7 +459,20 @@ namespace esvr2
         panel->addChild(mDebugTextFieldShadow );
         panel->addChild(mDebugTextField );
         overlay->add2D( panel );
+        overlay->setRenderQueueGroup(253);
         overlay->show();
+
+        Ogre::v1::Overlay *overlayViewDirectionIndicator = overlayManager.create( "ViewDirectionIndicator" );
+        mViewingDirectionIndicator = static_cast<Ogre::v1::PanelOverlayElement*>(
+                overlayManager.createOverlayElement("Panel", "ViewingDirecitonIndicator"));
+//        mViewingDirectionIndicator->setColour(Ogre::ColourValue::Red);
+        mViewingDirectionIndicator->setPosition( 0.5, 0.5 );
+        mViewingDirectionIndicator->setHeight(0.01);
+        mViewingDirectionIndicator->setWidth(0.01);
+        mViewingDirectionIndicator->setMaterialName("TransparentRed");
+        overlayViewDirectionIndicator->add2D(mViewingDirectionIndicator);
+        overlayViewDirectionIndicator->setRenderQueueGroup(254);
+        overlayViewDirectionIndicator->show();
     }
 
     void GameState::loadDatablocks()
@@ -495,6 +511,18 @@ namespace esvr2
                                 Ogre::HlmsParamVec() ) );
         colourdatablock->setUseColour(true);
         colourdatablock->setColour( Ogre::ColourValue(0,0,1,1));
+        Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
+        blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
+        colourdatablock =
+                dynamic_cast<Ogre::HlmsUnlitDatablock*>(
+                        hlmsUnlit->createDatablock(
+                                "TransparentRed",
+                                "TransparentRed",
+                                Ogre::HlmsMacroblock(),
+                                blendBlock,
+                                Ogre::HlmsParamVec() ) );
+        colourdatablock->setUseColour(true);
+        colourdatablock->setColour( Ogre::ColourValue(1, 0, 0,0.7));
 
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
@@ -515,7 +543,7 @@ namespace esvr2
                         infoScreenDatablockName,
                         infoScreenDatablockName,
                         Ogre::HlmsMacroblock(),
-                        Ogre::HlmsBlendblock(),
+                        blendBlock,
                         Ogre::HlmsParamVec() ) );
 
         // THis should work as well
@@ -610,9 +638,9 @@ namespace esvr2
 
         createVRCamerasNodes();
         createVRFloor();
-        createVRInfoScreen();
 //         createProjectionRectangle2D();
         createVRProjectionPlanes();
+        createVRInfoScreen();
         createMesh();
 //        createVRAxisCamera();
 
@@ -1011,32 +1039,37 @@ namespace esvr2
 
     void GameState::createVRInfoScreen(void)
     {
-        const Ogre::Real dimx = 1.28f;
-        const Ogre::Real dimy = 0.72f;
-        Ogre::v1::MeshPtr planeMeshV1 = Ogre::v1::MeshManager::getSingleton().createPlane(
-                "InfoScreenV1",
-                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                Ogre::Plane( Ogre::Vector3::UNIT_Z, 0.0f ), dimx, dimy,
-                1, 1, true, 1, 1.0f, 1.0f, Ogre::Vector3::UNIT_Y,
-                Ogre::v1::HardwareBuffer::HBU_STATIC,
-                Ogre::v1::HardwareBuffer::HBU_STATIC );
-
-        Ogre::MeshPtr planeMesh = Ogre::MeshManager::getSingleton().createByImportingV1(
-                "InfoScreenV1", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-                planeMeshV1.get(), true, true, true );
-
         Ogre::SceneManager *sceneManager = mGraphicsSystem->mVRSceneManager;
-        Ogre::Item *item = sceneManager->createItem( planeMesh, Ogre::SCENE_DYNAMIC );
+        mVRInfoScreen = sceneManager->createManualObject();
 
-        item->setDatablock( mInfoScreenDatablock );
-        mInfoScreenSceneNode = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
+        mVRInfoScreen->begin(
+                *(mInfoScreenDatablock->getNameStr()),
+                Ogre::OT_TRIANGLE_LIST);
+
+        Ogre::Vector3 edge;
+        edge = Ogre::Vector3( -mInfoScreenDim.x, mInfoScreenDim.y,0);
+        mVRInfoScreen->position( edge );
+        mVRInfoScreen->textureCoord(0 , 0);
+        edge = Ogre::Vector3( mInfoScreenDim.x, mInfoScreenDim.y, 0 );
+        mVRInfoScreen->position(edge);
+        mVRInfoScreen->textureCoord(1 , 0);
+        edge = Ogre::Vector3( mInfoScreenDim.x, -mInfoScreenDim.y, 0 );
+        mVRInfoScreen->position(edge);
+        mVRInfoScreen->textureCoord(1 , 1);
+        edge = Ogre::Vector3( -mInfoScreenDim.x, -mInfoScreenDim.y, 0);
+        mVRInfoScreen->position(edge);
+        mVRInfoScreen->textureCoord(0 , 1);
+        mVRInfoScreen->quad(3, 2, 1, 0);
+
+        mVRInfoScreen->end();
+        mInfoScreenSceneNode = mVRSceneNodeProjectionPlanesOrigin->
                 createChildSceneNode( Ogre::SCENE_DYNAMIC );
         mInfoScreenSceneNode->setName("InfoScreenNode");
-        mInfoScreenSceneNode->attachObject( item );
+        mInfoScreenSceneNode->attachObject( mVRInfoScreen );
         //for debugging
 //        mInfoScreenSceneNode->attachObject( createAxisIntern(sceneManager));
-        mInfoScreenSceneNode->translate( 0, mEsvr2->mConfig->headHight, -1,
-                                         Ogre::Node::TS_WORLD);
+        Ogre::Real dist = mProjPlaneDistance[DIST_RAW];
+        mInfoScreenSceneNode->translate( 0, 0, -(dist-0.01));
     }
 
     void GameState::createVRFloor()
@@ -1083,11 +1116,29 @@ namespace esvr2
         Ogre::Vector3 origin = mVRCamerasNode->getPosition();
         Ogre::Vector3 direction = mVRCamerasNode->getOrientation() * (- Ogre::Vector3::UNIT_Z);
         Ogre::Ray viewingDirection = Ogre::Ray(origin, direction);
-        Ogre::Aabb aabb = mInfoScreenSceneNode->getAttachedObject(0)->getWorldAabbUpdated();
-        Ogre::AxisAlignedBox axisAlignedBox(aabb.getMinimum(), aabb.getMaximum());
+
+        Ogre::Plane infoScreenPlane(
+            mInfoScreenSceneNode->convertLocalToWorldDirectionUpdated(Ogre::Vector3::UNIT_Z, true),
+            mInfoScreenSceneNode->convertLocalToWorldPositionUpdated(Ogre::Vector3::ZERO));
         std::pair<bool, Ogre::Real> pairIntersections =
-                Ogre::Math::intersects(viewingDirection, axisAlignedBox);
-        mIntersectsInfoScreen = pairIntersections.first;
+                Ogre::Math::intersects(viewingDirection, infoScreenPlane);
+        Ogre::Vector3 intersect = viewingDirection.getPoint(pairIntersections.second);
+        Ogre::Vector3 intersect_loc = mInfoScreenSceneNode->convertWorldToLocalPosition(intersect);
+        Ogre::Vector2 uv;
+        uv.x = (intersect_loc.x + mInfoScreenDim.x) / (2 * mInfoScreenDim.x);
+        uv.y = (intersect_loc.y - mInfoScreenDim.y) / (-2 * mInfoScreenDim.y);
+        mIntersectsInfoScreen = 0.0f < uv.x && uv.x < 1.0f &&  0 < uv.y && uv.y < 1.0f;
+        if (mIntersectsInfoScreen)
+        {
+
+            mInfoScreenUV = uv;
+            mViewingDirectionIndicator->setPosition(uv.x, uv.y);
+            mViewingDirectionIndicator->show();
+        }
+        else
+        {
+            mViewingDirectionIndicator->hide();
+        }
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()

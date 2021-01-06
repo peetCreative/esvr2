@@ -14,6 +14,7 @@
 #include "Overlay/OgreTextAreaOverlayElement.h"
 
 #include <memory>
+#include <OgrePanelOverlayElement.h>
 
 namespace esvr2
 {
@@ -48,6 +49,7 @@ namespace esvr2
         Ogre::HlmsUnlitDatablock *mVideoDatablock[2];
         Ogre::HlmsUnlitDatablock *mInfoScreenDatablock;
         Ogre::Rectangle2D        *mProjectionRectangle2D;
+        Ogre::ManualObject       *mVRInfoScreen;
         Ogre::ManualObject       *mProjectionRectangle[4];
         Ogre::ManualObject       *mAxis;
         Ogre::ManualObject       *mAxisCameras;
@@ -64,7 +66,10 @@ namespace esvr2
         Ogre::SceneNode          *mLaparoscopeSceneNodePointCloud;
         Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
         Ogre::SceneNode          *mInfoScreenSceneNode;
+
+        const Ogre::Vector2      mInfoScreenDim = Ogre::Vector2(1.28f, 0.72f);
         bool                     mIntersectsInfoScreen;
+        Ogre::Vector2            mInfoScreenUV;
         bool                     mIsStereo;
         size_t                   mEyeNum;
 
@@ -73,6 +78,8 @@ namespace esvr2
         Ogre::v1::TextAreaOverlayElement* mDebugTextFieldShadow;
         Ogre::String mDebugText;
         Ogre::String mHelpDescription;
+
+        Ogre::v1::PanelOverlayElement *mViewingDirectionIndicator;
 
         Ogre::Real mProjPlaneDistance[4],
             mLeft[4], mRight[4], mTop[4], mBottom[4];
