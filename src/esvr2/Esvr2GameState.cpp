@@ -583,22 +583,6 @@ namespace esvr2
             Ogre::Vector3 initialPose = RealVectorToVector3(vec1);
             mVRCamerasNode->setPosition(initialPose);
         }
-
-        //add line inidicating the viewing direction
-        Ogre::ManualObject *viewingDirectionLine =
-                mGraphicsSystem->mVRSceneManager
-                ->createManualObject(Ogre::SCENE_DYNAMIC);
-        viewingDirectionLine->begin("Red", Ogre::OT_LINE_LIST);
-        viewingDirectionLine->position(0,0, -0.5 );
-//        viewingDirectionLine->textureCoord(0 , 0);
-        viewingDirectionLine->position( 0,0,-1);
-        viewingDirectionLine->line(0,1);
-//        viewingDirectionLine->textureCoord(1 , 0);
-        viewingDirectionLine->end();
-
-        mVRCamerasNode->attachObject(viewingDirectionLine);
-
-
     }
 
     void GameState::createLaparoscopeCameraNodes()
