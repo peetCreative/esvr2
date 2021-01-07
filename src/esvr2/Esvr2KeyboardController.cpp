@@ -65,36 +65,22 @@ namespace esvr2
         Ogre::Radian pitchRad = headOrientationRel.getPitch();
         Ogre::Degree pitchDeg(pitchRad);
         // swingy seems to be inverted
-        if (pitchDeg > Ogre::Degree(5))
+        if (Ogre::Degree(5) < pitchDeg && pitchDeg < Ogre::Degree(10))
             pose.swingY -= 0.01;
-        else if (pitchDeg > Ogre::Degree(10))
-            pose.swingY -= 0.02;
-        else if (pitchDeg > Ogre::Degree(15))
-            pose.swingY -= 0.03;
-        if (pitchDeg < Ogre::Degree(-5))
+        if (Ogre::Degree(-5) > pitchDeg && pitchDeg > Ogre::Degree(-10))
             pose.swingY += 0.01;
-        else if (pitchDeg < Ogre::Degree(-10))
-            pose.swingY += 0.02;
-        else if (pitchDeg < Ogre::Degree(-15))
-            pose.swingY += 0.03;
 
         Ogre::Radian yawRad(headOrientationRel.getYaw());
         Ogre::Degree yawDeg(yawRad);
-        if (yawDeg > Ogre::Degree(5))
+        if (Ogre::Degree(5) < yawDeg && yawDeg < Ogre::Degree(15))
             pose.swingX += 0.01;
-        else if (yawDeg > Ogre::Degree(10))
-            pose.swingX += 0.02;
-        else if (yawDeg > Ogre::Degree(15))
-            pose.swingX += 0.03;
-        if (yawDeg < Ogre::Degree(-5))
+        if (Ogre::Degree(-5) > yawDeg && yawDeg > Ogre::Degree(-15))
             pose.swingX -= 0.01;
-        else if (yawDeg < Ogre::Degree(-10))
-            pose.swingX -= 0.02;
-        else if (yawDeg < Ogre::Degree(-15))
-            pose.swingX -= 0.03;
-        //TODO:yaw
+
         pose.swingX = std::min(pose.swingX, boundaries.swingXMax);
         pose.swingX = std::max(pose.swingX, boundaries.swingXMin);
+        pose.swingY = std::min(pose.swingY, boundaries.swingYMax);
+        pose.swingY = std::max(pose.swingY, boundaries.swingYMin);
         mLaparoscopeController->moveLaparoscopeTo(pose);
         Ogre::String debugText = "mMoveMode ";
         debugText += "Pitch Rad: " + Ogre::StringConverter::toString(pitchRad) + "\n";
