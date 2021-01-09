@@ -1022,6 +1022,11 @@ namespace esvr2
         return isVisible;
     }
 
+    void GraphicsSystem::quit()
+    {
+        mQuit = true;
+    }
+
     bool GraphicsSystem::getQuit()
     {
         return mQuit;

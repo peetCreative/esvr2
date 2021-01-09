@@ -4,6 +4,7 @@
 #include "Esvr2.h"
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2PointCloud.h"
+#include "Esvr2InteractiveElement2D.h"
 
 #include "OgrePrerequisites.h"
 
@@ -11,10 +12,6 @@
 #include "OgreHlmsUnlitDatablock.h"
 #include "OgreManualObject2.h"
 #include "OgreRectangle2D2.h"
-#include "Overlay/OgreTextAreaOverlayElement.h"
-
-#include <memory>
-#include <OgrePanelOverlayElement.h>
 
 namespace esvr2
 {
@@ -24,6 +21,12 @@ namespace esvr2
         MM_ORIENTATION,
         MM_TRANSLATION
     } MouseManipulationType;
+
+    typedef enum {
+        UIS_NONE,
+        UIS_HOVER,
+        UIS_ACTIVATE
+    } UIStatusType;
 
     class GameState
     {
@@ -69,6 +72,7 @@ namespace esvr2
 
         const Ogre::Vector2      mInfoScreenDim = Ogre::Vector2(1.28f, 0.72f);
         bool                     mIntersectsInfoScreen;
+        UIStatusType             mUIStatus;
         Ogre::Vector2            mInfoScreenUV;
         bool                     mIsStereo;
         size_t                   mEyeNum;
@@ -78,6 +82,7 @@ namespace esvr2
         Ogre::v1::TextAreaOverlayElement* mDebugTextFieldShadow;
         Ogre::String mDebugText;
         Ogre::String mHelpDescription;
+        InteractiveElement2DList mInteractiveElement2DList;
 
         Ogre::v1::PanelOverlayElement *mViewingDirectionIndicator;
 
@@ -107,8 +112,14 @@ namespace esvr2
         void createVROverlays(void);
         void createMesh();
 
+        InteractiveElement2DPtr findInteractiveElement2DByName(Ogre::String);
+        InteractiveElement2DPtr findInteractiveElement2DByUV(
+                Ogre::Vector2 uv);
         void generateDebugText(
                 Ogre::uint64 microSecsSinceLast, Ogre::String &outText );
+
+        void holdUI(Ogre::uint64 timeSinceLast);
+        void toggleUI();
 
         void createVRCamerasNodes();
         void createLaparoscopeCameraNodes();
@@ -148,6 +159,7 @@ namespace esvr2
         Ogre::Vector3 getHeadPosition();
 
         void setDebugText(Ogre::String debugText);
+        void addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D);
     };
 }
 

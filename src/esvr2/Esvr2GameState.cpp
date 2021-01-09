@@ -2,6 +2,7 @@
 
 #include "Esvr2.h"
 #include "Esvr2PointCloud.h"
+#include "Esvr2InteractiveElement2D.h"
 #include "Esvr2Helper.h"
 #include "Esvr2Controller.h"
 
@@ -21,7 +22,9 @@
 #include "Overlay/OgreOverlayManager.h"
 #include "Overlay/OgreOverlayContainer.h"
 #include "Overlay/OgreTextAreaOverlayElement.h"
+#include "Overlay/OgreBorderPanelOverlayElement.h"
 
+#include <boost/bind/bind.hpp>
 #include "SDL.h"
 
 namespace esvr2
@@ -46,6 +49,7 @@ namespace esvr2
             mLaparoscopeSceneNodeTooltips( nullptr ),
             mInfoScreenSceneNode(nullptr),
             mIntersectsInfoScreen(false),
+            mUIStatus(UIS_NONE),
             mInfoScreenUV( 0, 0 ),
             mIsStereo( esvr2->mConfig->isStereo ),
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
@@ -473,7 +477,77 @@ namespace esvr2
         overlayViewDirectionIndicator->add2D(mViewingDirectionIndicator);
         overlayViewDirectionIndicator->setRenderQueueGroup(254);
         overlayViewDirectionIndicator->show();
+
+        InteractiveElement2DDef elementDef =
+                {
+                        "Close",
+                        "Close",
+                        Ogre::Vector2(0.5, 0.5),
+                        Ogre::Vector2(0.25, 0.25)
+                };
+
+        InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
+                elementDef,
+                boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
+                (boost::function<void (Ogre::uint64)>) 0);
+
+        addInteractiveElement2D(element);
+        // create ui elements
     }
+
+    void GameState::addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D)
+    {
+        InteractiveElement2DDef def = interactiveElement2D->mDefinition;
+        Ogre::String overlayId = def.id;
+        Ogre::v1::OverlayManager &overlayManager =
+                Ogre::v1::OverlayManager::getSingleton();
+        Ogre::v1::Overlay *overlay = overlayManager.create( overlayId );
+        interactiveElement2D->mOverlay = overlay;
+
+        Ogre::String panelId = overlayId + "Panel";
+        Ogre::v1::BorderPanelOverlayElement *panel = dynamic_cast<Ogre::v1::BorderPanelOverlayElement*>(
+                overlayManager.createOverlayElement("BorderPanel", panelId));
+//        Ogre::v1::OverlayContainer *panel = dynamic_cast<Ogre::v1::OverlayContainer*>(
+//                overlayManager.createOverlayElement("Panel", panelId));
+        panel->setPosition(
+                def.uv.x, def.uv.y );
+        panel->setWidth(def.size.x);
+        panel->setHeight(def.size.y);
+        panel->setBorderSize(0.001f);
+        panel->setMaterialName("TransparentRed");
+        panel->setBorderMaterialName("White");
+        interactiveElement2D->mBorderPanel = panel;
+
+        Ogre::String textAreaId = overlayId + "TextArea";
+        Ogre::v1::TextAreaOverlayElement *textArea = static_cast<Ogre::v1::TextAreaOverlayElement*>(
+                overlayManager.createOverlayElement( "TextArea", textAreaId ) );
+        textArea->setFontName(def.font );
+        textArea->setCharHeight(def.fontSize );
+        textArea->setColour(Ogre::ColourValue::White );
+//        textArea->setPosition(0.0f, 0.0f );
+        interactiveElement2D->mTextArea = textArea;
+
+        Ogre::String textAreaShadowId = overlayId + "TextAreaShadow";
+        Ogre::v1::TextAreaOverlayElement *textAreaShadow = dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
+                overlayManager.createOverlayElement( "TextArea", textAreaShadowId ) );
+        textAreaShadow->setFontName(def.font );
+        textAreaShadow->setCharHeight(def.fontSize );
+        textAreaShadow->setColour(Ogre::ColourValue::Black );
+//        textFieldShadow->setMaterialName("White");
+        textAreaShadow->setPosition(0.002f, 0.002f );
+        interactiveElement2D->mTextAreaShadow = textAreaShadow;
+
+        panel->addChild(textAreaShadow );
+        panel->addChild(textArea );
+        overlay->add2D( panel );
+        overlay->setRenderQueueGroup(253);
+        overlay->show();
+        textAreaShadow->setCaption(def.text);
+        textArea->setCaption(def.text);
+
+        mInteractiveElement2DList.push_back( interactiveElement2D );
+    }
+
 
     void GameState::loadDatablocks()
     {
@@ -511,6 +585,16 @@ namespace esvr2
                                 Ogre::HlmsParamVec() ) );
         colourdatablock->setUseColour(true);
         colourdatablock->setColour( Ogre::ColourValue(0,0,1,1));
+        colourdatablock =
+                dynamic_cast<Ogre::HlmsUnlitDatablock*>(
+                        hlmsUnlit->createDatablock(
+                                "White",
+                                "White",
+                                Ogre::HlmsMacroblock(),
+                                Ogre::HlmsBlendblock(),
+                                Ogre::HlmsParamVec() ) );
+        colourdatablock->setUseColour(true);
+        colourdatablock->setColour( Ogre::ColourValue(1,1,1,1));
         Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
         blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
         colourdatablock =
@@ -686,8 +770,11 @@ namespace esvr2
 
         outText.swap( finalText );
 
-        mDebugTextField->setCaption(finalText );
-        mDebugTextFieldShadow->setCaption(finalText );
+        if (mDebugTextField && mDebugTextFieldShadow)
+        {
+            mDebugTextField->setCaption(finalText );
+            mDebugTextFieldShadow->setCaption(finalText );
+        }
     }
 
     void GameState::updateLaparoscopePoseFromPoseState()
@@ -879,7 +966,13 @@ namespace esvr2
 
     bool GameState::keyPressed( const SDL_KeyboardEvent &arg )
     {
-        return false;
+        bool succ = false;
+        if( arg.keysym.scancode == SDL_SCANCODE_N )
+        {
+            mUIStatus = UIS_ACTIVATE;
+            succ = true;
+        }
+        return succ;
     }
 
     bool GameState::keyReleased( const SDL_KeyboardEvent &arg )
@@ -975,7 +1068,35 @@ namespace esvr2
             mGraphicsSystem->toggleShowVideo();
             succ = true;
         }
+        if( arg.keysym.scancode == SDL_SCANCODE_N )
+        {
+            toggleUI();
+            mUIStatus = UIS_NONE;
+            succ = true;
+        }
         return succ;
+    }
+
+    void GameState::toggleUI()
+    {
+        if (mIntersectsInfoScreen)
+        {
+            InteractiveElement2DPtr toggleElement =
+                    findInteractiveElement2DByUV(mInfoScreenUV);
+            if (toggleElement)
+                toggleElement->activateToggle();
+        }
+    }
+
+    void GameState::holdUI(Ogre::uint64 timeSinceLast)
+    {
+        if (mIntersectsInfoScreen)
+        {
+            InteractiveElement2DPtr holdElement =
+                    findInteractiveElement2DByUV(mInfoScreenUV);
+            if (holdElement)
+                holdElement->activateHold(timeSinceLast);
+        }
     }
 
     void GameState::updateVRCamerasNode(void)
@@ -1003,7 +1124,7 @@ namespace esvr2
         if (mEsvr2->mController )
             mEsvr2->mController->headPoseUpdated();
         //update Pointcloud ?
-        if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem )
+        if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem && mDebugTextFieldShadow && mDebugTextField )
         {
             if (mDebugText != "")
             {
@@ -1019,6 +1140,34 @@ namespace esvr2
                 mDebugTextFieldShadow->setCaption(finalText );
             }
         }
+        InteractiveElement2DPtr bla = findInteractiveElement2DByName("Close");
+        bla->setText("Close");
+        if (mUIStatus == UIS_ACTIVATE)
+        {
+            holdUI(microSecsSinceLast);
+        }
+    }
+
+    InteractiveElement2DPtr GameState::findInteractiveElement2DByName(
+            Ogre::String id)
+    {
+        auto it = find_if(
+                mInteractiveElement2DList.begin(),
+                mInteractiveElement2DList.end(),
+                [&id](const InteractiveElement2DPtr& obj)
+                    {return obj->mDefinition.id == id;});
+        return it != mInteractiveElement2DList.end() ? *it : nullptr;
+    }
+
+    InteractiveElement2DPtr GameState::findInteractiveElement2DByUV(
+            Ogre::Vector2 uv)
+    {
+        auto it = find_if(
+                mInteractiveElement2DList.begin(),
+                mInteractiveElement2DList.end(),
+                [&uv](const InteractiveElement2DPtr& obj)
+                {return obj->isUVinside(uv);});
+        return it != mInteractiveElement2DList.end() ? *it : nullptr;
     }
 
     void GameState::createVRInfoScreen(void)
@@ -1112,16 +1261,18 @@ namespace esvr2
         uv.x = (intersect_loc.x + mInfoScreenDim.x) / (2 * mInfoScreenDim.x);
         uv.y = (intersect_loc.y - mInfoScreenDim.y) / (-2 * mInfoScreenDim.y);
         mIntersectsInfoScreen = 0.0f < uv.x && uv.x < 1.0f &&  0 < uv.y && uv.y < 1.0f;
-        if (mIntersectsInfoScreen)
+        if (mViewingDirectionIndicator)
         {
-
-            mInfoScreenUV = uv;
-            mViewingDirectionIndicator->setPosition(uv.x, uv.y);
-            mViewingDirectionIndicator->show();
-        }
-        else
-        {
-            mViewingDirectionIndicator->hide();
+            if (mIntersectsInfoScreen)
+            {
+                mInfoScreenUV = uv;
+                mViewingDirectionIndicator->setPosition(uv.x, uv.y);
+                mViewingDirectionIndicator->show();
+            }
+            else
+            {
+                mViewingDirectionIndicator->hide();
+            }
         }
     }
 

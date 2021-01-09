@@ -144,6 +144,7 @@ namespace esvr2
         //Ogre getters and setters
 
         //get variables
+        void quit();
         bool getQuit();
         bool isRenderWindowVisible( void );
         bool getShowVideo( void ) { return mShowVideo; };
