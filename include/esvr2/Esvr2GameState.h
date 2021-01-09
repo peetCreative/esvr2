@@ -78,8 +78,6 @@ namespace esvr2
         size_t                   mEyeNum;
 
         bool mDisplayHelpMode;
-        Ogre::v1::TextAreaOverlayElement* mDebugTextField;
-        Ogre::v1::TextAreaOverlayElement* mDebugTextFieldShadow;
         Ogre::String mDebugText;
         Ogre::String mHelpDescription;
         InteractiveElement2DList mInteractiveElement2DList;
@@ -110,6 +108,7 @@ namespace esvr2
         void createTooltips();
         void createPointCloud();
         void createVROverlays(void);
+        void addViewDirectionIndicator();
         void createMesh();
 
         InteractiveElement2DPtr findInteractiveElement2DByName(Ogre::String);

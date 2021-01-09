@@ -70,8 +70,6 @@ namespace esvr2
             mWarpY(0),
             //
             mDisplayHelpMode(true),
-            mDebugTextField(nullptr),
-            mDebugTextFieldShadow(nullptr),
             mDebugText(),
             mHelpDescription(""),
             mViewingDirectionIndicator(nullptr),
@@ -442,31 +440,46 @@ namespace esvr2
 
     void GameState::createVROverlays(void)
     {
+        addViewDirectionIndicator();
+
+        InteractiveElement2DDef debugElementDef =
+                {
+                        "Debug",
+                        "Debug",
+                        Ogre::Vector2(0.0, 0.0),
+                        Ogre::Vector2(0.5, 0.3),
+                        0.05f
+                };
+        InteractiveElement2DPtr debugElement = std::make_shared<InteractiveElement2D>(
+                debugElementDef,
+                (boost::function<void ()>) 0,
+                (boost::function<void (Ogre::uint64)>) 0);
+        addInteractiveElement2D(debugElement);
+
+
+        InteractiveElement2DDef elementDef =
+                {
+                        "Close",
+                        "Close",
+                        Ogre::Vector2(0.5, 0.0),
+                        Ogre::Vector2(0.5, 0.3)
+                };
+
+        InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
+                elementDef,
+                boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
+                (boost::function<void (Ogre::uint64)>) 0);
+
+        addInteractiveElement2D(element);
+        // create ui elements
+    }
+
+    void GameState::addViewDirectionIndicator()
+    {
         Ogre::v1::OverlayManager &overlayManager =
                 Ogre::v1::OverlayManager::getSingleton();
-        Ogre::v1::Overlay *overlay = overlayManager.create( "DebugText" );
-
-        Ogre::v1::OverlayContainer *panel = dynamic_cast<Ogre::v1::OverlayContainer*>(
-                overlayManager.createOverlayElement("Panel", "DebugPanel"));
-        mDebugTextField = static_cast<Ogre::v1::TextAreaOverlayElement*>(
-                overlayManager.createOverlayElement( "TextArea", "DebugText" ) );
-        mDebugTextField->setFontName("FreeSans" );
-        mDebugTextField->setCharHeight(0.1f );
-
-        mDebugTextFieldShadow= dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
-                overlayManager.createOverlayElement( "TextArea", "0DebugTextShadow" ) );
-        mDebugTextFieldShadow->setFontName("FreeSans" );
-        mDebugTextFieldShadow->setCharHeight(0.1f );
-        mDebugTextFieldShadow->setColour(Ogre::ColourValue::Black );
-        mDebugTextFieldShadow->setPosition(0.002f, 0.002f );
-
-        panel->addChild(mDebugTextFieldShadow );
-        panel->addChild(mDebugTextField );
-        overlay->add2D( panel );
-        overlay->setRenderQueueGroup(253);
-        overlay->show();
-
-        Ogre::v1::Overlay *overlayViewDirectionIndicator = overlayManager.create( "ViewDirectionIndicator" );
+        Ogre::v1::Overlay *overlayViewDirectionIndicator =
+                overlayManager.create( "ViewDirectionIndicator" );
         mViewingDirectionIndicator = static_cast<Ogre::v1::PanelOverlayElement*>(
                 overlayManager.createOverlayElement("Panel", "ViewingDirecitonIndicator"));
 //        mViewingDirectionIndicator->setColour(Ogre::ColourValue::Red);
@@ -478,21 +491,6 @@ namespace esvr2
         overlayViewDirectionIndicator->setRenderQueueGroup(254);
         overlayViewDirectionIndicator->show();
 
-        InteractiveElement2DDef elementDef =
-                {
-                        "Close",
-                        "Close",
-                        Ogre::Vector2(0.5, 0.5),
-                        Ogre::Vector2(0.25, 0.25)
-                };
-
-        InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
-                elementDef,
-                boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
-                (boost::function<void (Ogre::uint64)>) 0);
-
-        addInteractiveElement2D(element);
-        // create ui elements
     }
 
     void GameState::addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D)
@@ -770,11 +768,9 @@ namespace esvr2
 
         outText.swap( finalText );
 
-        if (mDebugTextField && mDebugTextFieldShadow)
-        {
-            mDebugTextField->setCaption(finalText );
-            mDebugTextFieldShadow->setCaption(finalText );
-        }
+        InteractiveElement2DPtr interactiveDebug =
+                findInteractiveElement2DByName("Debug");
+        interactiveDebug->setText(finalText);
     }
 
     void GameState::updateLaparoscopePoseFromPoseState()
@@ -1124,20 +1120,22 @@ namespace esvr2
         if (mEsvr2->mController )
             mEsvr2->mController->headPoseUpdated();
         //update Pointcloud ?
-        if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem && mDebugTextFieldShadow && mDebugTextField )
+        if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem )
         {
             if (mDebugText != "")
             {
-                mDebugTextField->setCaption(mDebugText );
-                mDebugTextFieldShadow->setCaption(mDebugText );
+                InteractiveElement2DPtr interactiveDebug =
+                        findInteractiveElement2DByName("Debug");
+                interactiveDebug->setText(mDebugText);
             }
             else
             {
                 //Show FPS
                 Ogre::String finalText;
                 generateDebugText( microSecsSinceLast, finalText );
-                mDebugTextField->setCaption(finalText );
-                mDebugTextFieldShadow->setCaption(finalText );
+                InteractiveElement2DPtr interactiveDebug =
+                        findInteractiveElement2DByName("Debug");
+                interactiveDebug->setText(finalText);
             }
         }
         InteractiveElement2DPtr bla = findInteractiveElement2DByName("Close");
