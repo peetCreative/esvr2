@@ -1,0 +1,56 @@
+#Put all the rather unimportend UI stuff here
+# so we don't need to recompile too much
+# when tinkering around with the UI
+interactive_bord:
+  # first we define the general stuff
+  # color always as rgba of 0-1.
+  # width/ height: width and height of the InfoScreen
+  # bg_color: a color for inidicating the InfoScreen is there
+  # or
+  # bg_img: a img showing up for inidicating the InfoScreen is there
+  #         tip, make it transparent in the middle
+  width: 1.28
+  height: 0.72
+#  bg_img:
+  bg_color:
+    - 1.0
+    - 0.0
+    - 1.0
+    - 0.5
+  # a definition must contain the following parameters
+  # id: unique name
+  # uv_x/y: 2el list of upper left uv coordinate 0.0 to 1.0 of the box
+  # uv_size_x/y: 2el list of size in uv of the element box
+  # the following elements are compulsary
+  # text: text to fill the obj
+  # font: font name; but can only use font
+  #       which is defined in media using a .fontdef file
+  # font_size: font_size relative to vertical size
+  # font_size_rel: more convinient relative of the standard font_size
+  # text_color: color of the text
+  # bg_color_hover: color of the bg when hovering
+  # bg_color_active: color of the bg when hovering
+  definitions:
+    - id: Debug
+      uv_x: 0.0
+      uv_y: 0.0
+      uv_size_x: 0.5
+      uv_size_y: 0.3
+    - id: Close
+      text: Close
+      uv_x: 0.5
+      uv_y: 0.0
+      uv_size_x: 0.5
+      uv_size_y: 0.3
+    - id: RawDist
+      text: Raw
+      uv_x: 0.0
+      uv_y: -0.3
+      uv_size_x: 0.5
+      uv_size_y: rest
+    - id: UndistRectDist
+      text: UndistortRect
+      uv_x: -0.5
+      uv_y: -0.3
+      uv_size_x: rest
+      uv_size_y: rest

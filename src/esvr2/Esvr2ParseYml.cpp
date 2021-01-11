@@ -1,6 +1,7 @@
 #include "Esvr2ParseYml.h"
 
 #include "Esvr2.h"
+#include "Esvr2InteractiveElement2DDef.h"
 
 #include <yaml-cpp/yaml.h>
 #include <fstream>
@@ -137,6 +138,132 @@ namespace esvr2 {
         if (i != length)
             return false;
         return true;
+    }
+
+    bool readColorYmlIntern(
+            YAML::Node node, std::vector<float> &color)
+    {
+        if (node.size() == 4)
+        {
+            size_t i = 0;
+            for (YAML::iterator it = node.begin(); it != node.end(); it++)
+            {
+                if (!(*it))
+                    return false;
+                color[i++] = it->as<float>();
+            }
+        }
+        return true;
+    }
+
+    bool readInteractiveElementConfigYmlIntern(
+            YAML::Node node, InteractiveElementConfig& config)
+    {
+        if (YAML::Node param = node["width"])
+            config.width = param.as<float>();
+        if (YAML::Node param = node["height"])
+            config.height = param.as<float>();
+        if (YAML::Node param = node["bg_img"])
+            config.bgImg = param.as<std::string>();
+        if (YAML::Node param = node["bg_color"])
+        {
+            readColorYmlIntern(param, config.bgColor);
+        }
+        if (YAML::Node param = node["definitions"])
+        {
+            for (YAML::iterator it = param.begin(); it != param.end(); it++)
+            {
+                YAML::Node elem = *it;
+                if (!elem)
+                {
+                    LOG << "could not read InteractiveElement" << LOGEND;
+                    continue;
+                }
+                InteractiveElement2DDef def;
+                if (YAML::Node param = elem["id"])
+                    def.id = param.as<std::string>();
+                if (YAML::Node param = elem["uv_x"])
+                {
+                    float uvx = param.as<float>();
+                    def.uvX = uvx >= 0 ? uvx : 1.0 + uvx;
+                }
+                if (YAML::Node param = elem["uv_y"])
+                {
+                    float uvy = param.as<float>();
+                    def.uvY = uvy >= 0 ? uvy : 1.0 + uvy;
+
+                }
+                if (YAML::Node param = elem["uv_size_x"])
+                {
+                    std::string str = param.as<std::string>();
+                    if ( str == "rest")
+                        def.uvSizeX = 1.0 - def.uvX;
+                    else
+                        def.uvSizeX = param.as<float>();
+                }
+                if (YAML::Node param = elem["uv_size_y"])
+                {
+                    std::string str = param.as<std::string>();
+                    if ( str == "rest")
+                        def.uvSizeY = 1.0 - def.uvY;
+                    else
+                        def.uvSizeY = param.as<float>();
+                }
+                if (YAML::Node param = elem["text"])
+                    def.text = param.as<std::string>();
+                if (YAML::Node param = elem["font"])
+                    def.font = param.as<std::string>();
+                if (YAML::Node param = elem["font_size"])
+                    def.fontSize = param.as<float>();
+                if (YAML::Node param = elem["font_size_rel"])
+                    def.fontSize = 0.05f / param.as<float>();
+                if (YAML::Node param = elem["font_color"])
+                {
+                    readColorYmlIntern(param, def.bgHoverColor);
+                }
+                if (YAML::Node param = elem["font_hover"])
+                {
+                    readColorYmlIntern(param, def.bgHoverColor);
+                }
+                if (YAML::Node param = elem["font_active"])
+                {
+                    readColorYmlIntern(param, def.bgActiveColor);
+                }
+                if(!config.findByName(def.id))
+                {
+                    InteractiveElement2DDefPtr defPtr =
+                            std::make_shared<InteractiveElement2DDef>(def);
+                    config.defList.push_back(defPtr);
+                }
+            }
+            return true;
+        }
+        return true;
+    }
+
+    bool readInteractiveElementConfigYml(
+            const std::string& file_name,
+            InteractiveElementConfig& config)
+    {
+        LOG << "file_name:" << file_name << LOGEND;
+        std::ifstream fin(file_name.c_str());
+        if (!fin.good()) {
+            LOG << "Unable to open InteractiveElement2DDef configfile: ["
+                << file_name << "]" << LOGEND;
+            return false;
+        }
+        YAML::Node node = YAML::Load(fin);
+        bool success = false;
+        //TODO: rename to sth consistent
+        if(YAML::Node bordNode = node["interactive_bord"])
+        {
+            success = readInteractiveElementConfigYmlIntern(bordNode, config);
+            if (!success)
+                LOG << "Failed to parse InteractiveElement2DDef configfile from file ["
+                    << file_name << " %s]" << LOGEND;
+
+        }
+        return success;
     }
 
 

@@ -2,16 +2,19 @@
 // Created by peetcreative on 09.01.21.
 //
 #include "Esvr2InteractiveElement2D.h"
+#include "Esvr2InteractiveElement2DDef.h"
+
+#include "OgreVector2.h"
 
 namespace esvr2
 {
     InteractiveElement2D::InteractiveElement2D(
-            InteractiveElement2DDef def,
+            InteractiveElement2DDefPtr def,
             const boost::function<void()> &togglecb,
             const boost::function<void(Ogre::uint64)> &holdcb) :
     mToggleCallback(togglecb),
     mHoldCallback(holdcb),
-    mDefinition(def) {};
+    mDefinitionPtr(def) {};
 
     //TODO: add visual effects like changing the color
     void InteractiveElement2D::activateToggle() {
@@ -32,9 +35,10 @@ namespace esvr2
 
     bool InteractiveElement2D::isUVinside(Ogre::Vector2 uv)
     {
-        Ogre::Vector2 a = uv - mDefinition.uv;
-        return 0 <= a.x && a.x <= mDefinition.size.x &&
-                0 <= a.y && a.y <= mDefinition.size.y;
+        Ogre::Vector2 defUv(mDefinitionPtr->uvX, mDefinitionPtr->uvY);
+        Ogre::Vector2 a = uv - defUv;
+        return 0 <= a.x && a.x <= mDefinitionPtr->uvSizeX &&
+                0 <= a.y && a.y <= mDefinitionPtr->uvSizeY;
     }
 
 

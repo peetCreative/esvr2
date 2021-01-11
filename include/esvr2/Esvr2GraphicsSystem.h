@@ -4,6 +4,7 @@
 #include "Esvr2.h"
 #include "Esvr2VideoLoader.h"
 #include "Esvr2PoseState.h"
+#include "Esvr2InteractiveElement2DDef.h"
 
 #include "Ogre.h"
 #include "OgreSceneNode.h"
@@ -94,6 +95,7 @@ namespace esvr2
         SDL_Window *mSdlWindow;
 
         //Class Variables
+        InteractiveElementConfig mInteractiveElementConfig;
         bool mQuit;
         size_t mEyeNum;
         bool mShowVideo;

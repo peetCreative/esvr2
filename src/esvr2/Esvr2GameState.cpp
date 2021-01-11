@@ -72,6 +72,7 @@ namespace esvr2
             mDisplayHelpMode(true),
             mDebugText(),
             mHelpDescription(""),
+            mInteractiveElement2DList(),
             mViewingDirectionIndicator(nullptr),
             mWantRelative(false),
             mWantMouseVisible(true),
@@ -442,36 +443,53 @@ namespace esvr2
     {
         addViewDirectionIndicator();
 
-        InteractiveElement2DDef debugElementDef =
-                {
-                        "Debug",
-                        "Debug",
-                        Ogre::Vector2(0.0, 0.0),
-                        Ogre::Vector2(0.5, 0.3),
-                        0.05f
-                };
-        InteractiveElement2DPtr debugElement = std::make_shared<InteractiveElement2D>(
-                debugElementDef,
-                (boost::function<void ()>) 0,
-                (boost::function<void (Ogre::uint64)>) 0);
-        addInteractiveElement2D(debugElement);
 
+        InteractiveElementConfig config =
+                mGraphicsSystem->mInteractiveElementConfig;
 
-        InteractiveElement2DDef elementDef =
-                {
-                        "Close",
-                        "Close",
-                        Ogre::Vector2(0.5, 0.0),
-                        Ogre::Vector2(0.5, 0.3)
-                };
+        InteractiveElement2DDefPtr debugElementDefPtr =
+            config.findByName("Debug");
+        if (debugElementDefPtr)
+        {
+            InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
+                    debugElementDefPtr,
+                    (boost::function<void ()>) 0,
+                    (boost::function<void (Ogre::uint64)>) 0);
+            addInteractiveElement2D(element);
+        }
 
-        InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
-                elementDef,
-                boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
-                (boost::function<void (Ogre::uint64)>) 0);
+        InteractiveElement2DDefPtr closeDefPtr =
+            mGraphicsSystem->mInteractiveElementConfig.findByName("Close");
+        if (closeDefPtr)
+        {
+            InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
+                    closeDefPtr,
+                    boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
+                    (boost::function<void(Ogre::uint64)>) 0);
+            addInteractiveElement2D(element);
+        }
 
-        addInteractiveElement2D(element);
-        // create ui elements
+        InteractiveElement2DDefPtr RawDistDefPtr =
+            mGraphicsSystem->mInteractiveElementConfig.findByName("RawDist");
+        if (RawDistDefPtr)
+        {
+            InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
+                    RawDistDefPtr,
+                    boost::bind(&GameState::setDistortion, this, DIST_RAW),
+                    (boost::function<void(Ogre::uint64)>) 0);
+            addInteractiveElement2D(element);
+        }
+
+        InteractiveElement2DDefPtr UndistRectDistDefPtr =
+            mGraphicsSystem->mInteractiveElementConfig.findByName("UndistRectDist");
+        if (UndistRectDistDefPtr)
+        {
+            InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
+                    UndistRectDistDefPtr,
+                    boost::bind(&GameState::setDistortion, this, DIST_UNDISTORT_RECTIFY),
+                    (boost::function<void(Ogre::uint64)>) 0);
+            addInteractiveElement2D(element);
+        }
     }
 
     void GameState::addViewDirectionIndicator()
@@ -495,8 +513,8 @@ namespace esvr2
 
     void GameState::addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D)
     {
-        InteractiveElement2DDef def = interactiveElement2D->mDefinition;
-        Ogre::String overlayId = def.id;
+        InteractiveElement2DDefPtr def = interactiveElement2D->mDefinitionPtr;
+        Ogre::String overlayId = def->id;
         Ogre::v1::OverlayManager &overlayManager =
                 Ogre::v1::OverlayManager::getSingleton();
         Ogre::v1::Overlay *overlay = overlayManager.create( overlayId );
@@ -508,9 +526,9 @@ namespace esvr2
 //        Ogre::v1::OverlayContainer *panel = dynamic_cast<Ogre::v1::OverlayContainer*>(
 //                overlayManager.createOverlayElement("Panel", panelId));
         panel->setPosition(
-                def.uv.x, def.uv.y );
-        panel->setWidth(def.size.x);
-        panel->setHeight(def.size.y);
+                def->uvX, def->uvY );
+        panel->setWidth(def->uvSizeX);
+        panel->setHeight(def->uvSizeY);
         panel->setBorderSize(0.001f);
         panel->setMaterialName("TransparentRed");
         panel->setBorderMaterialName("White");
@@ -519,8 +537,8 @@ namespace esvr2
         Ogre::String textAreaId = overlayId + "TextArea";
         Ogre::v1::TextAreaOverlayElement *textArea = static_cast<Ogre::v1::TextAreaOverlayElement*>(
                 overlayManager.createOverlayElement( "TextArea", textAreaId ) );
-        textArea->setFontName(def.font );
-        textArea->setCharHeight(def.fontSize );
+        textArea->setFontName(def->font );
+        textArea->setCharHeight(def->fontSize );
         textArea->setColour(Ogre::ColourValue::White );
 //        textArea->setPosition(0.0f, 0.0f );
         interactiveElement2D->mTextArea = textArea;
@@ -528,8 +546,8 @@ namespace esvr2
         Ogre::String textAreaShadowId = overlayId + "TextAreaShadow";
         Ogre::v1::TextAreaOverlayElement *textAreaShadow = dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
                 overlayManager.createOverlayElement( "TextArea", textAreaShadowId ) );
-        textAreaShadow->setFontName(def.font );
-        textAreaShadow->setCharHeight(def.fontSize );
+        textAreaShadow->setFontName(def->font );
+        textAreaShadow->setCharHeight(def->fontSize );
         textAreaShadow->setColour(Ogre::ColourValue::Black );
 //        textFieldShadow->setMaterialName("White");
         textAreaShadow->setPosition(0.002f, 0.002f );
@@ -540,8 +558,8 @@ namespace esvr2
         overlay->add2D( panel );
         overlay->setRenderQueueGroup(253);
         overlay->show();
-        textAreaShadow->setCaption(def.text);
-        textArea->setCaption(def.text);
+        textAreaShadow->setCaption(def->text);
+        textArea->setCaption(def->text);
 
         mInteractiveElement2DList.push_back( interactiveElement2D );
     }
@@ -770,7 +788,8 @@ namespace esvr2
 
         InteractiveElement2DPtr interactiveDebug =
                 findInteractiveElement2DByName("Debug");
-        interactiveDebug->setText(finalText);
+        if (interactiveDebug)
+            interactiveDebug->setText(finalText);
     }
 
     void GameState::updateLaparoscopePoseFromPoseState()
@@ -1095,6 +1114,28 @@ namespace esvr2
         }
     }
 
+    bool GameState::setDistortion(Distortion dist)
+    {
+        mEsvr2->mVideoLoader->setDistortion(dist);
+        Ogre::uint32 setMask = 0x0;
+        Ogre::uint32 unsetMask = 0x0;
+        if (dist == DIST_UNDISTORT_RECTIFY)
+        {
+            setMask = 0x40 | 0x80;
+            unsetMask = 0x10 | 0x20;
+        }
+        else
+        {
+            setMask = 0x10 | 0x20;
+            unsetMask = 0x40 | 0x80;
+        }
+        Ogre::SceneManager *sceneManager = mGraphicsSystem->mVRSceneManager;
+        Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask( );
+        visibilityMask |= setMask;
+        visibilityMask &= ~unsetMask;
+        sceneManager->setVisibilityMask( visibilityMask );
+    }
+
     void GameState::updateVRCamerasNode(void)
     {
         mVRCamerasNode->_getFullTransformUpdated();
@@ -1126,7 +1167,8 @@ namespace esvr2
             {
                 InteractiveElement2DPtr interactiveDebug =
                         findInteractiveElement2DByName("Debug");
-                interactiveDebug->setText(mDebugText);
+                if (interactiveDebug)
+                    interactiveDebug->setText(mDebugText);
             }
             else
             {
@@ -1135,11 +1177,13 @@ namespace esvr2
                 generateDebugText( microSecsSinceLast, finalText );
                 InteractiveElement2DPtr interactiveDebug =
                         findInteractiveElement2DByName("Debug");
-                interactiveDebug->setText(finalText);
+                if (interactiveDebug)
+                    interactiveDebug->setText(finalText);
             }
         }
-        InteractiveElement2DPtr bla = findInteractiveElement2DByName("Close");
-        bla->setText("Close");
+        InteractiveElement2DPtr closeElement = findInteractiveElement2DByName("Close");
+        if (closeElement)
+            closeElement->setText("Close");
         if (mUIStatus == UIS_ACTIVATE)
         {
             holdUI(microSecsSinceLast);
@@ -1153,7 +1197,7 @@ namespace esvr2
                 mInteractiveElement2DList.begin(),
                 mInteractiveElement2DList.end(),
                 [&id](const InteractiveElement2DPtr& obj)
-                    {return obj->mDefinition.id == id;});
+                    {return obj->mDefinitionPtr->id == id;});
         return it != mInteractiveElement2DList.end() ? *it : nullptr;
     }
 

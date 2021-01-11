@@ -13,3 +13,6 @@ FileSystem=@OGRE_MEDIA_DIR@/2.0/scripts/materials/Common/Metal
 # the Hlms templates are located
 [Hlms]
 DoNotUseAsResource=@OGRE_MEDIA_DIR@
+
+[Custom]
+Yaml=@ESVR2_MEDIA_DIR@/InteractiveElementsDef.yaml

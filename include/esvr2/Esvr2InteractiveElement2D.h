@@ -5,6 +5,8 @@
 #ifndef ESVR2_INTERACTIVEELEMENT2D_H
 #define ESVR2_INTERACTIVEELEMENT2D_H
 
+#include "Esvr2InteractiveElement2DDef.h"
+
 #include <OgrePanelOverlayElement.h>
 #include <boost/function.hpp>
 #include <OgreBorderPanelOverlayElement.h>
@@ -14,15 +16,6 @@
 
 namespace esvr2
 {
-    struct InteractiveElement2DDef {
-        Ogre::String id;
-        Ogre::String text;
-        Ogre::Vector2 uv;
-        Ogre::Vector2 size;
-        Ogre::Real fontSize = 0.1f;
-        Ogre::String font = "FreeSans";
-    };
-
     class InteractiveElement2D {
     private:
         const boost::function<void(void)> mToggleCallback;
@@ -32,10 +25,10 @@ namespace esvr2
         Ogre::v1::BorderPanelOverlayElement *mBorderPanel = nullptr;
         Ogre::v1::TextAreaOverlayElement *mTextArea = nullptr;
         Ogre::v1::TextAreaOverlayElement *mTextAreaShadow = nullptr;
-        InteractiveElement2DDef mDefinition;
+        InteractiveElement2DDefPtr mDefinitionPtr;
 
 
-        InteractiveElement2D(InteractiveElement2DDef def,
+        InteractiveElement2D(InteractiveElement2DDefPtr def,
                              const boost::function<void()> &togglecb,
                              const boost::function<void(Ogre::uint64)> &holdcb);
 

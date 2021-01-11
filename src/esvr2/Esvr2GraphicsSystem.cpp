@@ -3,6 +3,7 @@
 #include "Esvr2.h"
 #include "Esvr2GameState.h"
 #include "Esvr2OpenVRCompositorListener.h"
+#include "Esvr2ParseYml.h"
 #include "Esvr2Helper.h"
 
 #include "Ogre.h"
@@ -73,6 +74,7 @@ namespace esvr2
             mDebugCamera(nullptr),
             mDebugCameraNode(nullptr),
             mSdlWindow(nullptr),
+            mInteractiveElementConfig(),
             mQuit(false),
             mShowVideo(true),
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
@@ -103,13 +105,18 @@ namespace esvr2
             secName = seci.peekNextKey();
             Ogre::ConfigFile::SettingsMultiMap *settings = seci.getNext();
 
-            if( secName != "Hlms" )
+            Ogre::ConfigFile::SettingsMultiMap::iterator i;
+            for (i = settings->begin(); i != settings->end(); ++i)
             {
-                Ogre::ConfigFile::SettingsMultiMap::iterator i;
-                for (i = settings->begin(); i != settings->end(); ++i)
+                typeName = i->first;
+                archName = i->second;
+                if (secName == "Custom")
                 {
-                    typeName = i->first;
-                    archName = i->second;
+                    readInteractiveElementConfigYml(
+                            archName, mInteractiveElementConfig);
+                }
+                else if( secName != "Hlms" )
+                {
                     Ogre::ResourceGroupManager::getSingleton().addResourceLocation(
                             archName, typeName, secName);
                 }

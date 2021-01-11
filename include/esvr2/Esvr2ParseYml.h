@@ -2,10 +2,8 @@
 #define _Esvr2_Parse_Yml_H
 
 #include "Esvr2.h"
-
+#include "Esvr2InteractiveElement2DDef.h"
 #include <string>
-#include <istream>
-#include <ostream>
 
 namespace esvr2 {
 
@@ -18,6 +16,9 @@ namespace esvr2 {
  */
 bool readCalibrationYml(const std::string& file_name, std::string& camera_name,
                         CameraConfig& cam_info);
+bool readInteractiveElementConfigYml(
+        const std::string& file_name,
+        InteractiveElementConfig& config);
 bool readConfigYml(const std::string& file_name,
                    std::shared_ptr<Esvr2Config> config,
                    std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig = nullptr);

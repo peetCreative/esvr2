@@ -5,6 +5,7 @@
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2PointCloud.h"
 #include "Esvr2InteractiveElement2D.h"
+#include "Esvr2InteractiveElement2DDef.h"
 
 #include "OgrePrerequisites.h"
 
@@ -117,8 +118,11 @@ namespace esvr2
         void generateDebugText(
                 Ogre::uint64 microSecsSinceLast, Ogre::String &outText );
 
-        void holdUI(Ogre::uint64 timeSinceLast);
         void toggleUI();
+        void holdUI(Ogre::uint64 timeSinceLast);
+
+        bool setDistortion(Distortion dist);
+
 
         void createVRCamerasNodes();
         void createLaparoscopeCameraNodes();
