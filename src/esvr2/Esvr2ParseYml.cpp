@@ -141,18 +141,86 @@ namespace esvr2 {
     }
 
     bool readColorYmlIntern(
-            YAML::Node node, std::vector<float> &color)
+            YAML::Node node, std::vector<float> &colorVal,
+            ColorDefList &colorDefList)
     {
-        if (node.size() == 4)
+        ColorDef colorDef;
+        if (node.Type() == YAML::NodeType::Map)
         {
-            size_t i = 0;
-            for (YAML::iterator it = node.begin(); it != node.end(); it++)
+            if (YAML::Node param = node["r"])
+                colorDef.color[INDEX_RED] = param.as<float>();
+            if (YAML::Node param = node["g"])
+                colorDef.color[INDEX_GREEN] = param.as<float>();
+            if (YAML::Node param = node["b"])
+                colorDef.color[INDEX_BLUE] = param.as<float>();
+            if (YAML::Node param = node["a"])
+                colorDef.color[INDEX_ALPHA] = param.as<float>();
+        }
+        else if(node.Type() == YAML::NodeType::Sequence)
+        {
+            if (node.size() == 4)
             {
-                if (!(*it))
-                    return false;
-                color[i++] = it->as<float>();
+                size_t i = 0;
+                for (YAML::iterator it = node.begin(); it != node.end(); it++)
+                {
+                    if (!(*it))
+                        return false;
+                    colorDef.color[i++] = it->as<float>();
+                }
             }
         }
+        else if(node.Type() == YAML::NodeType::Scalar)
+        {
+            std::string str = node.as<std::string>();
+            if (str.rfind("Color", 0))
+            {
+                colorDef.name = str;
+            }
+            else if(str.rfind("Hex", 0))
+            {
+//                TODO: create color
+            }
+            else if(str == "None")
+            {
+                colorVal = {0, 0, 0, 0};
+                return true;
+            }
+        }
+//        auto it = find_if(
+//                colorDefList.begin(),
+//                colorDefList.end(),
+//                [&colorDef](const ColorDef& obj)
+//                {return obj.name == colorDef.name ||
+//                        (obj.color[INDEX_RED] == colorDef.color[INDEX_RED] &&
+//                                obj.color[INDEX_GREEN] == colorDef.color[INDEX_GREEN] &&
+//                                obj.color[INDEX_BLUE] == colorDef.color[INDEX_BLUE] &&
+//                                obj.color[INDEX_ALPHA] == colorDef.color[INDEX_ALPHA]);});
+        std::string nameInList = "";
+        for (auto it = colorDefList.begin(); it != colorDefList.end(); it++)
+        {
+            if (it->name == colorDef.name ||
+                (it->color[INDEX_RED] == colorDef.color[INDEX_RED] &&
+                 it->color[INDEX_GREEN] == colorDef.color[INDEX_GREEN] &&
+                 it->color[INDEX_BLUE] == colorDef.color[INDEX_BLUE] &&
+                 it->color[INDEX_ALPHA] == colorDef.color[INDEX_ALPHA]))
+            {
+                nameInList = it->name;
+                break;
+            }
+        }
+        if (nameInList == "")
+        {
+            std::stringstream ss;
+            ss << "ColorHex" << std::hex;
+            for (int i = 0; i < 4; i++)
+            {
+                int colorVal = static_cast<int>(255 * colorDef.color[i]);
+                ss << colorVal;
+            }
+            colorDef.name = ss.str();
+            colorDefList.push_back(colorDef);
+        }
+        colorVal = colorDef.color;
         return true;
     }
 
@@ -167,7 +235,7 @@ namespace esvr2 {
             config.bgImg = param.as<std::string>();
         if (YAML::Node param = node["bg_color"])
         {
-            readColorYmlIntern(param, config.bgColor);
+            readColorYmlIntern(param, config.bgColor, config.colorDefList);
         }
         if (YAML::Node param = node["definitions"])
         {
@@ -219,15 +287,21 @@ namespace esvr2 {
                     def.fontSize = 0.05f / param.as<float>();
                 if (YAML::Node param = elem["font_color"])
                 {
-                    readColorYmlIntern(param, def.bgHoverColor);
+                    readColorYmlIntern(param, def.fontColor, config.colorDefList);
                 }
-                if (YAML::Node param = elem["font_hover"])
+                if (YAML::Node param = elem["always_visible"])
+                    def.alwaysVisible = param.as<bool>();
+                if (YAML::Node param = elem["bg_color"])
                 {
-                    readColorYmlIntern(param, def.bgHoverColor);
+                    readColorYmlIntern(param, def.bgColor, config.colorDefList);
                 }
-                if (YAML::Node param = elem["font_active"])
+                if (YAML::Node param = elem["bg_color_hover"])
                 {
-                    readColorYmlIntern(param, def.bgActiveColor);
+                    readColorYmlIntern(param, def.bgHoverColor, config.colorDefList);
+                }
+                if (YAML::Node param = elem["bg_color_active"])
+                {
+                    readColorYmlIntern(param, def.bgActiveColor, config.colorDefList);
                 }
                 if(!config.findByName(def.id))
                 {

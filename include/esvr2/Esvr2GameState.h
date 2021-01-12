@@ -23,12 +23,6 @@ namespace esvr2
         MM_TRANSLATION
     } MouseManipulationType;
 
-    typedef enum {
-        UIS_NONE,
-        UIS_HOVER,
-        UIS_ACTIVATE
-    } UIStatusType;
-
     class GameState
     {
     friend GraphicsSystem;
@@ -73,7 +67,9 @@ namespace esvr2
 
         const Ogre::Vector2      mInfoScreenDim = Ogre::Vector2(1.28f, 0.72f);
         bool                     mIntersectsInfoScreen;
-        UIStatusType             mUIStatus;
+//        UIStatusType             mUIStatus;
+        bool                     mIsUIVisible;
+        bool                     mUIActive;
         Ogre::Vector2            mInfoScreenUV;
         bool                     mIsStereo;
         size_t                   mEyeNum;
@@ -118,6 +114,7 @@ namespace esvr2
         void generateDebugText(
                 Ogre::uint64 microSecsSinceLast, Ogre::String &outText );
 
+        void updateOverlayElements();
         void toggleUI();
         void holdUI(Ogre::uint64 timeSinceLast);
 

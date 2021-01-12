@@ -7,36 +7,48 @@
 
 #include "Esvr2InteractiveElement2DDef.h"
 
-#include <OgrePanelOverlayElement.h>
-#include <boost/function.hpp>
-#include <OgreBorderPanelOverlayElement.h>
+#include "OgreHlmsUnlitDatablock.h"
+#include "Overlay/OgreOverlay.h"
+#include "Overlay/OgreBorderPanelOverlayElement.h"
 #include "Overlay/OgreTextAreaOverlayElement.h"
 
+#include <boost/function.hpp>
 #include <memory>
 
 namespace esvr2
 {
+    typedef enum {
+        UIS_NONE,
+        UIS_VISIBLE,
+        UIS_HOVER,
+        UIS_ACTIVATE
+    } UIStatusType;
+
     class InteractiveElement2D {
     private:
         const boost::function<void(void)> mToggleCallback;
         const boost::function<void(Ogre::uint64)> mHoldCallback;
-    public:
+
         Ogre::v1::Overlay *mOverlay = nullptr;
+        Ogre::HlmsUnlitDatablock *mDatablock = nullptr;
         Ogre::v1::BorderPanelOverlayElement *mBorderPanel = nullptr;
         Ogre::v1::TextAreaOverlayElement *mTextArea = nullptr;
         Ogre::v1::TextAreaOverlayElement *mTextAreaShadow = nullptr;
         InteractiveElement2DDefPtr mDefinitionPtr;
-
+    public:
 
         InteractiveElement2D(InteractiveElement2DDefPtr def,
                              const boost::function<void()> &togglecb,
-                             const boost::function<void(Ogre::uint64)> &holdcb);
+                             const boost::function<void(Ogre::uint64)> &holdcb,
+                             Ogre::HlmsUnlit *hlmsUnlit);
 
         void activateToggle();
         void activateHold(Ogre::uint64);
         bool isOverlaySetup();
         bool isUVinside(Ogre::Vector2 uv);
+        Ogre::String getId();
         bool setText(Ogre::String text);
+        void setUIState(UIStatusType uiStatusType);
     };
 
     typedef std::shared_ptr <InteractiveElement2D> InteractiveElement2DPtr;

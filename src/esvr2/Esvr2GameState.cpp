@@ -49,7 +49,9 @@ namespace esvr2
             mLaparoscopeSceneNodeTooltips( nullptr ),
             mInfoScreenSceneNode(nullptr),
             mIntersectsInfoScreen(false),
-            mUIStatus(UIS_NONE),
+//            mUIStatus(UIS_NONE),
+            mIsUIVisible(false),
+            mUIActive(false),
             mInfoScreenUV( 0, 0 ),
             mIsStereo( esvr2->mConfig->isStereo ),
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
@@ -288,7 +290,7 @@ namespace esvr2
                 sceneManager->createManualObject();
         Ogre::Real diam = 0.1f;
         Ogre::Real len = 1.0f;
-        axis->begin("Red", Ogre::OT_TRIANGLE_LIST);
+        axis->begin("ColorRed", Ogre::OT_TRIANGLE_LIST);
         axis->position( 0.0f, diam, 0.0f );
         axis->position( 0.0f, -diam, 0.0f );
         axis->position( len, -diam, 0.0f );
@@ -302,7 +304,7 @@ namespace esvr2
         axis->quad(4, 5, 6, 7);
         axis->quad(7, 6, 5, 4);
         axis->end();
-        axis->begin("Green", Ogre::OT_TRIANGLE_LIST);
+        axis->begin("ColorGreen", Ogre::OT_TRIANGLE_LIST);
         axis->position(  diam, 0.0f, 0.0f );
         axis->position( -diam, 0.0f, 0.0f );
         axis->position( -diam, len, 0.0f );
@@ -316,7 +318,7 @@ namespace esvr2
         axis->quad(4, 5, 6, 7);
         axis->quad(7, 6, 5, 4);
         axis->end();
-        axis->begin("Blue", Ogre::OT_TRIANGLE_LIST);
+        axis->begin("ColorBlue", Ogre::OT_TRIANGLE_LIST);
         axis->position(  diam, 0.0f, 0.0f );
         axis->position( -diam, 0.0f, 0.0f );
         axis->position( -diam, 0.0f, len);
@@ -443,6 +445,9 @@ namespace esvr2
     {
         addViewDirectionIndicator();
 
+        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
+        Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
+                hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
 
         InteractiveElementConfig config =
                 mGraphicsSystem->mInteractiveElementConfig;
@@ -454,7 +459,8 @@ namespace esvr2
             InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
                     debugElementDefPtr,
                     (boost::function<void ()>) 0,
-                    (boost::function<void (Ogre::uint64)>) 0);
+                    (boost::function<void (Ogre::uint64)>) 0,
+                    hlmsUnlit);
             addInteractiveElement2D(element);
         }
 
@@ -465,7 +471,8 @@ namespace esvr2
             InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
                     closeDefPtr,
                     boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
-                    (boost::function<void(Ogre::uint64)>) 0);
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    hlmsUnlit);
             addInteractiveElement2D(element);
         }
 
@@ -476,7 +483,8 @@ namespace esvr2
             InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
                     RawDistDefPtr,
                     boost::bind(&GameState::setDistortion, this, DIST_RAW),
-                    (boost::function<void(Ogre::uint64)>) 0);
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    hlmsUnlit);
             addInteractiveElement2D(element);
         }
 
@@ -487,7 +495,8 @@ namespace esvr2
             InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
                     UndistRectDistDefPtr,
                     boost::bind(&GameState::setDistortion, this, DIST_UNDISTORT_RECTIFY),
-                    (boost::function<void(Ogre::uint64)>) 0);
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    hlmsUnlit);
             addInteractiveElement2D(element);
         }
     }
@@ -504,7 +513,7 @@ namespace esvr2
         mViewingDirectionIndicator->setPosition( 0.5, 0.5 );
         mViewingDirectionIndicator->setHeight(0.01);
         mViewingDirectionIndicator->setWidth(0.01);
-        mViewingDirectionIndicator->setMaterialName("TransparentRed");
+        mViewingDirectionIndicator->setMaterialName("ColorRedTransparent");
         overlayViewDirectionIndicator->add2D(mViewingDirectionIndicator);
         overlayViewDirectionIndicator->setRenderQueueGroup(254);
         overlayViewDirectionIndicator->show();
@@ -513,53 +522,6 @@ namespace esvr2
 
     void GameState::addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D)
     {
-        InteractiveElement2DDefPtr def = interactiveElement2D->mDefinitionPtr;
-        Ogre::String overlayId = def->id;
-        Ogre::v1::OverlayManager &overlayManager =
-                Ogre::v1::OverlayManager::getSingleton();
-        Ogre::v1::Overlay *overlay = overlayManager.create( overlayId );
-        interactiveElement2D->mOverlay = overlay;
-
-        Ogre::String panelId = overlayId + "Panel";
-        Ogre::v1::BorderPanelOverlayElement *panel = dynamic_cast<Ogre::v1::BorderPanelOverlayElement*>(
-                overlayManager.createOverlayElement("BorderPanel", panelId));
-//        Ogre::v1::OverlayContainer *panel = dynamic_cast<Ogre::v1::OverlayContainer*>(
-//                overlayManager.createOverlayElement("Panel", panelId));
-        panel->setPosition(
-                def->uvX, def->uvY );
-        panel->setWidth(def->uvSizeX);
-        panel->setHeight(def->uvSizeY);
-        panel->setBorderSize(0.001f);
-        panel->setMaterialName("TransparentRed");
-        panel->setBorderMaterialName("White");
-        interactiveElement2D->mBorderPanel = panel;
-
-        Ogre::String textAreaId = overlayId + "TextArea";
-        Ogre::v1::TextAreaOverlayElement *textArea = static_cast<Ogre::v1::TextAreaOverlayElement*>(
-                overlayManager.createOverlayElement( "TextArea", textAreaId ) );
-        textArea->setFontName(def->font );
-        textArea->setCharHeight(def->fontSize );
-        textArea->setColour(Ogre::ColourValue::White );
-//        textArea->setPosition(0.0f, 0.0f );
-        interactiveElement2D->mTextArea = textArea;
-
-        Ogre::String textAreaShadowId = overlayId + "TextAreaShadow";
-        Ogre::v1::TextAreaOverlayElement *textAreaShadow = dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
-                overlayManager.createOverlayElement( "TextArea", textAreaShadowId ) );
-        textAreaShadow->setFontName(def->font );
-        textAreaShadow->setCharHeight(def->fontSize );
-        textAreaShadow->setColour(Ogre::ColourValue::Black );
-//        textFieldShadow->setMaterialName("White");
-        textAreaShadow->setPosition(0.002f, 0.002f );
-        interactiveElement2D->mTextAreaShadow = textAreaShadow;
-
-        panel->addChild(textAreaShadow );
-        panel->addChild(textArea );
-        overlay->add2D( panel );
-        overlay->setRenderQueueGroup(253);
-        overlay->show();
-        textAreaShadow->setCaption(def->text);
-        textArea->setCaption(def->text);
 
         mInteractiveElement2DList.push_back( interactiveElement2D );
     }
@@ -571,58 +533,31 @@ namespace esvr2
         Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
                 hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
 
-        Ogre::HlmsUnlitDatablock* colourdatablock =
-        dynamic_cast<Ogre::HlmsUnlitDatablock*>(
-                        hlmsUnlit->createDatablock(
-                                "Red",
-                                "Red",
-                                Ogre::HlmsMacroblock(),
-                                Ogre::HlmsBlendblock(),
-                                Ogre::HlmsParamVec() ) );
-        colourdatablock->setUseColour(true);
-        colourdatablock->setColour( Ogre::ColourValue(1,0,0,1));
-        colourdatablock =
-                dynamic_cast<Ogre::HlmsUnlitDatablock*>(
-                        hlmsUnlit->createDatablock(
-                                "Green",
-                                "Green",
-                                Ogre::HlmsMacroblock(),
-                                Ogre::HlmsBlendblock(),
-                                Ogre::HlmsParamVec() ) );
-        colourdatablock->setUseColour(true);
-        colourdatablock->setColour( Ogre::ColourValue(0,1,0,1));
-        colourdatablock =
-                dynamic_cast<Ogre::HlmsUnlitDatablock*>(
-                        hlmsUnlit->createDatablock(
-                                "Blue",
-                                "Blue",
-                                Ogre::HlmsMacroblock(),
-                                Ogre::HlmsBlendblock(),
-                                Ogre::HlmsParamVec() ) );
-        colourdatablock->setUseColour(true);
-        colourdatablock->setColour( Ogre::ColourValue(0,0,1,1));
-        colourdatablock =
-                dynamic_cast<Ogre::HlmsUnlitDatablock*>(
-                        hlmsUnlit->createDatablock(
-                                "White",
-                                "White",
-                                Ogre::HlmsMacroblock(),
-                                Ogre::HlmsBlendblock(),
-                                Ogre::HlmsParamVec() ) );
-        colourdatablock->setUseColour(true);
-        colourdatablock->setColour( Ogre::ColourValue(1,1,1,1));
-        Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
-        blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
-        colourdatablock =
-                dynamic_cast<Ogre::HlmsUnlitDatablock*>(
-                        hlmsUnlit->createDatablock(
-                                "TransparentRed",
-                                "TransparentRed",
-                                Ogre::HlmsMacroblock(),
-                                blendBlock,
-                                Ogre::HlmsParamVec() ) );
-        colourdatablock->setUseColour(true);
-        colourdatablock->setColour( Ogre::ColourValue(1, 0, 0,0.7));
+        InteractiveElementConfig config =
+                mGraphicsSystem->mInteractiveElementConfig;
+
+        for(auto it = config.colorDefList.begin();
+                it != config.colorDefList.end(); it++)
+        {
+            ColorDef def = *it;
+            Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
+            if (def.color[INDEX_ALPHA] < 1.0)
+            {
+                blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
+            }
+            Ogre::HlmsUnlitDatablock* colourdatablock =
+            dynamic_cast<Ogre::HlmsUnlitDatablock*>(
+                            hlmsUnlit->createDatablock(
+                                    def.name,
+                                    def.name,
+                                    Ogre::HlmsMacroblock(),
+                                    blendBlock,
+                                    Ogre::HlmsParamVec() ) );
+            colourdatablock->setUseColour(true);
+            colourdatablock->setColour( Ogre::ColourValue(
+                    def.color[INDEX_RED],def.color[INDEX_GREEN],
+                    def.color[INDEX_GREEN],def.color[INDEX_ALPHA]));
+        }
 
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
@@ -637,6 +572,8 @@ namespace esvr2
             mVideoDatablock[eye]->setTexture( 0, mTextureName[eye] );
         }
 
+        Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
+        blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
         Ogre::String infoScreenDatablockName = "InfoScreenDatablock";
         mInfoScreenDatablock = dynamic_cast<Ogre::HlmsUnlitDatablock*>(
                 hlmsUnlit->createDatablock(
@@ -982,9 +919,19 @@ namespace esvr2
     bool GameState::keyPressed( const SDL_KeyboardEvent &arg )
     {
         bool succ = false;
-        if( arg.keysym.scancode == SDL_SCANCODE_N )
+        if ( arg.keysym.scancode == SDL_SCANCODE_M )
         {
-            mUIStatus = UIS_ACTIVATE;
+            mIsUIVisible = true;
+            updateOverlayElements();
+            succ = true;
+        }
+        if( arg.keysym.scancode == SDL_SCANCODE_N && mIsUIVisible )
+        {
+            toggleUI();
+            mUIActive = true;
+            updateOverlayElements();
+
+//            mUIStatus = UIS_ACTIVATE;
             succ = true;
         }
         return succ;
@@ -1083,13 +1030,35 @@ namespace esvr2
             mGraphicsSystem->toggleShowVideo();
             succ = true;
         }
+        if( arg.keysym.scancode == SDL_SCANCODE_M )
+        {
+            mIsUIVisible = false;
+            updateOverlayElements();
+        }
         if( arg.keysym.scancode == SDL_SCANCODE_N )
         {
-            toggleUI();
-            mUIStatus = UIS_NONE;
+            mUIActive = false;
+            updateOverlayElements();
+//            mUIStatus = UIS_NONE;
             succ = true;
         }
         return succ;
+    }
+
+    void GameState::updateOverlayElements()
+    {
+        for (auto it = mInteractiveElement2DList.begin();
+                it != mInteractiveElement2DList.end();
+                it++)
+        {
+            InteractiveElement2DPtr elem = *it;
+            if (mUIActive)
+                elem->setUIState(UIS_ACTIVATE);
+            else if (mIsUIVisible)
+                elem->setUIState(UIS_VISIBLE);
+            else
+                elem->setUIState(UIS_NONE);
+        }
     }
 
     void GameState::toggleUI()
@@ -1181,12 +1150,16 @@ namespace esvr2
                     interactiveDebug->setText(finalText);
             }
         }
-        InteractiveElement2DPtr closeElement = findInteractiveElement2DByName("Close");
-        if (closeElement)
-            closeElement->setText("Close");
-        if (mUIStatus == UIS_ACTIVATE)
+        if (mUIActive)
         {
             holdUI(microSecsSinceLast);
+        }
+        else if (mIsUIVisible)
+        {
+            InteractiveElement2DPtr elem =
+                    findInteractiveElement2DByUV(mInfoScreenUV);
+            if (elem)
+                elem->setUIState(UIS_HOVER);
         }
     }
 
@@ -1197,7 +1170,7 @@ namespace esvr2
                 mInteractiveElement2DList.begin(),
                 mInteractiveElement2DList.end(),
                 [&id](const InteractiveElement2DPtr& obj)
-                    {return obj->mDefinitionPtr->id == id;});
+                    {return obj->getId() == id;});
         return it != mInteractiveElement2DList.end() ? *it : nullptr;
     }
 
