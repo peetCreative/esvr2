@@ -136,32 +136,30 @@ namespace esvr2
         return true;
     }
 
-    void InteractiveElement2D::setUIState(UIStatusType uiStatusType)
+    void InteractiveElement2D::setUIState(UIStatusType uiStatusType, bool hover)
     {
 
-        Ogre::ColourValue color;
         bool show = true;
-        switch (uiStatusType)
-        {
+        Ogre::ColourValue color;
+        switch (uiStatusType) {
+        case UIS_ACTIVATE:
+            color = vectorToColourValue(hover?
+                    mDefinitionPtr->bgActiveColor:
+                    mDefinitionPtr->bgColor);
+            break;
+        case UIS_VISIBLE:
+            color = vectorToColourValue(hover?
+                    mDefinitionPtr->bgHoverColor:
+                    mDefinitionPtr->bgColor);
+            break;
         case UIS_NONE:
             color = vectorToColourValue(mDefinitionPtr->bgColor);
             show = mDefinitionPtr->alwaysVisible;
             break;
-        case UIS_VISIBLE:
-            color = vectorToColourValue(mDefinitionPtr->bgColor);
-            break;
-        case UIS_HOVER:
-            color = vectorToColourValue(mDefinitionPtr->bgHoverColor);
-            break;
-        case UIS_ACTIVATE:
-            color = vectorToColourValue(mDefinitionPtr->bgActiveColor);
-            break;
         }
         mDatablock->setColour(color);
         if (show)
-        {
             mOverlay->show();
-        }
         else
             mOverlay->hide();
     }

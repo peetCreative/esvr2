@@ -51,7 +51,9 @@ namespace esvr2
             mIntersectsInfoScreen(false),
 //            mUIStatus(UIS_NONE),
             mIsUIVisible(false),
+            mHoverUIElement(nullptr),
             mUIActive(false),
+            mActiveUIElement(nullptr),
             mInfoScreenUV( 0, 0 ),
             mIsStereo( esvr2->mConfig->isStereo ),
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
@@ -929,6 +931,7 @@ namespace esvr2
         {
             toggleUI();
             mUIActive = true;
+            mActiveUIElement = mHoverUIElement;
             updateOverlayElements();
 
 //            mUIStatus = UIS_ACTIVATE;
@@ -1032,11 +1035,13 @@ namespace esvr2
         }
         if( arg.keysym.scancode == SDL_SCANCODE_M )
         {
+            mHoverUIElement = nullptr;
             mIsUIVisible = false;
             updateOverlayElements();
         }
         if( arg.keysym.scancode == SDL_SCANCODE_N )
         {
+            mActiveUIElement = nullptr;
             mUIActive = false;
             updateOverlayElements();
 //            mUIStatus = UIS_NONE;
@@ -1053,11 +1058,11 @@ namespace esvr2
         {
             InteractiveElement2DPtr elem = *it;
             if (mUIActive)
-                elem->setUIState(UIS_ACTIVATE);
+                elem->setUIState(UIS_ACTIVATE, elem->isUVinside(mInfoScreenUV));
             else if (mIsUIVisible)
-                elem->setUIState(UIS_VISIBLE);
+                elem->setUIState(UIS_VISIBLE, elem->isUVinside(mInfoScreenUV));
             else
-                elem->setUIState(UIS_NONE);
+                elem->setUIState(UIS_NONE, false);
         }
     }
 
@@ -1074,12 +1079,10 @@ namespace esvr2
 
     void GameState::holdUI(Ogre::uint64 timeSinceLast)
     {
-        if (mIntersectsInfoScreen)
+        if (mIntersectsInfoScreen && mActiveUIElement)
         {
-            InteractiveElement2DPtr holdElement =
-                    findInteractiveElement2DByUV(mInfoScreenUV);
-            if (holdElement)
-                holdElement->activateHold(timeSinceLast);
+            mActiveUIElement->activateHold(timeSinceLast);
+            mActiveUIElement->setUIState(UIS_ACTIVATE, true);
         }
     }
 
@@ -1156,10 +1159,24 @@ namespace esvr2
         }
         else if (mIsUIVisible)
         {
-            InteractiveElement2DPtr elem =
-                    findInteractiveElement2DByUV(mInfoScreenUV);
-            if (elem)
-                elem->setUIState(UIS_HOVER);
+            InteractiveElement2DPtr elem = nullptr;
+            for (auto it = mInteractiveElement2DList.begin();
+                it != mInteractiveElement2DList.end(); it++)
+            {
+                if((*it)->isUVinside(mInfoScreenUV))
+                {
+                    elem = *it;
+                    break;
+                }
+            }
+            if (mHoverUIElement != elem)
+            {
+                if (mHoverUIElement)
+                    mHoverUIElement->setUIState(UIS_VISIBLE, false);
+                if (elem)
+                    elem->setUIState(UIS_VISIBLE, true);
+                mHoverUIElement = elem;
+            }
         }
     }
 

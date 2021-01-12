@@ -52,7 +52,7 @@ compositor_node InfoScreenNode
     {
         pass clear
         {
-			colour_value			0.0 0.4 0.9 0.4
+			colour_value			0.0 0.0 0.0 0.0
 			store
 			{
 				colour	store

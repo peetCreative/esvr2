@@ -69,7 +69,9 @@ namespace esvr2
         bool                     mIntersectsInfoScreen;
 //        UIStatusType             mUIStatus;
         bool                     mIsUIVisible;
+        InteractiveElement2DPtr  mHoverUIElement;
         bool                     mUIActive;
+        InteractiveElement2DPtr  mActiveUIElement;
         Ogre::Vector2            mInfoScreenUV;
         bool                     mIsStereo;
         size_t                   mEyeNum;

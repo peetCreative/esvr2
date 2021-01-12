@@ -20,7 +20,6 @@ namespace esvr2
     typedef enum {
         UIS_NONE,
         UIS_VISIBLE,
-        UIS_HOVER,
         UIS_ACTIVATE
     } UIStatusType;
 
@@ -48,7 +47,7 @@ namespace esvr2
         bool isUVinside(Ogre::Vector2 uv);
         Ogre::String getId();
         bool setText(Ogre::String text);
-        void setUIState(UIStatusType uiStatusType);
+        void setUIState(UIStatusType uiStatusType, bool hover);
     };
 
     typedef std::shared_ptr <InteractiveElement2D> InteractiveElement2DPtr;
