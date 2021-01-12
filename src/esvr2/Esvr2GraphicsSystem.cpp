@@ -1041,26 +1041,28 @@ namespace esvr2
 
     void GraphicsSystem::handleWindowEvent( const SDL_Event& evt )
     {
+        Ogre::Window *window = mEsvr2->mConfig->debugScreen ?
+                mDebugWindow : mWindow;
         switch( evt.window.event )
         {
             case SDL_WINDOWEVENT_SIZE_CHANGED:
                 int w,h;
                 SDL_GetWindowSize( mSdlWindow, &w, &h );
-                mWindow->requestResolution( w, h );
-                mWindow->windowMovedOrResized();
+                window->requestResolution( w, h );
+                window->windowMovedOrResized();
                 break;
             case SDL_WINDOWEVENT_RESIZED:
-                mWindow->requestResolution( evt.window.data1, evt.window.data2 );
-                mWindow->windowMovedOrResized();
+                window->requestResolution( evt.window.data1, evt.window.data2 );
+                window->windowMovedOrResized();
                 break;
             case SDL_WINDOWEVENT_CLOSE:
                 mQuit = true;
                 break;
             case SDL_WINDOWEVENT_SHOWN:
-                mWindow->_setVisible( true );
+                window->_setVisible( true );
                 break;
             case SDL_WINDOWEVENT_HIDDEN:
-                mWindow->_setVisible( false );
+                window->_setVisible( false );
                 break;
             case SDL_WINDOWEVENT_ENTER:
                 mGameState->mMouseInWindow = true;
@@ -1070,11 +1072,11 @@ namespace esvr2
                 break;
             case SDL_WINDOWEVENT_FOCUS_GAINED:
                 mGameState->mWindowHasFocus = true;
-                mWindow->setFocused( true );
+                window->setFocused( true );
                 break;
             case SDL_WINDOWEVENT_FOCUS_LOST:
                 mGameState->mWindowHasFocus = false;
-                mWindow->setFocused( false );
+                window->setFocused( false );
                 break;
         }
     }
