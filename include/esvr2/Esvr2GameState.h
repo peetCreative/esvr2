@@ -161,6 +161,11 @@ namespace esvr2
         Ogre::Vector3 getHeadPosition();
 
         void setDebugText(Ogre::String debugText);
+        void createInteractiveElement2D(
+                Ogre::String defName,
+                const boost::function<void()> &togglecb,
+                const boost::function<void(Ogre::uint64)> &holdcb);
+
         void addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D);
     };
 }

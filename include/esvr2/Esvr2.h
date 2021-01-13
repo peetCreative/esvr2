@@ -22,7 +22,9 @@
 namespace esvr2 {
     typedef enum {
         CT_NONE,
-        CT_KEYBOARD
+        CT_KEYBOARD,
+        CT_OPT1,
+        CT_OPT2
     } ControllerType;
     //TODO: rename to VideoInput
     typedef enum {

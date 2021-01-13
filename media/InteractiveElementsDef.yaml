@@ -61,3 +61,45 @@ interactive_bord:
       uv_y: -0.3
       uv_size_x: rest
       uv_size_y: rest
+    - id: Opt1Left
+      text: Left
+      uv_x: 0.3
+      uv_y: 0.4
+      uv_size_x: 0.1
+      uv_size_y: 0.2
+    - id: Opt1Right
+      text: Right
+      uv_x: -0.4
+      uv_y: 0.4
+      uv_size_x: 0.1
+      uv_size_y: 0.2
+    - id: Opt1Up
+      text: Up
+      uv_x: 0.4
+      uv_y: 0.3
+      uv_size_x: 0.2
+      uv_size_y: 0.1
+    - id: Opt1Down
+      text: Down
+      uv_x: -0.6
+      uv_y: -0.4
+      uv_size_x: 0.2
+      uv_size_y: 0.1
+    - id: Opt1TransIn
+      text: In
+      uv_x: 0.45
+      uv_y: 0.4
+      uv_size_x: 0.1
+      uv_size_y: 0.05
+    - id: Opt1TransOut
+      text: Out
+      uv_x: 0.45
+      uv_y: -0.45
+      uv_size_x: 0.1
+      uv_size_y: 0.05
+    - id: Opt2Move
+      text: Move
+      uv_x: 0.45
+      uv_y: 0.45
+      uv_size_x: 0.1
+      uv_size_y: 0.1

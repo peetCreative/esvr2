@@ -522,6 +522,28 @@ namespace esvr2
 
     }
 
+    void GameState::createInteractiveElement2D(
+            Ogre::String defName,
+            const boost::function<void()> &togglecb,
+            const boost::function<void(Ogre::uint64)> &holdcb)
+    {
+        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
+        Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
+                hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
+
+        InteractiveElement2DDefPtr defPtr =
+                mGraphicsSystem->mInteractiveElementConfig.findByName(defName);
+        if (defPtr)
+        {
+            InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
+                    defPtr,
+                    togglecb,
+                    holdcb,
+                    hlmsUnlit);
+            addInteractiveElement2D(element);
+        }
+    }
+
     void GameState::addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D)
     {
 
