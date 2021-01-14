@@ -163,4 +163,12 @@ namespace esvr2
         else
             mOverlay->hide();
     }
+
+    bool InteractiveElement2D::isHideOtherOnActive() {
+        return mDefinitionPtr->hideOtherOnActive;
+    }
+
+    bool InteractiveElement2D::isVisibleOnActive() {
+        return mDefinitionPtr->visibleOnActive;
+    }
 }

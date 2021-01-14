@@ -37,7 +37,7 @@ interactive_bord:
       uv_x: 0.0
       uv_y: 0.05
       uv_size_x: 0.4
-      uv_size_y: 0.3
+      uv_size_y: 0.25
       always_visible: true
       bg_color:
         r: 0.5
@@ -48,13 +48,17 @@ interactive_bord:
       uv_x: 0.4
       uv_y: 0.05
       uv_size_x: 0.2
-      uv_size_y: 0.3
+      uv_size_y: 0.25
+      visible_on_active: false
+      hide_other_on_active: false
     - id: AdjustToHeadHight
       text: Adjust
       uv_x: 0.6
       uv_y: 0.05
       uv_size_x: 0.2
-      uv_size_y: 0.3
+      uv_size_y: 0.25
+      visible_on_active: false
+      hide_other_on_active: false
     - id: Close
       text: X
       uv_x: -0.05
@@ -110,8 +114,10 @@ interactive_bord:
       uv_size_x: 0.1
       uv_size_y: 0.05
     - id: Opt2Move
-      text: Move
-      uv_x: 0.45
-      uv_y: 0.45
-      uv_size_x: 0.1
-      uv_size_y: 0.1
+      text: M
+      uv_x: 0.48
+      uv_y: 0.48
+      uv_size_x: 0.04
+      uv_size_y: 0.04
+      visible_on_active: false
+      hide_other_on_active: true

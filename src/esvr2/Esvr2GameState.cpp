@@ -1034,18 +1034,26 @@ namespace esvr2
 
     void GameState::updateOverlayElements()
     {
+        bool hideOther = mHoverUIElement ?
+                mHoverUIElement->isHideOtherOnActive() : false;
         for (auto it = mInteractiveElement2DList.begin();
                 it != mInteractiveElement2DList.end();
                 it++)
         {
             InteractiveElement2DPtr elem = *it;
             if (mUIActive)
-                elem->setUIState(UIS_ACTIVATE, elem->isUVinside(mInfoScreenUV));
+                if (!hideOther)
+                    elem->setUIState(UIS_ACTIVATE, elem == mHoverUIElement);
+                else
+                    elem->setUIState(UIS_NONE, false);
             else if (mIsUIVisible)
                 elem->setUIState(UIS_VISIBLE, elem->isUVinside(mInfoScreenUV));
             else
                 elem->setUIState(UIS_NONE, false);
         }
+        if(mHoverUIElement && mHoverUIElement->isVisibleOnActive())
+            mHoverUIElement->setUIState(UIS_ACTIVATE, true);
+
     }
 
     void GameState::toggleUI()
@@ -1064,7 +1072,7 @@ namespace esvr2
         if (mIntersectsInfoScreen && mActiveUIElement)
         {
             mActiveUIElement->activateHold(timeSinceLast);
-            mActiveUIElement->setUIState(UIS_ACTIVATE, true);
+//            mActiveUIElement->setUIState(UIS_ACTIVATE, true);
         }
     }
 

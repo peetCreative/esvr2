@@ -48,6 +48,8 @@ namespace esvr2
         Ogre::String getId();
         bool setText(Ogre::String text);
         void setUIState(UIStatusType uiStatusType, bool hover);
+        bool isHideOtherOnActive();
+        bool isVisibleOnActive();
     };
 
     typedef std::shared_ptr <InteractiveElement2D> InteractiveElement2DPtr;

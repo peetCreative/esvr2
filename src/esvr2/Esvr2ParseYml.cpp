@@ -303,6 +303,10 @@ namespace esvr2 {
                 {
                     readColorYmlIntern(param, def.bgActiveColor, config.colorDefList);
                 }
+                if (YAML::Node param = elem["visible_on_active"])
+                    def.visibleOnActive = param.as<bool>();
+                if (YAML::Node param = elem["hide_other_on_active"])
+                    def.hideOtherOnActive = param.as<bool>();
                 if(!config.findByName(def.id))
                 {
                     InteractiveElement2DDefPtr defPtr =

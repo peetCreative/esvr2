@@ -30,9 +30,11 @@ namespace esvr2
         std::string font = "FreeSans";
         std::vector<float> fontColor = {0,0,0,1};
         bool alwaysVisible = false;
-        std::vector<float> bgColor = {};
-        std::vector<float> bgHoverColor = {1,0,0,0.5};
-        std::vector<float> bgActiveColor = {1,0,1,0.5};
+        std::vector<float> bgColor = {1,1,1,0.5};
+        std::vector<float> bgHoverColor = {1,0,0,1};
+        std::vector<float> bgActiveColor = {1,0,1,1};
+        bool visibleOnActive = true;
+        bool hideOtherOnActive = false;
     };
     typedef std::shared_ptr<InteractiveElement2DDef> InteractiveElement2DDefPtr;
     typedef std::vector<InteractiveElement2DDefPtr> InteractiveElement2DDefList;
