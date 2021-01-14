@@ -518,7 +518,7 @@ namespace esvr2
         mViewingDirectionIndicator->setPosition( 0.5, 0.5 );
         mViewingDirectionIndicator->setHeight(0.01);
         mViewingDirectionIndicator->setWidth(0.01);
-        mViewingDirectionIndicator->setMaterialName("ColorRedTransparent");
+        mViewingDirectionIndicator->setMaterialName("ColorRed");
         overlayViewDirectionIndicator->add2D(mViewingDirectionIndicator);
         overlayViewDirectionIndicator->setRenderQueueGroup(254);
         overlayViewDirectionIndicator->show();
