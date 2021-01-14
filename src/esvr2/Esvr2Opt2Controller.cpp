@@ -24,8 +24,6 @@ namespace esvr2
     void Opt2Controller::startMoving()
     {
         mStartOrientation = mGameState->getHeadOrientation();
-        mStartPosition    = mGameState->getHeadPosition();
-
         //TODO: guard
         if (!mLaparoscopeController->getLaparoscopePose(mStartPose))
             return;
@@ -34,7 +32,6 @@ namespace esvr2
     void Opt2Controller::hold(Ogre::uint64 time)
     {
         Ogre::Quaternion currentOrientation = mGameState->getHeadOrientation();
-        Ogre::Vector3 currentPosition    = mGameState->getHeadPosition();
         LaparoscopeDOFBoundaries boundaries;
         LaparoscopeDOFPose pose = mStartPose;
 
@@ -43,12 +40,19 @@ namespace esvr2
             LOG << "In Move mode but did not get DOFPose or DOFBoundaries" << LOGEND;
             return;
         }
-        Ogre::Quaternion diff = (-mStartOrientation) * currentOrientation;
-        Ogre::Radian pitch = diff.getPitch();
-        Ogre::Radian yaw = diff.getYaw();
-//        pose.swingY = mStartPose.swingY - pitch.valueRadians();
-        pose.swingX = mStartPose.swingX + yaw.valueRadians();
+
+        Ogre::Radian pitchDiff =
+                mStartOrientation.getPitch() - currentOrientation.getPitch();
+        Ogre::Radian yawDiff =
+                mStartOrientation.getYaw() - currentOrientation.getYaw();
+        pose.swingY = mStartPose.swingY + pitchDiff.valueRadians();
+        pose.swingX = mStartPose.swingX - yawDiff.valueRadians();
+        pose.swingX = std::min(pose.swingX, boundaries.swingXMax);
+        pose.swingX = std::max(pose.swingX, boundaries.swingXMin);
+        pose.swingY = std::min(pose.swingY, boundaries.swingYMax);
+        pose.swingY = std::max(pose.swingY, boundaries.swingYMin);
         mLaparoscopeController->moveLaparoscopeTo(pose);
+        mGameState->moveScreen(0);
     }
 
 }
