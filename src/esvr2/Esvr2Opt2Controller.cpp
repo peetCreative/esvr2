@@ -25,11 +25,30 @@ namespace esvr2
     {
         mStartOrientation = mGameState->getHeadOrientation();
         mStartPosition    = mGameState->getHeadPosition();
+
+        //TODO: guard
+        if (!mLaparoscopeController->getLaparoscopePose(mStartPose))
+            return;
     }
 
     void Opt2Controller::hold(Ogre::uint64 time)
     {
+        Ogre::Quaternion currentOrientation = mGameState->getHeadOrientation();
+        Ogre::Vector3 currentPosition    = mGameState->getHeadPosition();
+        LaparoscopeDOFBoundaries boundaries;
+        LaparoscopeDOFPose pose = mStartPose;
 
+        if (!mLaparoscopeController->getLaparoscopeBoundaries(boundaries) )
+        {
+            LOG << "In Move mode but did not get DOFPose or DOFBoundaries" << LOGEND;
+            return;
+        }
+        Ogre::Quaternion diff = (-mStartOrientation) * currentOrientation;
+        Ogre::Radian pitch = diff.getPitch();
+        Ogre::Radian yaw = diff.getYaw();
+//        pose.swingY = mStartPose.swingY - pitch.valueRadians();
+        pose.swingX = mStartPose.swingX + yaw.valueRadians();
+        mLaparoscopeController->moveLaparoscopeTo(pose);
     }
 
 }
