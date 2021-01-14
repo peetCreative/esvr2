@@ -35,8 +35,8 @@ interactive_bord:
   definitions:
     - id: Debug
       uv_x: 0.0
-      uv_y: 0.0
-      uv_size_x: 0.5
+      uv_y: 0.05
+      uv_size_x: 0.4
       uv_size_y: 0.3
       always_visible: true
       bg_color:
@@ -56,11 +56,11 @@ interactive_bord:
       uv_size_x: 0.2
       uv_size_y: 0.3
     - id: Close
-      text: Close
-      uv_x: 0.5
-      uv_y: 0.0
-      uv_size_x: 0.5
-      uv_size_y: 0.3
+      text: X
+      uv_x: -0.05
+      uv_y:  0.0
+      uv_size_x: 0.05
+      uv_size_y: 0.05
     - id: RawDist
       text: Raw
       uv_x: 0.0
