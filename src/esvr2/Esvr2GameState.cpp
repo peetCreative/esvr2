@@ -445,65 +445,21 @@ namespace esvr2
     void GameState::createVROverlays(void)
     {
         addViewDirectionIndicator();
-
-        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
-        Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
-                hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
-
-        InteractiveElementConfig config =
-                mGraphicsSystem->mInteractiveElementConfig;
-
-        InteractiveElement2DDefPtr debugElementDefPtr =
-            config.findByName("Debug");
-        if (debugElementDefPtr)
-        {
-            InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
-                    debugElementDefPtr,
+        createInteractiveElement2D("Debug",
                     (boost::function<void ()>) 0,
-                    (boost::function<void (Ogre::uint64)>) 0,
-                    hlmsUnlit);
-            addInteractiveElement2D(element);
-        }
-
-        InteractiveElement2DDefPtr closeDefPtr =
-            mGraphicsSystem->mInteractiveElementConfig.findByName("Close");
-        if (closeDefPtr)
-        {
-            InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
-                    closeDefPtr,
-                    boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
-                    (boost::function<void(Ogre::uint64)>) 0,
-                    hlmsUnlit);
-            addInteractiveElement2D(element);
-        }
-
+                    (boost::function<void (Ogre::uint64)>) 0);
+        createInteractiveElement2D("Close",
+                boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
+                (boost::function<void(Ogre::uint64)>) 0);
         createInteractiveElement2D("AdjustToHeadHight",
                     boost::bind(&GameState::adjustToHeadHight, this),
                     (boost::function<void(Ogre::uint64)>) 0);
-
-        InteractiveElement2DDefPtr RawDistDefPtr =
-            mGraphicsSystem->mInteractiveElementConfig.findByName("RawDist");
-        if (RawDistDefPtr)
-        {
-            InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
-                    RawDistDefPtr,
+        createInteractiveElement2D("RawDist",
                     boost::bind(&GameState::setDistortion, this, DIST_RAW),
-                    (boost::function<void(Ogre::uint64)>) 0,
-                    hlmsUnlit);
-            addInteractiveElement2D(element);
-        }
-
-        InteractiveElement2DDefPtr UndistRectDistDefPtr =
-            mGraphicsSystem->mInteractiveElementConfig.findByName("UndistRectDist");
-        if (UndistRectDistDefPtr)
-        {
-            InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
-                    UndistRectDistDefPtr,
+                    (boost::function<void(Ogre::uint64)>) 0);
+        createInteractiveElement2D("UndistRectDist",
                     boost::bind(&GameState::setDistortion, this, DIST_UNDISTORT_RECTIFY),
-                    (boost::function<void(Ogre::uint64)>) 0,
-                    hlmsUnlit);
-            addInteractiveElement2D(element);
-        }
+                    (boost::function<void(Ogre::uint64)>) 0);
     }
 
     void GameState::addViewDirectionIndicator()
