@@ -168,6 +168,7 @@ namespace esvr2
 
         void addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D);
         void adjustToHeadHight();
+        void moveScreen(Ogre::uint64 time);
     };
 }
 

@@ -23,7 +23,7 @@
 #include "Overlay/OgreTextAreaOverlayElement.h"
 #include "Overlay/OgreBorderPanelOverlayElement.h"
 
-#include <boost/bind/bind.hpp>
+#include <boost/bind.hpp>
 #include "SDL.h"
 
 namespace esvr2
@@ -454,6 +454,9 @@ namespace esvr2
         createInteractiveElement2D("AdjustToHeadHight",
                     boost::bind(&GameState::adjustToHeadHight, this),
                     (boost::function<void(Ogre::uint64)>) 0);
+        createInteractiveElement2D("MoveScreen",
+                   (boost::function<void()>) 0,
+                   boost::bind(&GameState::moveScreen, this, _1));
         createInteractiveElement2D("RawDist",
                     boost::bind(&GameState::setDistortion, this, DIST_RAW),
                     (boost::function<void(Ogre::uint64)>) 0);
@@ -1291,6 +1294,14 @@ namespace esvr2
     {
         mVRSceneNodeProjectionPlanesOrigin->setPosition(
                 mVRCamerasNode->getPosition());
+    }
+
+    void GameState::moveScreen(Ogre::uint64 time)
+    {
+        //TODO: guard mVRSceneNodeProjectionPlanesOrigin and
+        // mVRCamerasNode are at least in proxemity like 0.1m~
+        mVRSceneNodeProjectionPlanesOrigin->setOrientation(
+                mVRCamerasNode->getOrientation());
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()
