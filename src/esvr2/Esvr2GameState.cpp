@@ -478,6 +478,10 @@ namespace esvr2
             addInteractiveElement2D(element);
         }
 
+        createInteractiveElement2D("AdjustToHeadHight",
+                    boost::bind(&GameState::adjustToHeadHight, this),
+                    (boost::function<void(Ogre::uint64)>) 0);
+
         InteractiveElement2DDefPtr RawDistDefPtr =
             mGraphicsSystem->mInteractiveElementConfig.findByName("RawDist");
         if (RawDistDefPtr)
@@ -1328,6 +1332,12 @@ namespace esvr2
                 mViewingDirectionIndicator->hide();
             }
         }
+    }
+
+    void GameState::adjustToHeadHight()
+    {
+        mVRSceneNodeProjectionPlanesOrigin->setPosition(
+                mVRCamerasNode->getPosition());
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()

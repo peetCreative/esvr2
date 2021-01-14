@@ -167,6 +167,7 @@ namespace esvr2
                 const boost::function<void(Ogre::uint64)> &holdcb);
 
         void addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D);
+        void adjustToHeadHight();
     };
 }
 
