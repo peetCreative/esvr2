@@ -1,7 +1,6 @@
 hmd_info:
     width: 1680
     height: 1512
-    initial_pose: [0, 1.6, 0]
     left:
         eye_to_head: [-0.03015, 0, 0.015]
         projection_matrix: [

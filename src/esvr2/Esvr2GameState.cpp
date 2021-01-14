@@ -643,9 +643,8 @@ namespace esvr2
         HmdConfig hmdConfig = mEsvr2->mConfig->hmdConfig;
         if (hmdConfig.valid())
         {
-            RealVector vec1 = hmdConfig.initialPose;
-            Ogre::Vector3 initialPose = RealVectorToVector3(vec1);
-            mVRCamerasNode->setPosition(initialPose);
+            Ogre::Real headHight = mEsvr2->mConfig->headHight;
+            mVRCamerasNode->setPosition(Ogre::Vector3(0, headHight, 0));
         }
     }
 

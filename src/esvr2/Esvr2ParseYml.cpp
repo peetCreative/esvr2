@@ -344,8 +344,6 @@ namespace esvr2 {
     bool readHmdConfigYmlIntern(YAML::Node doc, HmdConfig* hmdConfig)
     {
         bool succ = true;
-        YAML::Node initialPose = doc["initial_pose"];
-        readSequence(initialPose, &(hmdConfig->initialPose), 3);
         if (YAML::Node widthNode = doc["width"])
             hmdConfig->width = widthNode.as<int>();
         else return false;
