@@ -151,8 +151,8 @@ namespace esvr2 {
         {
             //TODO: look we can quit here
             Ogre::Threads::Sleep( 50 );
-            videoLoader->update();
-            if (videoLoader->getQuit())
+            mVideoLoader->update();
+            if (mVideoLoader->getQuit())
             {
                 LOG << "quit videoLoader" << LOGEND;
                 return;

@@ -20,7 +20,6 @@
 #include "OgreMeshManager2.h"
 #include "Overlay/OgreOverlay.h"
 #include "Overlay/OgreOverlayManager.h"
-#include "Overlay/OgreOverlayContainer.h"
 #include "Overlay/OgreTextAreaOverlayElement.h"
 #include "Overlay/OgreBorderPanelOverlayElement.h"
 
@@ -711,7 +710,6 @@ namespace esvr2
 
         mGraphicsSystem->mVRSceneManager->setVisibilityMask(0xFFFFFF30);
 
-        //TODO: stopped working because DebugFont is not loaded anymore
         createVROverlays();
     }
 
@@ -1269,9 +1267,9 @@ namespace esvr2
                 "Plane v1",
                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
                Ogre::Plane( Ogre::Vector3::UNIT_Y, 0.0f ), 50.0f, 50.0f,
-                                                                                           1, 1, true, 1, 4.0f, 4.0f, Ogre::Vector3::UNIT_Z,
-                                                                                           Ogre::v1::HardwareBuffer::HBU_STATIC,
-                                                                                           Ogre::v1::HardwareBuffer::HBU_STATIC );
+               1, 1, true, 1, 4.0f, 4.0f, Ogre::Vector3::UNIT_Z,
+               Ogre::v1::HardwareBuffer::HBU_STATIC,
+               Ogre::v1::HardwareBuffer::HBU_STATIC );
 
         Ogre::MeshPtr planeMesh = Ogre::MeshManager::getSingleton().createByImportingV1(
                 "Plane", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,

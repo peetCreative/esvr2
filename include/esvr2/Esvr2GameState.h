@@ -35,7 +35,7 @@ namespace esvr2
         void createVRScene(void);
 
     private:
-    Esvr2                           *mEsvr2;
+        Esvr2                       *mEsvr2;
         GraphicsSystem              *mGraphicsSystem;
 
 //        HmdConfig                   mHmdConfig;
