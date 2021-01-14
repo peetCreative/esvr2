@@ -14,7 +14,9 @@ namespace esvr2
     {
     private:
         Ogre::Quaternion mStartOrientation = Ogre::Quaternion::ZERO;
+        Ogre::Vector3 mStartPosition = Ogre::Vector3::ZERO;
         LaparoscopeDOFPose mStartPose;
+        const Ogre::Real mTransZFact = 2.0;
     public:
         Opt2Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,
