@@ -1277,7 +1277,7 @@ namespace esvr2
         mIntersectsInfoScreen = 0.0f < uv.x && uv.x < 1.0f &&  0 < uv.y && uv.y < 1.0f;
         if (mViewingDirectionIndicator)
         {
-            if (mIntersectsInfoScreen)
+            if (mIntersectsInfoScreen && mIsUIVisible)
             {
                 mInfoScreenUV = uv;
                 mViewingDirectionIndicator->setPosition(uv.x, uv.y);
