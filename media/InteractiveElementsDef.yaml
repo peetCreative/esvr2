@@ -43,9 +43,21 @@ interactive_bord:
         r: 0.5
         g: 0.5
         a: 0.4
+    - id: ResetProjectionPlaneDistance
+      text: Reset Distance
+      uv_x: 0.4
+      uv_y: 0.05
+      uv_size_x: 0.2
+      uv_size_y: 0.15
+    - id: AdjustProjectionPlaneDistance
+      text: Change Distance
+      uv_x: 0.4
+      uv_y: 0.2
+      uv_size_x: 0.2
+      uv_size_y: 0.1
     - id: MoveScreen
       text: Move
-      uv_x: 0.4
+      uv_x: 0.6
       uv_y: 0.05
       uv_size_x: 0.2
       uv_size_y: 0.25
@@ -53,7 +65,7 @@ interactive_bord:
       hide_other_on_active: false
     - id: AdjustToHeadHight
       text: Adjust
-      uv_x: 0.6
+      uv_x: 0.8
       uv_y: 0.05
       uv_size_x: 0.2
       uv_size_y: 0.25

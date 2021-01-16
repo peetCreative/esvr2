@@ -83,10 +83,17 @@ namespace esvr2
 
         Ogre::v1::PanelOverlayElement *mViewingDirectionIndicator;
 
-        Ogre::Real mProjPlaneDistance[4],
+        //correct Distance
+        Ogre::Real mCorrectProjPlaneDistance[4],
             mLeft[4], mRight[4], mTop[4], mBottom[4];
         Ogre::Real mScale;
         Ogre::String mTextureName[2], mDatablockName[2];
+
+        Ogre::Real mAdjustProjectionPlaneInitialPitch = 0;
+        Ogre::Real mAdjustProjectionPlaneRawInitialDistance = 0;
+        Ogre::Real mAdjustProjectionPlaneRectInitialDistance = 0;
+        const Ogre::Real mAdjustProjectionPlaneFact = 2.0f;
+
 
         bool mWindowHasFocus;
         bool mMouseInWindow;
@@ -148,6 +155,11 @@ namespace esvr2
         void createVRFloor();
 
         void readHeadGestures();
+
+        void resetProjectionPlaneDistance();
+        void initAdjustProjectionPlane();
+        void holdAdjustProjectionPlane(Ogre::uint64 time);
+
     public:
 
         void update( Ogre::uint64 microSecsSinceLast );

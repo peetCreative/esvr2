@@ -56,7 +56,7 @@ namespace esvr2
             mInfoScreenUV( 0, 0 ),
             mIsStereo( esvr2->mConfig->isStereo ),
             mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
-            mProjPlaneDistance{ 0, 0, 0, 0 },
+            mCorrectProjPlaneDistance{0, 0, 0, 0 },
             mLeft{ 0, 0 },
             mRight{ 0, 0 },
             mTop{ 0, 0 },
@@ -128,7 +128,7 @@ namespace esvr2
                     c_x = cfg->K[2];
                     c_y = cfg->K[5];
                 }
-                mProjPlaneDistance[eye] = projPlaneDistance;
+                mCorrectProjPlaneDistance[eye] = projPlaneDistance;
             }
             else
             {
@@ -140,16 +140,16 @@ namespace esvr2
                     c_y = cfg->P[6];
                 }
 
-                mProjPlaneDistance[eye] =
+                mCorrectProjPlaneDistance[eye] =
                     mGraphicsSystem->mVrData.mLeftToRight.length() * f_x /
                     -cameraConfig.cfg[RIGHT]->P[3];
             }
 
             //in xy left is negativ
-            mLeft[eye] = -c_x * mProjPlaneDistance[eye] / f_x;
-            mRight[eye] = ( width -c_x  ) * mProjPlaneDistance[eye] / f_x;
-            mTop[eye] = c_y * mProjPlaneDistance[eye] / f_y;
-            mBottom[eye] = ( c_y - height  ) * mProjPlaneDistance[eye] / f_y;
+            mLeft[eye] = -c_x * mCorrectProjPlaneDistance[eye] / f_x;
+            mRight[eye] = ( width -c_x  ) * mCorrectProjPlaneDistance[eye] / f_x;
+            mTop[eye] = c_y * mCorrectProjPlaneDistance[eye] / f_y;
+            mBottom[eye] = ( c_y - height  ) * mCorrectProjPlaneDistance[eye] / f_y;
             LOG << "mLeft: " << mLeft[eye] <<
                 "mRight: " << mRight[eye] <<
                 "mTop: " << mTop[eye] <<
@@ -205,7 +205,7 @@ namespace esvr2
     {
         bool alldata =
 //             mVrData.mHeadToEye[LEFT] != Ogre::Matrix4::IDENTITY &&
-            mProjPlaneDistance &&
+            mCorrectProjPlaneDistance &&
             mLeft[LEFT] && mRight[LEFT] && mTop[LEFT] && mBottom[LEFT] &&
             ( !mIsStereo ||
                 ( mLeft[RIGHT] && mRight[RIGHT] &&
@@ -225,14 +225,14 @@ namespace esvr2
         mVRSceneNodesProjectionPlaneRaw = mVRSceneNodeProjectionPlanesOrigin
                 ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
         mVRSceneNodesProjectionPlaneRaw->setName("VR Node Projection Plane Raw");
-        mVRSceneNodesProjectionPlaneRaw->translate(0, 0, -mProjPlaneDistance[DIST_RAW] );
+        mVRSceneNodesProjectionPlaneRaw->translate(0, 0, -mCorrectProjPlaneDistance[DIST_RAW] );
 
         mVRSceneNodesProjectionPlaneRect = mVRSceneNodeProjectionPlanesOrigin
                 ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
         mVRSceneNodesProjectionPlaneRect->setName("VR Node Projection Plane Rect");
         Ogre::SceneNode *sceneNodesProjectionPlanes[2] =
                 {mVRSceneNodesProjectionPlaneRaw, mVRSceneNodesProjectionPlaneRect};
-        mVRSceneNodesProjectionPlaneRaw->translate(0, 0, -mProjPlaneDistance[DIST_UNDISTORT_RECTIFY] );
+        mVRSceneNodesProjectionPlaneRaw->translate(0, 0, -mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] );
         Ogre::Vector4 edge;
         //we need to create two planes for raw and recitified
         for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
@@ -451,6 +451,12 @@ namespace esvr2
         createInteractiveElement2D("Close",
                 boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
                 (boost::function<void(Ogre::uint64)>) 0);
+        createInteractiveElement2D("ResetProjectionPlaneDistance",
+                   boost::bind(&GameState::resetProjectionPlaneDistance, this),
+                   (boost::function<void(Ogre::uint64)>) 0);
+        createInteractiveElement2D("AdjustProjectionPlaneDistance",
+                   boost::bind(&GameState::initAdjustProjectionPlane, this),
+                   boost::bind(&GameState::holdAdjustProjectionPlane, this, _1));
         createInteractiveElement2D("AdjustToHeadHight",
                     boost::bind(&GameState::adjustToHeadHight, this),
                     (boost::function<void(Ogre::uint64)>) 0);
@@ -1223,7 +1229,7 @@ namespace esvr2
         mInfoScreenSceneNode->attachObject( mVRInfoScreen );
         //for debugging
 //        mInfoScreenSceneNode->attachObject( createAxisIntern(sceneManager));
-        Ogre::Real dist = mProjPlaneDistance[DIST_RAW];
+        Ogre::Real dist = mCorrectProjPlaneDistance[DIST_RAW];
         mInfoScreenSceneNode->translate( 0, 0, -(dist-0.01));
     }
 
@@ -1310,6 +1316,36 @@ namespace esvr2
         // mVRCamerasNode are at least in proxemity like 0.1m~
         mVRSceneNodeProjectionPlanesOrigin->setOrientation(
                 mVRCamerasNode->getOrientation());
+    }
+
+    void GameState::resetProjectionPlaneDistance()
+    {
+        mVRSceneNodesProjectionPlaneRaw->setPosition(
+                0, 0, mCorrectProjPlaneDistance[DIST_RAW]);
+        mVRSceneNodesProjectionPlaneRect->setPosition(
+                0, 0, mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] );
+    }
+
+    void GameState::initAdjustProjectionPlane()
+    {
+        mAdjustProjectionPlaneInitialPitch =
+                getHeadOrientation().getYaw().valueRadians();
+        mAdjustProjectionPlaneRawInitialDistance =
+                mVRSceneNodesProjectionPlaneRaw->getPosition().z;
+        mAdjustProjectionPlaneRectInitialDistance =
+                mVRSceneNodesProjectionPlaneRect->getPosition().z;
+    }
+
+    void GameState::holdAdjustProjectionPlane(Ogre::uint64 time)
+    {
+        Ogre::Real increment = mAdjustProjectionPlaneInitialPitch +
+                getHeadOrientation().getYaw().valueRadians();
+        mVRSceneNodesProjectionPlaneRaw->setPosition(
+                0, 0, mAdjustProjectionPlaneRawInitialDistance +
+                        (mAdjustProjectionPlaneFact * increment));
+        mVRSceneNodesProjectionPlaneRect->setPosition(
+                0, 0, mAdjustProjectionPlaneRectInitialDistance +
+                      (mAdjustProjectionPlaneFact * increment) );
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()
