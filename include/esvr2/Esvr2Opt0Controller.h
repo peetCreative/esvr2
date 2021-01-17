@@ -6,20 +6,22 @@
 #define ESVR2_ESVR2OPT0CONTROLLER_H
 #include "Esvr2Controller.h"
 
-#include "SDL.h"
+#include "OgreQuaternion.h"
+#include "OgreVector3.h"
 namespace esvr2
 {
     class Opt0Controller : public Controller
     {
     private:
-        bool mMoveMode;
+        Ogre::Vector3 mStartPosition = Ogre::Vector3::ZERO;
+        Ogre::uint64 mTimeSinceLast;
+        const Ogre::uint64 mDelay = 100;
     public:
         Opt0Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,
                 GameState *gameState);
-        bool keyPressed( const SDL_KeyboardEvent &arg ) override;
-        bool keyReleased( const SDL_KeyboardEvent &arg ) override;
-        void headPoseUpdated() override;
+        void keyPressed();
+        void holdPressed(Ogre::uint64 timesincelast);
     };
 }
 

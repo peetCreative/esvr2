@@ -261,7 +261,7 @@ namespace esvr2 {
             while( !mGraphicsSystem->getQuit() )
             {
                 mVideoLoader->update();
-                mGraphicsSystem->update( timeSinceLast );
+                mGraphicsSystem->update( startTime );
 
                 if( !mGraphicsSystem->isRenderWindowVisible() )
                 {
