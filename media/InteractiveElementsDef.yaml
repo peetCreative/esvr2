@@ -38,7 +38,7 @@ interactive_bord:
       uv_y: 0.05
       uv_size_x: 0.4
       uv_size_y: 0.25
-      always_visible: true
+      always_visible: false
       bg_color:
         r: 0.5
         g: 0.5
