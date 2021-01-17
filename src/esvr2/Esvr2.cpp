@@ -5,7 +5,7 @@
 #include "Esvr2LaparoscopeController.h"
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2TestPose.h"
-#include "Esvr2KeyboardController.h"
+#include "Esvr2Opt0Controller.h"
 #include "Esvr2Opt1Controller.h"
 #include "Esvr2Opt2Controller.h"
 #include "Esvr2Barrier.h"
@@ -39,8 +39,8 @@ namespace esvr2 {
     ControllerType getControllerType(std::string input_str)
     {
         ControllerType controllerType = CT_NONE;
-        if (input_str == "KEYBOARD")
-            controllerType = CT_KEYBOARD;
+        if (input_str == "OPT0")
+            controllerType = CT_OPT0;
         if (input_str == "OPT1")
             controllerType = CT_OPT1;
         if (input_str == "OPT2")
@@ -184,9 +184,9 @@ namespace esvr2 {
         {
             switch(mConfig->controllerType)
             {
-                case CT_KEYBOARD:
+                case CT_OPT0:
                     mController =
-                            std::make_shared<KeyboardController>(
+                            std::make_shared<Opt0Controller>(
                                     mLaparoscopeController,
                                     mGraphicsSystem->getGameState());
                     break;

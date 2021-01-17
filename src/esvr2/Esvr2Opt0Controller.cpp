@@ -1,7 +1,7 @@
 //
 // Created by peetcreative on 13.12.20.
 //
-#include "Esvr2KeyboardController.h"
+#include "Esvr2Opt0Controller.h"
 #include "Esvr2Controller.h"
 #include "Esvr2LaparoscopeController.h"
 #include "Esvr2GameState.h"
@@ -12,7 +12,7 @@
 
 namespace esvr2
 {
-    KeyboardController::KeyboardController(
+    Opt0Controller::Opt0Controller(
             std::shared_ptr<LaparoscopeController> laparoscopeController,
             GameState *gameState):
             Controller(laparoscopeController, gameState),
@@ -20,7 +20,7 @@ namespace esvr2
     {
     }
 
-    bool KeyboardController::keyPressed( const SDL_KeyboardEvent &arg )
+    bool Opt0Controller::keyPressed(const SDL_KeyboardEvent &arg )
     {
 //        if (arg.keysym.scancode == SDL_SCANCODE_M )
 //        {
@@ -28,7 +28,7 @@ namespace esvr2
 //        }
         return false;
     }
-    bool KeyboardController::keyReleased( const SDL_KeyboardEvent &arg )
+    bool Opt0Controller::keyReleased(const SDL_KeyboardEvent &arg )
     {
         bool succ = false;
         if (arg.keysym.scancode == SDL_SCANCODE_M )
@@ -39,7 +39,7 @@ namespace esvr2
         return succ;
     }
 
-    void KeyboardController::headPoseUpdated()
+    void Opt0Controller::headPoseUpdated()
     {
         if (!mMoveMode)
         {

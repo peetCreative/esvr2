@@ -22,7 +22,7 @@
 namespace esvr2 {
     typedef enum {
         CT_NONE,
-        CT_KEYBOARD,
+        CT_OPT0,
         CT_OPT1,
         CT_OPT2
     } ControllerType;
