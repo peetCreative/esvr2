@@ -1351,9 +1351,17 @@ namespace esvr2
     void GameState::resetProjectionPlaneDistance()
     {
         mVRSceneNodesProjectionPlaneRaw->setPosition(
-                0, 0, mCorrectProjPlaneDistance[DIST_RAW]);
+                0, 0, -mCorrectProjPlaneDistance[DIST_RAW]);
         mVRSceneNodesProjectionPlaneRect->setPosition(
-                0, 0, mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] );
+                0, 0, -mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] );
+        //We need to add because distance is negative
+        Distortion dist = mEsvr2->mVideoLoader->getDistortion();
+        if (dist == DIST_RAW || dist == DIST_UNDISTORT)
+            mInfoScreenSceneNode->setPosition(
+                    0, 0, -mCorrectProjPlaneDistance[DIST_RAW] + 0.001 );
+        if (dist == DIST_UNDISTORT_RECTIFY)
+            mInfoScreenSceneNode->setPosition(
+                    0, 0, -mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] + 0.001 );
     }
 
     void GameState::initAdjustProjectionPlane()
@@ -1370,12 +1378,24 @@ namespace esvr2
     {
         Ogre::Real increment = mAdjustProjectionPlaneInitialPitch +
                 getHeadOrientation().getYaw().valueRadians();
+        Ogre::Real newProjectionPlaneDistanceRaw =
+                mAdjustProjectionPlaneRawInitialDistance +
+                (mAdjustProjectionPlaneFact * increment);
         mVRSceneNodesProjectionPlaneRaw->setPosition(
-                0, 0, mAdjustProjectionPlaneRawInitialDistance +
-                        (mAdjustProjectionPlaneFact * increment));
+                0, 0, newProjectionPlaneDistanceRaw);
+        Ogre::Real newProjectionPlaneDistanceRect =
+                mAdjustProjectionPlaneRectInitialDistance +
+                (mAdjustProjectionPlaneFact * increment);
         mVRSceneNodesProjectionPlaneRect->setPosition(
                 0, 0, mAdjustProjectionPlaneRectInitialDistance +
                       (mAdjustProjectionPlaneFact * increment) );
+        Distortion dist = mEsvr2->mVideoLoader->getDistortion();
+        if (dist == DIST_RAW || dist == DIST_UNDISTORT)
+            mInfoScreenSceneNode->setPosition(
+                0, 0, newProjectionPlaneDistanceRaw + 0.001 );
+        if (dist == DIST_UNDISTORT_RECTIFY)
+            mInfoScreenSceneNode->setPosition(
+                0, 0, newProjectionPlaneDistanceRect + 0.001 );
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()
