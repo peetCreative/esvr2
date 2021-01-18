@@ -1376,7 +1376,7 @@ namespace esvr2
 
     void GameState::holdAdjustProjectionPlane(Ogre::uint64 time)
     {
-        Ogre::Real increment = mAdjustProjectionPlaneInitialPitch +
+        Ogre::Real increment = mAdjustProjectionPlaneInitialPitch -
                 getHeadOrientation().getYaw().valueRadians();
         Ogre::Real newProjectionPlaneDistanceRaw =
                 mAdjustProjectionPlaneRawInitialDistance +
