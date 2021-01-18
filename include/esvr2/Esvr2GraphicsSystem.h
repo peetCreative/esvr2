@@ -5,6 +5,7 @@
 #include "Esvr2VideoLoader.h"
 #include "Esvr2PoseState.h"
 #include "Esvr2InteractiveElement2DDef.h"
+#include "Esvr2FootPedal.h"
 
 #include "Ogre.h"
 #include "OgreSceneNode.h"
@@ -93,6 +94,9 @@ namespace esvr2
 
         //SDL for input and output
         SDL_Window *mSdlWindow;
+#ifdef USE_FOOTPEDAL
+        FootPedal *mFootPedal = nullptr;
+#endif //USE_FOOTPEDAL
 
         //Class Variables
         InteractiveElementConfig mInteractiveElementConfig;
@@ -124,6 +128,9 @@ namespace esvr2
 
         void handleWindowEvent( const SDL_Event& evt );
         void pumpSDLEvents();
+#ifdef USE_FOOTPEDAL
+        void pumpFootPedalEvents();
+#endif // USE_FOOTPEDAL
 
         bool configureLaparoscopeCamera(void);
         bool configureVRCamera(void);

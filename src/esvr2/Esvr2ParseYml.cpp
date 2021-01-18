@@ -400,6 +400,8 @@ namespace esvr2 {
                 getRenderVideoTarget(param.as<std::string>());
         if (YAML::Node param = doc["resource_path"])
             config->resourcePath = param.as<std::string>();
+        if (YAML::Node param = doc["serial_port"])
+            config->serialPort = param.as<std::string>();
         if (YAML::Node param = doc["center_projection_plane"])
             config->centerProjectionPlane = param.as<bool>();
 

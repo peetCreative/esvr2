@@ -4,6 +4,7 @@
 #include "Esvr2GameState.h"
 #include "Esvr2OpenVRCompositorListener.h"
 #include "Esvr2ParseYml.h"
+#include "Esvr2FootPedal.h"
 #include "Esvr2Helper.h"
 
 #include "Ogre.h"
@@ -447,6 +448,10 @@ namespace esvr2
             OGRE_EXCEPT( Ogre::Exception::ERR_INTERNAL_ERROR, "Cannot initialize SDL2!",
                          "GraphicsSystem::initialize" );
         }
+
+#ifdef USE_FOOTPEDAL
+        mFootPedal = new FootPedal(mEsvr2->mConfig->serialPort);
+#endif
 
         mRoot = OGRE_NEW Ogre::Root( pluginsPath,
                                      mWriteAccessFolder + "ogre.cfg",
@@ -1102,12 +1107,26 @@ namespace esvr2
          }
      }
 
+#ifdef USE_FOOTPEDAL
+    void GraphicsSystem::pumpFootPedalEvents()
+    {
+        FootPedalEvent evt;
+        while( mFootPedal->pollFootPedalEvent( evt ) )
+        {
+            mGameState->handleFootPedalEvent( evt );
+        }
+    }
+#endif //USE_FOOTPEDAL
+
     void GraphicsSystem::update( Ogre::uint64 microSecsSinceLast)
     {
         mFrameCnt++;
 
         Ogre::WindowEventUtilities::messagePump();
         pumpSDLEvents();
+#ifdef USE_FOOTPEDAL
+        pumpFootPedalEvents();
+#endif //USE_FOOTPEDAL
         const Ogre::uint64 second = 1000000;
         if (microSecsSinceLast > second)
         {

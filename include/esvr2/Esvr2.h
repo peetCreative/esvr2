@@ -135,6 +135,7 @@ namespace esvr2 {
         int screen = 0;
         double headHight = 1.7f;
         std::string resourcePath = "Resources.cfg";
+        std::string serialPort = "/dev/ttyUSB0";
         bool centerProjectionPlane = false;
         ControllerType controllerType = CT_NONE;
         WorkspaceType workspaceType = WS_TWO_CAMERAS_STEREO;

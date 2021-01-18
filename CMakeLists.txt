@@ -95,6 +95,10 @@ else()
 endif()
 
 find_package(SDL2 REQUIRED)
+find_package(SerialPort)
+if(SerialPort_FOUND)
+    add_definitions(-DUSE_FOOTPEDAL)
+endif()
 
 find_package( OpenCV REQUIRED )
 message("OpenCV Libs: ${OpenCV_LIBS}")
@@ -136,13 +140,14 @@ endmacro()
 add_recursive( ${CMAKE_CURRENT_SOURCE_DIR}/src/esvr2 SOURCES_LIB )
 add_recursive( ${CMAKE_CURRENT_SOURCE_DIR}/include/esvr2 HEADERS_LIB )
 
-
 include_directories(
         ${OGRE_INCLUDE_DIRS}
         ${SDL2_INCLUDE_DIR}
         ${OpenVR_INCLUDE_DIRS}
         ${OpenCV_INCLUDE_DIRS}
-        ${BLACKMAGIC_INCLUDE_DIRS} )
+        ${BLACKMAGIC_INCLUDE_DIRS}
+        ${SerialPort_INCLUDE_DIRS}
+)
 
 link_libraries(stdc++fs)
 
@@ -167,6 +172,7 @@ target_link_libraries(
     ${OpenCV_LIBS}
     ${YAML_CPP_LIBRARIES}
     ${CMAKE_DL_LIBS}
+    ${SerialPort_LIBRARIES}
 #    ${BLACKMAGIC_LIBRARIES}
 )
 

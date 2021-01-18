@@ -6,6 +6,7 @@
 #include "Esvr2PointCloud.h"
 #include "Esvr2InteractiveElement2D.h"
 #include "Esvr2InteractiveElement2DDef.h"
+#include "Esvr2FootPedal.h"
 
 #include "OgrePrerequisites.h"
 
@@ -167,6 +168,9 @@ namespace esvr2
         //TODO: implement destroyScene
         void destroyScene() {};
         void handleSdlEvent( const SDL_Event& evt );
+#ifdef USE_FOOTPEDAL
+        void handleFootPedalEvent( const FootPedalEvent& evt );
+#endif
 
         Ogre::Quaternion getHeadOrientation();
         Ogre::Quaternion getProjectionPlanesOrientation();

@@ -1038,6 +1038,36 @@ namespace esvr2
         return succ;
     }
 
+#ifdef USE_FOOTPEDAL
+    void GameState::handleFootPedalEvent( const FootPedalEvent& evt )
+    {
+        if ( evt == FPE_HOVER_PRESS )
+        {
+            mIsUIVisible = true;
+            updateOverlayElements();
+        }
+        if( evt == FPE_ACTIVE_PRESS && mIsUIVisible )
+        {
+            toggleUI();
+            mUIActive = true;
+            mActiveUIElement = mHoverUIElement;
+            updateOverlayElements();
+        }
+        if( evt == FPE_HOVER_RELEASE )
+        {
+            mHoverUIElement = nullptr;
+            mIsUIVisible = false;
+            updateOverlayElements();
+        }
+        if(  evt == FPE_ACTIVE_RELEASE )
+        {
+            mActiveUIElement = nullptr;
+            mUIActive = false;
+            updateOverlayElements();
+        }
+    }
+#endif
+
     void GameState::updateOverlayElements()
     {
         bool hideOther = mHoverUIElement ?
