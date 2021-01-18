@@ -1026,6 +1026,7 @@ namespace esvr2
             mHoverUIElement = nullptr;
             mIsUIVisible = false;
             updateOverlayElements();
+            succ = true;
         }
         if( arg.keysym.scancode == SDL_SCANCODE_N )
         {
