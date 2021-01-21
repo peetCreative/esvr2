@@ -141,8 +141,9 @@ namespace esvr2
                 }
 
                 mCorrectProjPlaneDistance[eye] =
-                    mGraphicsSystem->mVrData.mLeftToRight.length() * f_x /
-                    -cameraConfig.cfg[RIGHT]->P[3];
+                        projPlaneDistance;
+//                    mGraphicsSystem->mVrData.mLeftToRight.length() * f_x /
+//                    -cameraConfig.cfg[RIGHT]->P[3];
             }
 
             //in xy left is negativ
@@ -225,14 +226,14 @@ namespace esvr2
         mVRSceneNodesProjectionPlaneRaw = mVRSceneNodeProjectionPlanesOrigin
                 ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
         mVRSceneNodesProjectionPlaneRaw->setName("VR Node Projection Plane Raw");
-        mVRSceneNodesProjectionPlaneRaw->translate(0, 0, -mCorrectProjPlaneDistance[DIST_RAW] );
+        mVRSceneNodesProjectionPlaneRaw->setPosition(0, 0, -mCorrectProjPlaneDistance[DIST_RAW] );
 
         mVRSceneNodesProjectionPlaneRect = mVRSceneNodeProjectionPlanesOrigin
                 ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
         mVRSceneNodesProjectionPlaneRect->setName("VR Node Projection Plane Rect");
+        mVRSceneNodesProjectionPlaneRect->setPosition(0, 0, -mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] );
         Ogre::SceneNode *sceneNodesProjectionPlanes[2] =
                 {mVRSceneNodesProjectionPlaneRaw, mVRSceneNodesProjectionPlaneRect};
-        mVRSceneNodesProjectionPlaneRaw->translate(0, 0, -mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] );
         Ogre::Vector4 edge;
         //we need to create two planes for raw and recitified
         for( size_t eye = 0; eye < 2 * mEyeNum; eye++ )
@@ -943,12 +944,12 @@ namespace esvr2
 
         if( arg.keysym.scancode == SDL_SCANCODE_Y )
         {
-            mEsvr2->mVideoLoader->setDistortion(DIST_RAW);
+            setDistortion(DIST_RAW);
             succ = true;
         }
         if( arg.keysym.scancode == SDL_SCANCODE_X )
         {
-            mEsvr2->mVideoLoader->setDistortion(DIST_UNDISTORT);
+            setDistortion(DIST_UNDISTORT_RECTIFY);
             succ = true;
         }
 //        if( arg.keysym.scancode == SDL_SCANCODE_A )
@@ -958,11 +959,6 @@ namespace esvr2
 //            mGraphicsSystem->setZoom( zoom );
 //            succ = true;
 //        }
-        if( arg.keysym.scancode == SDL_SCANCODE_C )
-        {
-            mEsvr2->mVideoLoader->setDistortion(DIST_UNDISTORT_RECTIFY);
-            succ = true;
-        }
         if( arg.keysym.scancode == SDL_SCANCODE_1 &&
             (arg.keysym.mod & (KMOD_LCTRL|KMOD_RCTRL)) )
         {
@@ -1118,15 +1114,16 @@ namespace esvr2
         mEsvr2->mVideoLoader->setDistortion(dist);
         Ogre::uint32 setMask = 0x0;
         Ogre::uint32 unsetMask = 0x0;
-        if (dist == DIST_UNDISTORT_RECTIFY)
-        {
-            setMask = 0x40 | 0x80;
-            unsetMask = 0x10 | 0x20;
-        }
-        else
+        if (dist == DIST_RAW)
         {
             setMask = 0x10 | 0x20;
             unsetMask = 0x40 | 0x80;
+
+        }
+        else
+        {
+            setMask = 0x40 | 0x80;
+            unsetMask = 0x10 | 0x20;
         }
         Ogre::SceneManager *sceneManager = mGraphicsSystem->mVRSceneManager;
         Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask( );
@@ -1261,7 +1258,7 @@ namespace esvr2
         //for debugging
 //        mInfoScreenSceneNode->attachObject( createAxisIntern(sceneManager));
         Ogre::Real dist = mCorrectProjPlaneDistance[DIST_RAW];
-        mInfoScreenSceneNode->translate( 0, 0, -(dist-0.01));
+        mInfoScreenSceneNode->setPosition( 0, 0, -(dist-0.01));
     }
 
     void GameState::createVRFloor()
