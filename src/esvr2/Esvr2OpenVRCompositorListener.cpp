@@ -263,6 +263,7 @@ namespace esvr2
                 mGraphicsSystem->mVRCameras[i]->setPosition(
                         eyeToHead[i].getTrans());
             }
+            mGraphicsSystem->mVrData.set(eyeToHead, projectionMatrixRS);
 //TODO: maybe we can also use instanced stereo
 
 // mVrData.set( eyeToHead, projectionMatrixRS );
