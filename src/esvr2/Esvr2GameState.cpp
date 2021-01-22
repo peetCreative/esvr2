@@ -1342,8 +1342,22 @@ namespace esvr2
     {
         //TODO: guard mVRSceneNodeProjectionPlanesOrigin and
         // mVRCamerasNode are at least in proxemity like 0.1m~
+        Ogre::Quaternion headOrientation = mVRCamerasNode->getOrientation();
+        Ogre::Quaternion newOrientation;
+        Ogre::Vector3 xAxisTrans = headOrientation.xAxis();
+        Ogre::Vector3 yAxisTrans = headOrientation.yAxis();
+        Ogre::Vector3 zAxisTrans = headOrientation.zAxis();
+        if (xAxisTrans != Ogre::Vector3::UNIT_Y &&
+                xAxisTrans != -Ogre::Vector3::UNIT_Y)
+            return;
+        Ogre::Vector3 xAxisNew(xAxisTrans.y,0,xAxisTrans.z);
+        xAxisNew.normalise();
+        Ogre::Quaternion trans = xAxisTrans.getRotationTo(xAxisNew);
+        Ogre::Vector3 yAxisNew = trans * yAxisTrans;
+        Ogre::Vector3 zAxisNew = trans * zAxisTrans;
+        newOrientation = Ogre::Quaternion(xAxisNew, yAxisNew, zAxisNew);
         mVRSceneNodeProjectionPlanesOrigin->setOrientation(
-                mVRCamerasNode->getOrientation());
+                newOrientation);
     }
 
     void GameState::resetProjectionPlaneDistance()
