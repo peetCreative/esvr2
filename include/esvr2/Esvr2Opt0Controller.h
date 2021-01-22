@@ -16,6 +16,7 @@ namespace esvr2
         Ogre::Vector3 mStartPosition = Ogre::Vector3::ZERO;
         Ogre::uint64 mTimeSinceLast;
         const Ogre::uint64 mDelay = 100;
+        bool mBlocked = false;
     public:
         Opt0Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,

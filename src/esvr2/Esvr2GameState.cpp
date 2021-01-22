@@ -1411,6 +1411,14 @@ namespace esvr2
         return mVRCamerasNode->getPosition();
     }
 
+    bool GameState::isHeadPositionCentered()
+    {
+        Ogre::Vector3 diff =
+            mVRSceneNodeProjectionPlanesOrigin->getPosition()
+            - mVRCamerasNode->getPosition();
+        return diff.length() < 0.05;
+    }
+
     void GameState::setDebugText(Ogre::String debugText)
     {
         mDebugText = debugText;

@@ -26,11 +26,16 @@ namespace esvr2
     {
         mTimeSinceLast = 0;
         mStartPosition = mGameState->getHeadPosition();
+        mBlocked = !mGameState->isHeadPositionCentered();
+        if (mBlocked)
+            mGameState->setDebugText("too far from center");
+        else
+            mGameState->setDebugText("");
     }
 
     void Opt0Controller::holdPressed(Ogre::uint64 timesincelast)
     {
-        if (mTimeSinceLast + mDelay >  timesincelast)
+        if (mBlocked || mTimeSinceLast + mDelay >  timesincelast)
         {
             return;
         }

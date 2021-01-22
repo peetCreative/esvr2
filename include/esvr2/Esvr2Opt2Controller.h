@@ -17,6 +17,7 @@ namespace esvr2
         Ogre::Vector3 mStartPosition = Ogre::Vector3::ZERO;
         LaparoscopeDOFPose mStartPose;
         const Ogre::Real mTransZFact = 2.0;
+        bool mBlocked = false;
     public:
         Opt2Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,

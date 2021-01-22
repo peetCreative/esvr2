@@ -28,10 +28,17 @@ namespace esvr2
         //TODO: guard
         if (!mLaparoscopeController->getLaparoscopePose(mStartPose))
             return;
+        mBlocked = !mGameState->isHeadPositionCentered();
+        if (mBlocked)
+            mGameState->setDebugText("too far from center");
+        else
+            mGameState->setDebugText("");
     }
 
     void Opt2Controller::hold(Ogre::uint64 time)
     {
+        if (mBlocked)
+            return;
         Ogre::Quaternion currentOrientation = mGameState->getHeadOrientation();
         Ogre::Vector3 currentPosition = mGameState->getHeadPosition();
         LaparoscopeDOFBoundaries boundaries;

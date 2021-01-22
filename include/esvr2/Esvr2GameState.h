@@ -175,6 +175,8 @@ namespace esvr2
         Ogre::Quaternion getHeadOrientation();
         Ogre::Quaternion getProjectionPlanesOrientation();
         Ogre::Vector3 getHeadPosition();
+        bool isHeadPositionCentered();
+
 
         void setDebugText(Ogre::String debugText);
         void createInteractiveElement2D(
