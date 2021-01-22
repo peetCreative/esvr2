@@ -14,6 +14,7 @@ namespace esvr2
     {
     private:
         Ogre::Vector3 mStartPosition = Ogre::Vector3::ZERO;
+        Ogre::Quaternion mStartOrientation = Ogre::Quaternion::ZERO;
         Ogre::uint64 mTimeSinceLast;
         const Ogre::uint64 mDelay = 100;
         bool mBlocked = false;

@@ -25,6 +25,7 @@ namespace esvr2
     void Opt0Controller::keyPressed()
     {
         mTimeSinceLast = 0;
+        mStartOrientation = mGameState->getHeadOrientation();
         mStartPosition = mGameState->getHeadPosition();
         mBlocked = !mGameState->isHeadPositionCentered();
         if (mBlocked)
@@ -51,7 +52,7 @@ namespace esvr2
         Ogre::Real headPositionRel = posDiff.length() * zAxis.dotProduct(posDiff);
         Ogre::Quaternion headOrientationRel =
 //                headOrientationWORLD;
-            headOrientationWORLD * toScreenOrientationWORLD.Inverse();
+            headOrientationWORLD * mStartOrientation.Inverse();
         //TODO: guard
         LaparoscopeDOFBoundaries boundaries;
         LaparoscopeDOFPose pose;
@@ -63,31 +64,41 @@ namespace esvr2
         }
 
         float inc =  (boundaries.transZMax - boundaries.transZMin)/100;
-        if (headPositionRel > 0.05)
+        if (headPositionRel > 0.02)
             pose.transZ -= inc;
-        if (headPositionRel < -0.05)
+        if (headPositionRel < -0.02)
             pose.transZ += inc;
         Ogre::Radian pitchRad = headOrientationRel.getPitch();
         Ogre::Degree pitchDeg(pitchRad);
         // swingy seems to be inverted
-        inc =  (boundaries.swingYMax - boundaries.swingYMin)/100;
+        inc = (boundaries.pitchMax - boundaries.pitchMin) / 100;
         if (Ogre::Degree(5) < pitchDeg)
-            pose.swingY -= inc;
+            pose.pitch -= inc;
         if (Ogre::Degree(-5) > pitchDeg)
-            pose.swingY += inc;
+            pose.pitch += inc;
 
         Ogre::Radian yawRad(headOrientationRel.getYaw());
         Ogre::Degree yawDeg(yawRad);
-        inc =  (boundaries.swingXMax - boundaries.swingXMin)/100;
+        inc = (boundaries.yawMax - boundaries.yawMin) / 100;
         if (Ogre::Degree(5) < yawDeg)
-            pose.swingX += inc;
+            pose.yaw += inc;
         if (Ogre::Degree(-5) > yawDeg)
-            pose.swingX -= inc;
+            pose.yaw -= inc;
 
-        pose.swingX = std::min(pose.swingX, boundaries.swingXMax);
-        pose.swingX = std::max(pose.swingX, boundaries.swingXMin);
-        pose.swingY = std::min(pose.swingY, boundaries.swingYMax);
-        pose.swingY = std::max(pose.swingY, boundaries.swingYMin);
+        Ogre::Radian rollRad(headOrientationRel.getRoll());
+        Ogre::Degree rollDeg(rollRad);
+        inc = (boundaries.rollMax - boundaries.rollMin) / 100;
+        if (Ogre::Degree(5) < rollDeg)
+            pose.roll += inc;
+        if (Ogre::Degree(-5) > rollDeg)
+            pose.roll -= inc;
+
+        pose.yaw = std::min(pose.yaw, boundaries.yawMax);
+        pose.yaw = std::max(pose.yaw, boundaries.yawMin);
+        pose.pitch = std::min(pose.pitch, boundaries.pitchMax);
+        pose.pitch = std::max(pose.pitch, boundaries.pitchMin);
+        pose.roll = std::min(pose.roll, boundaries.rollMax);
+        pose.roll = std::max(pose.roll, boundaries.rollMin);
         pose.transZ = std::min(pose.transZ, boundaries.transZMax);
         pose.transZ = std::max(pose.transZ, boundaries.transZMin);
         mLaparoscopeController->moveLaparoscopeTo(pose);

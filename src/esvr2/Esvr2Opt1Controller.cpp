@@ -61,18 +61,18 @@ namespace esvr2
             return;
         }
 
-        float inc =  (boundaries.swingXMax - boundaries.swingXMin)/100;
+        float inc = (boundaries.yawMax - boundaries.yawMin) / 100;
         // swingy seems to be inverted
         if (dir == DIR_LEFT)
-            pose.swingX += inc;
+            pose.yaw += inc;
         if (dir == DIR_RIGHT)
-            pose.swingX -= inc;
+            pose.yaw -= inc;
 
-        inc =  (boundaries.swingYMax - boundaries.swingYMin)/100;
+        inc = (boundaries.pitchMax - boundaries.pitchMin) / 100;
         if (dir == DIR_UP)
-            pose.swingY -= inc;
+            pose.pitch -= inc;
         if (dir == DIR_DOWN)
-            pose.swingY += inc;
+            pose.pitch += inc;
 
         inc =  (boundaries.transZMax - boundaries.transZMin)/100;
         if (dir == DIR_TRANS_IN)
@@ -80,10 +80,10 @@ namespace esvr2
         if (dir == DIR_TRANS_OUT)
             pose.transZ += inc;
 
-        pose.swingX = std::min(pose.swingX, boundaries.swingXMax);
-        pose.swingX = std::max(pose.swingX, boundaries.swingXMin);
-        pose.swingY = std::min(pose.swingY, boundaries.swingYMax);
-        pose.swingY = std::max(pose.swingY, boundaries.swingYMin);
+        pose.yaw = std::min(pose.yaw, boundaries.yawMax);
+        pose.yaw = std::max(pose.yaw, boundaries.yawMin);
+        pose.pitch = std::min(pose.pitch, boundaries.pitchMax);
+        pose.pitch = std::max(pose.pitch, boundaries.pitchMin);
         pose.transZ = std::min(pose.transZ, boundaries.transZMax);
         pose.transZ = std::max(pose.transZ, boundaries.transZMin);
         mLaparoscopeController->moveLaparoscopeTo(pose);

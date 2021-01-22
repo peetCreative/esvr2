@@ -10,17 +10,17 @@
 namespace esvr2
 {
     typedef struct {
-        float swingX;
-        float swingY;
-        float transZ;
-        float rotZ;
+        float yaw = 0;
+        float pitch = 0;
+        float roll = 0;
+        float transZ = 0;
     } LaparoscopeDOFPose;
 
     typedef struct {
-        float swingXMax, swingXMin;
-        float swingYMax, swingYMin;
+        float yawMax, yawMin;
+        float pitchMax, pitchMin;
+        float rollMax, rollMin;
         float transZMax, transZMin;
-        float rotZMax, rotZMin;
     } LaparoscopeDOFBoundaries;
 
     class LaparoscopeController : virtual public Component {

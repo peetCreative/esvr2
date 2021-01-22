@@ -15,10 +15,10 @@ namespace esvr2
             mGameState(gameState)
     {
         LaparoscopeDOFPose lapPose = LaparoscopeDOFPose();
-        lapPose.swingX = 0;
-        lapPose.swingY = 0;
+        lapPose.yaw = 0;
+        lapPose.pitch = 0;
         lapPose.transZ = 0.16;
-        lapPose.rotZ = 0;
+        lapPose.roll = 0;
         mLaparoscopeController->moveLaparoscopeTo(lapPose);
     }
 }

@@ -56,14 +56,14 @@ namespace esvr2
                 mStartOrientation.getYaw() - currentOrientation.getYaw();
         Ogre::Vector3 zAxis = currentOrientation.zAxis();
         Ogre::Vector3 posDiff = mStartPosition - currentPosition;
-        pose.swingY = mStartPose.swingY + pitchDiff.valueRadians();
-        pose.swingX = mStartPose.swingX - yawDiff.valueRadians();
+        pose.pitch = mStartPose.pitch + pitchDiff.valueRadians();
+        pose.yaw = mStartPose.yaw - yawDiff.valueRadians();
         pose.transZ = mStartPose.transZ -
                 mTransZFact * (posDiff.length() * zAxis.dotProduct(posDiff));
-        pose.swingX = std::min(pose.swingX, boundaries.swingXMax);
-        pose.swingX = std::max(pose.swingX, boundaries.swingXMin);
-        pose.swingY = std::min(pose.swingY, boundaries.swingYMax);
-        pose.swingY = std::max(pose.swingY, boundaries.swingYMin);
+        pose.yaw = std::min(pose.yaw, boundaries.yawMax);
+        pose.yaw = std::max(pose.yaw, boundaries.yawMin);
+        pose.pitch = std::min(pose.pitch, boundaries.pitchMax);
+        pose.pitch = std::max(pose.pitch, boundaries.pitchMin);
         pose.transZ = std::min(pose.transZ, boundaries.transZMax);
         pose.transZ = std::max(pose.transZ, boundaries.transZMin);
 
