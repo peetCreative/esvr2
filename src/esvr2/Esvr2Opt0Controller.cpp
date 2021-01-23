@@ -48,8 +48,8 @@ namespace esvr2
                 mGameState->getHeadOrientation();
         Ogre::Quaternion toScreenOrientationWORLD =
                 mGameState->getProjectionPlanesOrientation();
-        Ogre::Vector3 zAxis = toScreenOrientationWORLD.zAxis();
-        Ogre::Real headPositionRel = posDiff.length() * zAxis.dotProduct(posDiff);
+        Ogre::Vector3 axis = toScreenOrientationWORLD.xAxis();
+        Ogre::Real headPositionRel = posDiff.length() * axis.dotProduct(posDiff);
         Ogre::Quaternion headOrientationRel =
 //                headOrientationWORLD;
             headOrientationWORLD * mStartOrientation.Inverse();
@@ -64,9 +64,9 @@ namespace esvr2
         }
 
         float inc =  (boundaries.transZMax - boundaries.transZMin)/100;
-        if (headPositionRel > 0.02)
+        if (headPositionRel > 0.01)
             pose.transZ -= inc;
-        if (headPositionRel < -0.02)
+        if (headPositionRel < -0.01)
             pose.transZ += inc;
         Ogre::Radian pitchRad = headOrientationRel.getPitch();
         Ogre::Degree pitchDeg(pitchRad);
@@ -89,9 +89,9 @@ namespace esvr2
         Ogre::Degree rollDeg(rollRad);
         inc = (boundaries.rollMax - boundaries.rollMin) / 100;
         if (Ogre::Degree(5) < rollDeg)
-            pose.roll += inc;
-        if (Ogre::Degree(-5) > rollDeg)
             pose.roll -= inc;
+        if (Ogre::Degree(-5) > rollDeg)
+            pose.roll += inc;
 
         pose.yaw = std::min(pose.yaw, boundaries.yawMax);
         pose.yaw = std::max(pose.yaw, boundaries.yawMin);
