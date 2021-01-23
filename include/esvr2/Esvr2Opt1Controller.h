@@ -15,6 +15,8 @@ namespace esvr2
     {
         DIR_LEFT,
         DIR_RIGHT,
+        DIR_ROLL_LEFT,
+        DIR_ROLL_RIGHT,
         DIR_UP,
         DIR_DOWN,
         DIR_TRANS_IN,

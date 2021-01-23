@@ -109,6 +109,18 @@ interactive_bord:
       uv_y: 0.4
       uv_size_x: 0.1
       uv_size_y: 0.2
+    - id: Opt1RollLeft
+      text: RLeft
+      uv_x: 0.4
+      uv_y: 0.45
+      uv_size_x: 0.1
+      uv_size_y: 0.1
+    - id: Opt1RollRight
+      text: RRight
+      uv_x: -0.5
+      uv_y: 0.45
+      uv_size_x: 0.1
+      uv_size_y: 0.1
     - id: Opt1Up
       text: Up
       uv_x: 0.4
