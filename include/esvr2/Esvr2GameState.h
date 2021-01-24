@@ -21,7 +21,8 @@ namespace esvr2
     typedef enum {
         MM_NONE,
         MM_ORIENTATION,
-        MM_TRANSLATION
+        MM_TRANSLATION,
+        MM_ROLL
     } MouseManipulationType;
 
     class GameState
@@ -106,6 +107,7 @@ namespace esvr2
         MouseManipulationType mMouseManipulate;
         Ogre::Real mVRCameraNodeYaw, mVRCameraNodePitch;
         Ogre::Real mVRCameraNodeTransZ, mVRCameraNodeTransX;
+        Ogre::Real mVRCameraNodeRoll;
 
         void createProjectionRectangle2D();
         void createVRProjectionPlanes();

@@ -808,6 +808,11 @@ namespace esvr2
             mVRCameraNodeTransZ += -arg.motion.yrel /
                     static_cast<Ogre::Real>(height);
         }
+        if (mMouseManipulate == MM_ROLL)
+        {
+            mVRCameraNodeRoll   += -arg.motion.xrel /
+                    static_cast<Ogre::Real>(width);
+        }
     }
 
     void GameState::mousePressed( const SDL_MouseButtonEvent &arg )
@@ -821,6 +826,10 @@ namespace esvr2
         {
 //            setMouseRelative(true);
             mMouseManipulate = MM_TRANSLATION;
+        }
+        if ( arg.button == SDL_BUTTON_MIDDLE)
+        {
+            mMouseManipulate = MM_ROLL;
         }
     }
 
@@ -1137,6 +1146,7 @@ namespace esvr2
         mVRCamerasNode->_getFullTransformUpdated();
         mVRCamerasNode->yaw(Ogre::Radian(mVRCameraNodeYaw));
         mVRCamerasNode->pitch(Ogre::Radian(mVRCameraNodePitch));
+        mVRCamerasNode->roll(Ogre::Radian(mVRCameraNodeRoll));
         Ogre::Vector3 pos = mVRCamerasNode->getPosition();
         Ogre::Vector3 newPos = Ogre::Vector3(
                 pos.x + mVRCameraNodeTransX,
@@ -1147,6 +1157,7 @@ namespace esvr2
         mVRCameraNodePitch = 0;
         mVRCameraNodeTransX = 0;
         mVRCameraNodeTransZ = 0;
+        mVRCameraNodeRoll = 0;
     }
 
     //-----------------------------------------------------------------------------------
