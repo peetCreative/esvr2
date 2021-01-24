@@ -814,19 +814,19 @@ namespace esvr2
     {
         if ( arg.button == SDL_BUTTON_LEFT)
         {
-            setMouseRelative(true);
+//            setMouseRelative(true);
             mMouseManipulate = MM_ORIENTATION;
         }
         if ( arg.button == SDL_BUTTON_RIGHT)
         {
-            setMouseRelative(true);
+//            setMouseRelative(true);
             mMouseManipulate = MM_TRANSLATION;
         }
     }
 
     void GameState::mouseReleased( const SDL_MouseButtonEvent &arg )
     {
-        setMouseRelative(false);
+//        setMouseRelative(false);
         mMouseManipulate = MM_NONE;
     }
     //-----------------------------------------------------------------------------------
