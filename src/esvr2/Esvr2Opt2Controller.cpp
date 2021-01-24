@@ -51,21 +51,36 @@ namespace esvr2
             LOG << "In Move mode but did not get DOFPose or DOFBoundaries" << LOGEND;
             return;
         }
+        Ogre::Vector3 xAxisTrans = currentOrientation.xAxis();
+        if (xAxisTrans == Ogre::Vector3::UNIT_Y &&
+            xAxisTrans == -Ogre::Vector3::UNIT_Y)
+            return;
+        Ogre::Vector3 xAxisNew(xAxisTrans.x,0,xAxisTrans.z);
+        xAxisNew.normalise();
+        Ogre::Quaternion trans = xAxisTrans.getRotationTo(xAxisNew);
+        Ogre::Quaternion currentOrientationAdj = trans * currentOrientation;
 
         Ogre::Radian pitchDiff =
-                mStartOrientation.getPitch() - currentOrientation.getPitch();
+                mStartOrientation.getPitch() - currentOrientationAdj.getPitch();
         Ogre::Radian yawDiff =
-                mStartOrientation.getYaw() - currentOrientation.getYaw();
+                mStartOrientation.getYaw() - currentOrientationAdj.getYaw();
+        Ogre::Radian rollDiff =
+                mStartOrientation.getRoll() - currentOrientationAdj.getRoll();
         Ogre::Vector3 zAxis = currentOrientation.zAxis();
         Ogre::Vector3 posDiff = mStartPosition - currentPosition;
+
         pose.pitch = mStartPose.pitch - pitchDiff.valueRadians();
-        pose.yaw = mStartPose.yaw - yawDiff.valueRadians();
+        pose.yaw =  mStartPose.yaw - yawDiff.valueRadians();
+        pose.roll = mStartPose.roll - rollDiff.valueRadians();
         pose.transZ = mStartPose.transZ +
                 mTransZFact * (posDiff.length() * zAxis.dotProduct(posDiff));
+
         pose.yaw = std::min(pose.yaw, boundaries.yawMax);
         pose.yaw = std::max(pose.yaw, boundaries.yawMin);
         pose.pitch = std::min(pose.pitch, boundaries.pitchMax);
         pose.pitch = std::max(pose.pitch, boundaries.pitchMin);
+        pose.roll = std::min(pose.roll, boundaries.rollMax);
+        pose.roll = std::max(pose.roll, boundaries.rollMin);
         pose.transZ = std::min(pose.transZ, boundaries.transZMax);
         pose.transZ = std::max(pose.transZ, boundaries.transZMin);
 
