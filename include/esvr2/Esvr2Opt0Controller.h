@@ -16,12 +16,30 @@ namespace esvr2
         Ogre::Vector3 mStartPosition = Ogre::Vector3::ZERO;
         Ogre::Quaternion mStartOrientation = Ogre::Quaternion::ZERO;
         Ogre::uint64 mTimeSinceLast;
-        const Ogre::uint64 mDelay = 100;
+        Ogre::uint64 mDelay;
         bool mBlocked = false;
+
+        Ogre::Real mStepYaw;
+        Ogre::Real mStepPitch;
+        Ogre::Real mStepRoll;
+        Ogre::Real mStepTransZ;
+        Ogre::Real mThresholdTransZ;
+        Ogre::Real mThresholdYawDeg;
+        Ogre::Real mThresholdPitchDeg;
+        Ogre::Real mThresholdRollDeg;
     public:
         Opt0Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,
-                GameState *gameState);
+                GameState *gameState,
+                Ogre::uint64 delay,
+                Ogre::Real stepYaw,
+                Ogre::Real stepPitch,
+                Ogre::Real stepRoll,
+                Ogre::Real stepTransZ,
+                Ogre::Real thresholdTransZ,
+                Ogre::Real thresholdYawDeg,
+                Ogre::Real thresholdPitchDeg,
+                Ogre::Real thresholdRollDeg);
         void keyPressed();
         void holdPressed(Ogre::uint64 timesincelast);
     };

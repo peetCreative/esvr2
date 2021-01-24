@@ -12,46 +12,65 @@ namespace esvr2
 {
     Opt1Controller::Opt1Controller(
             std::shared_ptr<LaparoscopeController> laparoscopeController,
-            GameState *gameState) :
-        Controller(laparoscopeController, gameState)
+            GameState *gameState,
+            Ogre::uint64 delay,
+            Ogre::Real stepYaw,
+            Ogre::Real stepPitch,
+            Ogre::Real stepRoll,
+            Ogre::Real stepTransZ) :
+        Controller(laparoscopeController, gameState),
+        mDelay(delay),
+        mStepYaw(stepYaw),
+        mStepPitch(stepPitch),
+        mStepRoll(stepRoll),
+        mStepTransZ(stepTransZ)
     {
         //Create new device
         gameState->createInteractiveElement2D(
                 "Opt1Left",
-                (boost::function<void()>) 0,
+                boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_LEFT));
         gameState->createInteractiveElement2D(
                 "Opt1Right",
-                (boost::function<void()>) 0,
+                boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_RIGHT));
         gameState->createInteractiveElement2D(
                 "Opt1RollLeft",
-                (boost::function<void()>) 0,
+                boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_LEFT));
         gameState->createInteractiveElement2D(
                 "Opt1RollRight",
-                (boost::function<void()>) 0,
+                boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_RIGHT));
         gameState->createInteractiveElement2D(
                 "Opt1Up",
-                (boost::function<void()>) 0,
+                boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_UP));
         gameState->createInteractiveElement2D(
                 "Opt1Down",
-                (boost::function<void()>) 0,
+                boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_DOWN));
         gameState->createInteractiveElement2D(
                 "Opt1TransIn",
-                (boost::function<void()>) 0,
+                boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_IN));
         gameState->createInteractiveElement2D(
                 "Opt1TransOut",
-                (boost::function<void()>) 0,
+                boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_OUT));
     }
 
-    void Opt1Controller::holdBtn(Ogre::uint64 since, DirectionType dir)
+    void Opt1Controller::keyPressed()
     {
+        mTimeSinceLast = 0;
+    }
+
+    void Opt1Controller::holdBtn(Ogre::uint64 timesincelast, DirectionType dir)
+    {
+        if (mTimeSinceLast + mDelay >  timesincelast)
+            return;
+        mTimeSinceLast = timesincelast;
+
         Ogre::Quaternion headOrientationWORLD =
                 mGameState->getHeadOrientation();
         Ogre::Quaternion toScreenOrientationWORLD =
@@ -69,30 +88,26 @@ namespace esvr2
             return;
         }
 
-        float inc = (boundaries.yawMax - boundaries.yawMin) / 100;
         if (dir == DIR_LEFT)
-            pose.yaw += inc;
+            pose.yaw += mStepYaw;
         if (dir == DIR_RIGHT)
-            pose.yaw -= inc;
+            pose.yaw -= mStepYaw;
 
         //rotation around -z
-        inc = (boundaries.rollMax - boundaries.rollMin) / 100;
         if (dir == DIR_ROLL_LEFT)
-            pose.roll -= inc;
+            pose.roll -= mStepRoll;
         if (dir == DIR_ROLL_RIGHT)
-            pose.roll += inc;
+            pose.roll += mStepRoll;
 
-        inc = (boundaries.pitchMax - boundaries.pitchMin) / 100;
         if (dir == DIR_UP)
-            pose.pitch += inc;
+            pose.pitch += mStepPitch;
         if (dir == DIR_DOWN)
-            pose.pitch -= inc;
+            pose.pitch -= mStepPitch;
 
-        inc =  (boundaries.transZMax - boundaries.transZMin)/100;
         if (dir == DIR_TRANS_IN)
-            pose.transZ += inc;
+            pose.transZ += mStepTransZ;
         if (dir == DIR_TRANS_OUT)
-            pose.transZ -= inc;
+            pose.transZ -= mStepTransZ;
 
         pose.yaw = std::min(pose.yaw, boundaries.yawMax);
         pose.yaw = std::max(pose.yaw, boundaries.yawMin);

@@ -12,8 +12,10 @@ namespace esvr2
 {
     Opt2Controller::Opt2Controller(
             std::shared_ptr<LaparoscopeController> laparoscopeController,
-            GameState *gameState) :
-        Controller(laparoscopeController, gameState)
+            GameState *gameState,
+            Ogre::Real transZFact) :
+        Controller(laparoscopeController, gameState),
+        mTransZFact(transZFact)
     {
         gameState->createInteractiveElement2D(
                 "Opt2Move",

@@ -16,12 +16,13 @@ namespace esvr2
         Ogre::Quaternion mStartOrientation = Ogre::Quaternion::ZERO;
         Ogre::Vector3 mStartPosition = Ogre::Vector3::ZERO;
         LaparoscopeDOFPose mStartPose;
-        const Ogre::Real mTransZFact = 2.0;
+        Ogre::Real mTransZFact = 2.0;
         bool mBlocked = false;
     public:
         Opt2Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,
-                GameState *gameState);
+                GameState *gameState,
+                Ogre::Real transZFact);
 
         void startMoving();
         void hold(Ogre::uint64 time);

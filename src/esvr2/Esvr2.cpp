@@ -188,19 +188,34 @@ namespace esvr2 {
                     mController =
                             std::make_shared<Opt0Controller>(
                                     mLaparoscopeController,
-                                    mGraphicsSystem->getGameState());
+                                    mGraphicsSystem->getGameState(),
+                                    mConfig->ctlDelay,
+                                    mConfig->ctlStepYaw,
+                                    mConfig->ctlStepPitch,
+                                    mConfig->ctlStepRoll,
+                                    mConfig->ctlStepTransZ,
+                                    mConfig->ctlOpt0ThresholdTransZ,
+                                    mConfig->ctlOpt0ThresholdYawDeg,
+                                    mConfig->ctlOpt0ThresholdPitchDeg,
+                                    mConfig->ctlOpt0ThresholdRollDeg);
                     break;
                 case CT_OPT1:
                     mController =
                             std::make_shared<Opt1Controller>(
                                     mLaparoscopeController,
-                                    mGraphicsSystem->getGameState());
+                                    mGraphicsSystem->getGameState(),
+                                    mConfig->ctlDelay,
+                                    mConfig->ctlStepYaw,
+                                    mConfig->ctlStepPitch,
+                                    mConfig->ctlStepRoll,
+                                    mConfig->ctlStepTransZ);
                     break;
                 case CT_OPT2:
                     mController =
                             std::make_shared<Opt2Controller>(
                                     mLaparoscopeController,
-                                    mGraphicsSystem->getGameState());
+                                    mGraphicsSystem->getGameState(),
+                                    mConfig->ctlOpt2TransZFact);
                     break;
                 default:
                     mController = nullptr;

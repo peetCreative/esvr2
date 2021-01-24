@@ -392,6 +392,22 @@ namespace esvr2 {
         if (YAML::Node param = doc["controller_type"])
             config->controllerType =
                 getControllerType(param.as<std::string>());
+        if (YAML::Node param = doc["controller_opt01_delay"])
+            config->ctlDelay = param.as<int>();
+        if (YAML::Node param = doc["controller_step_yaw"])
+            config->ctlStepYaw = param.as<float>();
+        if (YAML::Node param = doc["controller_step_pitch"])
+            config->ctlStepPitch = param.as<float>();
+        if (YAML::Node param = doc["controller_step_roll"])
+            config->ctlStepRoll = param.as<float>();
+        if (YAML::Node param = doc["controller_opt0_threshold_trans_z"])
+            config->ctlOpt0ThresholdTransZ = param.as<float>();
+        if (YAML::Node param = doc["controller_opt0_threshold_yaw_deg"])
+            config->ctlOpt0ThresholdYawDeg = param.as<float>();
+        if (YAML::Node param = doc["controller_opt0_threshold_pitch_deg"])
+            config->ctlOpt0ThresholdPitchDeg = param.as<float>();
+        if (YAML::Node param = doc["controller_opt0_threshold_roll_deg"])
+            config->ctlOpt0ThresholdRollDeg = param.as<float>();
         if (YAML::Node param = doc["workspace_type"])
             config->workspaceType =
                 getWorkspaceType(param.as<std::string>());

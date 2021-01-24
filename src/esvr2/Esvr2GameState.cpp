@@ -1424,7 +1424,7 @@ namespace esvr2
         Ogre::Vector3 diff =
             mVRSceneNodeProjectionPlanesOrigin->getPosition()
             - mVRCamerasNode->getPosition();
-        return diff.length() < 0.05;
+        return diff.length() < mEsvr2->mConfig->centerEpsilon;
     }
 
     void GameState::setDebugText(Ogre::String debugText)

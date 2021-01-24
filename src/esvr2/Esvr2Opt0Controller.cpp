@@ -14,8 +14,26 @@ namespace esvr2
 {
     Opt0Controller::Opt0Controller(
             std::shared_ptr<LaparoscopeController> laparoscopeController,
-            GameState *gameState):
-            Controller(laparoscopeController, gameState)
+            GameState *gameState,
+            Ogre::uint64 delay,
+            Ogre::Real stepYaw,
+            Ogre::Real stepPitch,
+            Ogre::Real stepRoll,
+            Ogre::Real stepTransZ,
+            Ogre::Real thresholdTransZ,
+            Ogre::Real thresholdYawDeg,
+            Ogre::Real thresholdPitchDeg,
+            Ogre::Real thresholdRollDeg):
+        Controller(laparoscopeController, gameState),
+        mDelay(delay),
+        mStepYaw(stepYaw),
+        mStepPitch(stepPitch),
+        mStepRoll(stepRoll),
+        mStepTransZ(stepTransZ),
+        mThresholdTransZ(thresholdTransZ),
+        mThresholdYawDeg(thresholdYawDeg),
+        mThresholdPitchDeg(thresholdPitchDeg),
+        mThresholdRollDeg(thresholdRollDeg)
     {
         mGameState->createInteractiveElement2D("Opt0Move",
                boost::bind(&Opt0Controller::keyPressed, this),
@@ -63,35 +81,31 @@ namespace esvr2
             return;
         }
 
-        float inc =  (boundaries.transZMax - boundaries.transZMin)/100;
-        if (headPositionRel > 0.01)
-            pose.transZ += inc;
-        if (headPositionRel < -0.01)
-            pose.transZ -= inc;
+        if (headPositionRel > mThresholdTransZ)
+            pose.transZ += mStepTransZ;
+        if (headPositionRel < -mThresholdTransZ)
+            pose.transZ -= mStepTransZ;
         Ogre::Radian pitchRad = headOrientationRel.getPitch();
         Ogre::Degree pitchDeg(pitchRad);
         // swingy seems to be inverted
-        inc = (boundaries.pitchMax - boundaries.pitchMin) / 100;
-        if (Ogre::Degree(5) < pitchDeg)
-            pose.pitch += inc;
-        if (Ogre::Degree(-5) > pitchDeg)
-            pose.pitch -= inc;
+        if (Ogre::Degree(mThresholdPitchDeg) < pitchDeg)
+            pose.pitch += mStepPitch;
+        if (Ogre::Degree(-mThresholdPitchDeg) > pitchDeg)
+            pose.pitch -= mStepPitch;
 
         Ogre::Radian yawRad(headOrientationRel.getYaw());
         Ogre::Degree yawDeg(yawRad);
-        inc = (boundaries.yawMax - boundaries.yawMin) / 100;
-        if (Ogre::Degree(5) < yawDeg)
-            pose.yaw += inc;
-        if (Ogre::Degree(-5) > yawDeg)
-            pose.yaw -= inc;
+        if (Ogre::Degree(mThresholdYawDeg) < yawDeg)
+            pose.yaw += mStepYaw;
+        if (Ogre::Degree(-mThresholdYawDeg) > yawDeg)
+            pose.yaw -= mStepYaw;
 
         Ogre::Radian rollRad(headOrientationRel.getRoll());
         Ogre::Degree rollDeg(rollRad);
-        inc = (boundaries.rollMax - boundaries.rollMin) / 100;
-        if (Ogre::Degree(5) < rollDeg)
-            pose.roll += inc;
-        if (Ogre::Degree(-5) > rollDeg)
-            pose.roll -= inc;
+        if (Ogre::Degree(mThresholdRollDeg) < rollDeg)
+            pose.roll += mStepRoll;
+        if (Ogre::Degree(-mThresholdRollDeg) > rollDeg)
+            pose.roll -= mStepRoll;
 
         pose.yaw = std::min(pose.yaw, boundaries.yawMax);
         pose.yaw = std::max(pose.yaw, boundaries.yawMin);

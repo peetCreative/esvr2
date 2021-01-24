@@ -134,6 +134,17 @@ namespace esvr2 {
         bool debugScreen = false;
         int screen = 0;
         double headHight = 1.7f;
+        double centerEpsilon = 0.1;
+        int ctlDelay = 100;
+        double ctlStepYaw = 0.01;
+        double ctlStepPitch = 0.01;
+        double ctlStepRoll = 0.01;
+        double ctlStepTransZ = 0.01;
+        double ctlOpt0ThresholdTransZ = 0.01;
+        double ctlOpt0ThresholdYawDeg = 5;
+        double ctlOpt0ThresholdPitchDeg = 5;
+        double ctlOpt0ThresholdRollDeg = 5;
+        double ctlOpt2TransZFact = 2.0;
         std::string resourcePath = "Resources.cfg";
         std::string serialPort = "/dev/ttyUSB0";
         bool centerProjectionPlane = false;

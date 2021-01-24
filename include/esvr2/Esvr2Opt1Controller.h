@@ -30,11 +30,23 @@ namespace esvr2
         InteractiveElement2DPtr mUpButton;
         InteractiveElement2DPtr mLeftButton;
         InteractiveElement2DPtr mRightButton;
+        Ogre::uint64 mTimeSinceLast;
+        Ogre::uint64 mDelay;
+        Ogre::Real mStepYaw;
+        Ogre::Real mStepPitch;
+        Ogre::Real mStepRoll;
+        Ogre::Real mStepTransZ;
     public:
         Opt1Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,
-            GameState *gameState);
-        void holdBtn(Ogre::uint64 since, DirectionType dir);
+                GameState *gameState,
+                Ogre::uint64 delay,
+                Ogre::Real stepYaw,
+                Ogre::Real stepPitch,
+                Ogre::Real stepRoll,
+                Ogre::Real stepTransZ);
+        void keyPressed();
+        void holdBtn(Ogre::uint64 timesincelast, DirectionType dir);
     };
 }
 
