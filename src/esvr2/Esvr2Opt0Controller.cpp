@@ -65,17 +65,17 @@ namespace esvr2
 
         float inc =  (boundaries.transZMax - boundaries.transZMin)/100;
         if (headPositionRel > 0.01)
-            pose.transZ -= inc;
-        if (headPositionRel < -0.01)
             pose.transZ += inc;
+        if (headPositionRel < -0.01)
+            pose.transZ -= inc;
         Ogre::Radian pitchRad = headOrientationRel.getPitch();
         Ogre::Degree pitchDeg(pitchRad);
         // swingy seems to be inverted
         inc = (boundaries.pitchMax - boundaries.pitchMin) / 100;
         if (Ogre::Degree(5) < pitchDeg)
-            pose.pitch -= inc;
-        if (Ogre::Degree(-5) > pitchDeg)
             pose.pitch += inc;
+        if (Ogre::Degree(-5) > pitchDeg)
+            pose.pitch -= inc;
 
         Ogre::Radian yawRad(headOrientationRel.getYaw());
         Ogre::Degree yawDeg(yawRad);
@@ -89,9 +89,9 @@ namespace esvr2
         Ogre::Degree rollDeg(rollRad);
         inc = (boundaries.rollMax - boundaries.rollMin) / 100;
         if (Ogre::Degree(5) < rollDeg)
-            pose.roll -= inc;
-        if (Ogre::Degree(-5) > rollDeg)
             pose.roll += inc;
+        if (Ogre::Degree(-5) > rollDeg)
+            pose.roll -= inc;
 
         pose.yaw = std::min(pose.yaw, boundaries.yawMax);
         pose.yaw = std::max(pose.yaw, boundaries.yawMin);

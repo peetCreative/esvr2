@@ -70,30 +70,29 @@ namespace esvr2
         }
 
         float inc = (boundaries.yawMax - boundaries.yawMin) / 100;
-        // swingy seems to be inverted
         if (dir == DIR_LEFT)
             pose.yaw += inc;
         if (dir == DIR_RIGHT)
             pose.yaw -= inc;
 
+        //rotation around -z
         inc = (boundaries.rollMax - boundaries.rollMin) / 100;
-        // swingy seems to be inverted
         if (dir == DIR_ROLL_LEFT)
-            pose.roll += inc;
-        if (dir == DIR_ROLL_RIGHT)
             pose.roll -= inc;
+        if (dir == DIR_ROLL_RIGHT)
+            pose.roll += inc;
 
         inc = (boundaries.pitchMax - boundaries.pitchMin) / 100;
         if (dir == DIR_UP)
-            pose.pitch -= inc;
-        if (dir == DIR_DOWN)
             pose.pitch += inc;
+        if (dir == DIR_DOWN)
+            pose.pitch -= inc;
 
         inc =  (boundaries.transZMax - boundaries.transZMin)/100;
         if (dir == DIR_TRANS_IN)
-            pose.transZ -= inc;
-        if (dir == DIR_TRANS_OUT)
             pose.transZ += inc;
+        if (dir == DIR_TRANS_OUT)
+            pose.transZ -= inc;
 
         pose.yaw = std::min(pose.yaw, boundaries.yawMax);
         pose.yaw = std::max(pose.yaw, boundaries.yawMin);
