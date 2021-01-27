@@ -71,7 +71,7 @@ namespace esvr2
 
         pose.pitch = mStartPose.pitch - pitchDiff.valueRadians();
         pose.yaw =  mStartPose.yaw - yawDiff.valueRadians();
-        pose.roll = mStartPose.roll - rollDiff.valueRadians();
+        pose.roll = mStartPose.roll + rollDiff.valueRadians();
         pose.transZ = mStartPose.transZ +
                 mTransZFact * (posDiff.length() * zAxis.dotProduct(posDiff));
 
