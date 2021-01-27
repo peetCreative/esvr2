@@ -8,6 +8,8 @@
 
 #include <boost/bind.hpp>
 
+#define MENU_OPT2 "MenuOpt2"
+
 namespace esvr2
 {
     Opt2Controller::Opt2Controller(
@@ -18,9 +20,10 @@ namespace esvr2
         mTransZFact(transZFact)
     {
         gameState->createInteractiveElement2D(
-                "Opt2Move",
+                "CenterButton",
                 boost::bind(&Opt2Controller::startMoving, this),
-                boost::bind(&Opt2Controller::hold, this, _1));
+                boost::bind(&Opt2Controller::hold, this, _1),
+                Ogre::IdString(MENU_OPT2));
     }
 
     void Opt2Controller::startMoving()

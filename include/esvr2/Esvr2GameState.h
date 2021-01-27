@@ -15,6 +15,8 @@
 #include "OgreManualObject2.h"
 #include "OgreRectangle2D2.h"
 
+#define MENU_GENERAL "GeneralMenu"
+
 namespace esvr2
 {
     //Define what is modified when the mouse is moved
@@ -24,6 +26,12 @@ namespace esvr2
         MM_TRANSLATION,
         MM_ROLL
     } MouseManipulationType;
+
+    enum UIStatusType {
+        UI_NONE,
+        UI_GENERAL,
+        UI_CONTROLLER
+    };
 
     class GameState
     {
@@ -69,8 +77,9 @@ namespace esvr2
 
         const Ogre::Vector2      mInfoScreenDim = Ogre::Vector2(1.28f, 0.72f);
         bool                     mIntersectsInfoScreen;
-//        UIStatusType             mUIStatus;
+        UIStatusType             mUIStatus = UI_NONE;
         bool                     mIsUIVisible;
+        Ogre::IdString           mUIStatusStr = Ogre::IdString();
         InteractiveElement2DPtr  mHoverUIElement;
         bool                     mUIActive;
         InteractiveElement2DPtr  mActiveUIElement;
@@ -184,7 +193,8 @@ namespace esvr2
         void createInteractiveElement2D(
                 Ogre::String defName,
                 const boost::function<void()> &togglecb,
-                const boost::function<void(Ogre::uint64)> &holdcb);
+                const boost::function<void(Ogre::uint64)> &holdcb,
+                Ogre::IdString menu);
 
         void addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D);
         void adjustToHeadHight();

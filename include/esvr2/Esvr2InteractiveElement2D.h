@@ -17,11 +17,12 @@
 
 namespace esvr2
 {
-    typedef enum {
+    enum InteractiveElementStatusType {
         UIS_NONE,
         UIS_VISIBLE,
+        UIS_HOVER,
         UIS_ACTIVATE
-    } UIStatusType;
+    } ;
 
     class InteractiveElement2D {
     private:
@@ -34,11 +35,13 @@ namespace esvr2
         Ogre::v1::TextAreaOverlayElement *mTextArea = nullptr;
         Ogre::v1::TextAreaOverlayElement *mTextAreaShadow = nullptr;
         InteractiveElement2DDefPtr mDefinitionPtr;
+        Ogre::IdString mVisibleInMenu;
     public:
 
         InteractiveElement2D(InteractiveElement2DDefPtr def,
                              const boost::function<void()> &togglecb,
                              const boost::function<void(Ogre::uint64)> &holdcb,
+                             Ogre::IdString visibleMenu,
                              Ogre::HlmsUnlit *hlmsUnlit);
 
         void activateToggle();
@@ -47,9 +50,10 @@ namespace esvr2
         bool isUVinside(Ogre::Vector2 uv);
         Ogre::String getId();
         bool setText(Ogre::String text);
-        void setUIState(UIStatusType uiStatusType, bool hover);
+        void setUIState(InteractiveElementStatusType uiStatusType);
         bool isHideOtherOnActive();
         bool isVisibleOnActive();
+        bool isVisibleByMenu(Ogre::IdString menu);
     };
 
     typedef std::shared_ptr <InteractiveElement2D> InteractiveElement2DPtr;

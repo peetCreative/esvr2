@@ -89,14 +89,6 @@ interactive_bord:
       uv_y: -0.3
       uv_size_x: rest
       uv_size_y: rest
-    - id: Opt0Move
-      text: M
-      uv_x: 0.48
-      uv_y: 0.48
-      uv_size_x: 0.04
-      uv_size_y: 0.04
-      visible_on_active: false
-      hide_other_on_active: true
     - id: Opt1Left
       text: Left
       uv_x: 0.3
@@ -145,7 +137,7 @@ interactive_bord:
       uv_y: -0.45
       uv_size_x: 0.1
       uv_size_y: 0.05
-    - id: Opt2Move
+    - id: CenterButton
       text: M
       uv_x: 0.48
       uv_y: 0.48

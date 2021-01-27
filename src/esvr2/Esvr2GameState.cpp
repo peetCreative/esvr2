@@ -448,28 +448,36 @@ namespace esvr2
         addViewDirectionIndicator();
         createInteractiveElement2D("Debug",
                     (boost::function<void ()>) 0,
-                    (boost::function<void (Ogre::uint64)>) 0);
+                    (boost::function<void (Ogre::uint64)>) 0,
+                    Ogre::IdString(MENU_GENERAL));
         createInteractiveElement2D("Close",
                 boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
-                (boost::function<void(Ogre::uint64)>) 0);
+                (boost::function<void(Ogre::uint64)>) 0,
+                Ogre::IdString(MENU_GENERAL));
         createInteractiveElement2D("ResetProjectionPlaneDistance",
                    boost::bind(&GameState::resetProjectionPlaneDistance, this),
-                   (boost::function<void(Ogre::uint64)>) 0);
+                   (boost::function<void(Ogre::uint64)>) 0,
+                   Ogre::IdString(MENU_GENERAL));
         createInteractiveElement2D("AdjustProjectionPlaneDistance",
                    boost::bind(&GameState::initAdjustProjectionPlane, this),
-                   boost::bind(&GameState::holdAdjustProjectionPlane, this, _1));
+                   boost::bind(&GameState::holdAdjustProjectionPlane, this, _1),
+                   Ogre::IdString(MENU_GENERAL));
         createInteractiveElement2D("AdjustToHeadHight",
                     boost::bind(&GameState::adjustToHeadHight, this),
-                    (boost::function<void(Ogre::uint64)>) 0);
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    Ogre::IdString(MENU_GENERAL));
         createInteractiveElement2D("MoveScreen",
                    (boost::function<void()>) 0,
-                   boost::bind(&GameState::moveScreen, this, _1));
+                   boost::bind(&GameState::moveScreen, this, _1),
+                   Ogre::IdString(MENU_GENERAL));
         createInteractiveElement2D("RawDist",
                     boost::bind(&GameState::setDistortion, this, DIST_RAW),
-                    (boost::function<void(Ogre::uint64)>) 0);
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    Ogre::IdString(MENU_GENERAL));
         createInteractiveElement2D("UndistRectDist",
                     boost::bind(&GameState::setDistortion, this, DIST_UNDISTORT_RECTIFY),
-                    (boost::function<void(Ogre::uint64)>) 0);
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    Ogre::IdString(MENU_GENERAL));
     }
 
     void GameState::addViewDirectionIndicator()
@@ -494,7 +502,8 @@ namespace esvr2
     void GameState::createInteractiveElement2D(
             Ogre::String defName,
             const boost::function<void()> &togglecb,
-            const boost::function<void(Ogre::uint64)> &holdcb)
+            const boost::function<void(Ogre::uint64)> &holdcb,
+            Ogre::IdString menu)
     {
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
         Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
@@ -508,6 +517,7 @@ namespace esvr2
                     defPtr,
                     togglecb,
                     holdcb,
+                    menu,
                     hlmsUnlit);
             addInteractiveElement2D(element);
         }
@@ -919,21 +929,47 @@ namespace esvr2
     bool GameState::keyPressed( const SDL_KeyboardEvent &arg )
     {
         bool succ = false;
-        if ( arg.keysym.scancode == SDL_SCANCODE_M )
+        if ( arg.keysym.scancode == SDL_SCANCODE_M && mUIStatus == UI_NONE )
         {
-            mIsUIVisible = true;
-            updateOverlayElements();
-            succ = true;
+            //Make general UI visible
+            if ( mUIStatus == UI_NONE )
+            {
+                mIsUIVisible = true;
+                mUIStatus = UI_GENERAL;
+                mUIStatusStr = "GeneralMenu";
+                updateOverlayElements();
+                succ = true;
+            }
+            //Activate Controller UI
+            else if ( mUIStatus == UI_CONTROLLER && mIsUIVisible )
+            {
+                toggleUI();
+                mUIActive = true;
+                mActiveUIElement = mHoverUIElement;
+                updateOverlayElements();
+                succ = true;
+            }
         }
-        if( arg.keysym.scancode == SDL_SCANCODE_N && mIsUIVisible )
+        if( arg.keysym.scancode == SDL_SCANCODE_N )
         {
-            toggleUI();
-            mUIActive = true;
-            mActiveUIElement = mHoverUIElement;
-            updateOverlayElements();
-
-//            mUIStatus = UIS_ACTIVATE;
-            succ = true;
+            //Make Controller UI Visible
+            if ( mUIStatus == UI_NONE )
+            {
+                mIsUIVisible = true;
+                mUIStatus = UI_CONTROLLER;
+                mUIStatusStr = "ControllerMenu";
+                updateOverlayElements();
+                succ = true;
+            }
+            //Activate general UI
+            else if ( mUIStatus == UI_GENERAL && mIsUIVisible )
+            {
+                toggleUI();
+                mUIActive = true;
+                mActiveUIElement = mHoverUIElement;
+                updateOverlayElements();
+                succ = true;
+            }
         }
         return succ;
     }
@@ -1028,18 +1064,41 @@ namespace esvr2
         }
         if( arg.keysym.scancode == SDL_SCANCODE_M )
         {
-            mHoverUIElement = nullptr;
-            mIsUIVisible = false;
-            updateOverlayElements();
-            succ = true;
+            if( mUIStatus == UI_GENERAL )
+            {
+                mHoverUIElement = nullptr;
+                mIsUIVisible = false;
+                mUIStatus = UI_NONE;
+                updateOverlayElements();
+                succ = true;
+            }
+            else if ( mUIStatus == UI_CONTROLLER )
+            {
+                mActiveUIElement = nullptr;
+                mUIActive = false;
+                updateOverlayElements();
+//            mUIStatus = UIS_NONE;
+                succ = true;
+            }
         }
         if( arg.keysym.scancode == SDL_SCANCODE_N )
         {
-            mActiveUIElement = nullptr;
-            mUIActive = false;
-            updateOverlayElements();
+            if( mUIStatus == UI_GENERAL )
+            {
+                mActiveUIElement = nullptr;
+                mUIActive = false;
+                updateOverlayElements();
 //            mUIStatus = UIS_NONE;
-            succ = true;
+                succ = true;
+            }
+            else if ( mUIStatus == UI_CONTROLLER )
+            {
+                mHoverUIElement = nullptr;
+                mIsUIVisible = false;
+                mUIStatus = UI_NONE;
+                updateOverlayElements();
+                succ = true;
+            }
         }
         return succ;
     }
@@ -1080,22 +1139,23 @@ namespace esvr2
                 mHoverUIElement->isHideOtherOnActive() : false;
         for (auto it = mInteractiveElement2DList.begin();
                 it != mInteractiveElement2DList.end();
-                it++)
-        {
+                it++) {
             InteractiveElement2DPtr elem = *it;
-            if (mUIActive)
-                if (!hideOther)
-                    elem->setUIState(UIS_ACTIVATE, elem == mHoverUIElement);
-                else
-                    elem->setUIState(UIS_NONE, false);
-            else if (mIsUIVisible)
-                elem->setUIState(UIS_VISIBLE, elem->isUVinside(mInfoScreenUV));
-            else
-                elem->setUIState(UIS_NONE, false);
+            if ((mIsUIVisible || mUIActive) &&
+                elem->isVisibleByMenu(mUIStatusStr)) {
+                if (elem == mHoverUIElement && mIsUIVisible) {
+                    elem->setUIState(UIS_HOVER);
+                } else if (elem == mHoverUIElement && mUIActive) {
+                    elem->setUIState(UIS_ACTIVATE);
+                } else if (elem != mHoverUIElement && hideOther) {
+                    elem->setUIState(UIS_NONE);
+                } else if (elem != mHoverUIElement && mUIActive) {
+                    elem->setUIState(UIS_VISIBLE);
+                }
+            } else {
+                elem->setUIState(UIS_NONE);
+            }
         }
-        if(mHoverUIElement && mHoverUIElement->isVisibleOnActive())
-            mHoverUIElement->setUIState(UIS_ACTIVATE, true);
-
     }
 
     void GameState::toggleUI()
@@ -1198,20 +1258,27 @@ namespace esvr2
             for (auto it = mInteractiveElement2DList.begin();
                 it != mInteractiveElement2DList.end(); it++)
             {
-                if((*it)->isUVinside(mInfoScreenUV))
+                if((*it)->isVisibleByMenu(mUIStatusStr) && (*it)->isUVinside(mInfoScreenUV))
                 {
                     elem = *it;
                     break;
                 }
             }
+            //change Hoverelement
             if (mHoverUIElement != elem)
             {
                 if (mHoverUIElement)
-                    mHoverUIElement->setUIState(UIS_VISIBLE, false);
+                    mHoverUIElement->setUIState(UIS_VISIBLE);
                 if (elem)
-                    elem->setUIState(UIS_VISIBLE, true);
+                    elem->setUIState(UIS_HOVER);
                 mHoverUIElement = elem;
             }
+        }
+        else
+        {
+            if (mHoverUIElement)
+                mHoverUIElement->setUIState(UIS_VISIBLE);
+            mHoverUIElement = nullptr;
         }
     }
 

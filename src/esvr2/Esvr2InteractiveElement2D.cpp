@@ -30,11 +30,13 @@ namespace esvr2
             InteractiveElement2DDefPtr def,
             const boost::function<void()> &togglecb,
             const boost::function<void(Ogre::uint64)> &holdcb,
+            Ogre::IdString menu,
             //This feels like abusing Ogre..
             Ogre::HlmsUnlit *hlmsUnlit) :
     mToggleCallback(togglecb),
     mHoldCallback(holdcb),
-    mDefinitionPtr(def)
+    mDefinitionPtr(def),
+    mVisibleInMenu(menu)
     {
         Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
         blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
@@ -136,20 +138,22 @@ namespace esvr2
         return true;
     }
 
-    void InteractiveElement2D::setUIState(UIStatusType uiStatusType, bool hover)
+    void InteractiveElement2D::setUIState(InteractiveElementStatusType uiStatusType)
     {
 
         bool show = true;
         Ogre::ColourValue color;
         switch (uiStatusType) {
         case UIS_ACTIVATE:
-            color = vectorToColourValue(hover?
-                    mDefinitionPtr->bgActiveColor:
+            color = vectorToColourValue(
+                    mDefinitionPtr->bgActiveColor);
+            break;
+        case UIS_HOVER:
+            color = vectorToColourValue(
                     mDefinitionPtr->bgColor);
             break;
         case UIS_VISIBLE:
-            color = vectorToColourValue(hover?
-                    mDefinitionPtr->bgHoverColor:
+            color = vectorToColourValue(
                     mDefinitionPtr->bgColor);
             break;
         case UIS_NONE:
@@ -171,4 +175,10 @@ namespace esvr2
     bool InteractiveElement2D::isVisibleOnActive() {
         return mDefinitionPtr->visibleOnActive;
     }
+
+    bool InteractiveElement2D::isVisibleByMenu(Ogre::IdString menu)
+    {
+        return mVisibleInMenu == menu;
+    }
+
 }
