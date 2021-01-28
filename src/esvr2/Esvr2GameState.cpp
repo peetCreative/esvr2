@@ -728,7 +728,8 @@ namespace esvr2
 
         createVROverlays();
         createControllers();
-        mCurrentController = mControllerList.at(0);
+        if (!mControllerList.empty())
+            mCurrentController = mControllerList.at(0);
     }
 
     //-----------------------------------------------------------------------------------
