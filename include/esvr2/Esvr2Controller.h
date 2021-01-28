@@ -6,6 +6,7 @@
 #define ESVR2_ESVR2CONTROLLER_H
 
 #include <memory>
+#include <vector>
 #include "SDL.h"
 
 namespace esvr2
@@ -32,6 +33,7 @@ namespace esvr2
         virtual std::string getControllerMenuId() = 0;
     };
     typedef std::shared_ptr<Controller> ControllerPtr;
+    typedef std::vector<ControllerPtr> ControllerPtrList;
 }
 
 #endif //ESVR2_ESVR2CONTROLLER_H

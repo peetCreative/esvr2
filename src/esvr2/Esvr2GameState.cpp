@@ -5,6 +5,9 @@
 #include "Esvr2InteractiveElement2D.h"
 #include "Esvr2Helper.h"
 #include "Esvr2Controller.h"
+#include "Esvr2Opt0Controller.h"
+#include "Esvr2Opt1Controller.h"
+#include "Esvr2Opt2Controller.h"
 
 #include "OgreSceneManager.h"
 #include "OgreItem.h"
@@ -529,6 +532,44 @@ namespace esvr2
         mInteractiveElement2DList.push_back( interactiveElement2D );
     }
 
+    void GameState::createControllers()
+    {
+        if(mEsvr2->mLaparoscopeController)
+        {
+            mControllerList.push_back(
+                    std::make_shared<Opt0Controller>(
+                    mEsvr2->mLaparoscopeController,
+                    this,
+                    mEsvr2->mConfig->ctlDelay,
+                    mEsvr2->mConfig->ctlStepYaw,
+                    mEsvr2->mConfig->ctlStepPitch,
+                    mEsvr2->mConfig->ctlStepRoll,
+                    mEsvr2->mConfig->ctlStepTransZ,
+                    mEsvr2->mConfig->ctlOpt0ThresholdTransZ,
+                    mEsvr2->mConfig->ctlOpt0ThresholdYawDeg,
+                    mEsvr2->mConfig->ctlOpt0ThresholdPitchDeg,
+                    mEsvr2->mConfig->ctlOpt0ThresholdRollDeg));
+            mControllerList.push_back(
+                    std::make_shared<Opt1Controller>(
+                    mEsvr2->mLaparoscopeController,
+                    this,
+                    mEsvr2->mConfig->ctlDelay,
+                    mEsvr2->mConfig->ctlStepYaw,
+                    mEsvr2->mConfig->ctlStepPitch,
+                    mEsvr2->mConfig->ctlStepRoll,
+                    mEsvr2->mConfig->ctlStepTransZ));
+            mControllerList.push_back(
+                    std::make_shared<Opt2Controller>(
+                    mEsvr2->mLaparoscopeController,
+                    this,
+                    mEsvr2->mConfig->ctlOpt2TransZFact));
+        }
+        else
+        {
+        LOG << "no laparoscope Controller defined, do not load Controller" << LOGEND;
+        }
+    }
+
 
     void GameState::loadDatablocks()
     {
@@ -686,6 +727,8 @@ namespace esvr2
         mGraphicsSystem->mVRSceneManager->setVisibilityMask(0xFFFFFF30);
 
         createVROverlays();
+        createControllers();
+        mCurrentController = mControllerList.at(0);
     }
 
     //-----------------------------------------------------------------------------------
@@ -911,16 +954,16 @@ namespace esvr2
                 if( !evt.key.repeat )
                 {
                     bool handled = keyPressed(evt.key);
-                    if (!handled && mEsvr2->mController)
-                        mEsvr2->mController->keyPressed(evt.key);
+                    if (!handled && mCurrentController)
+                        mCurrentController->keyPressed(evt.key);
                 }
                 break;
             case SDL_KEYUP:
                 if( !evt.key.repeat )
                 {
                     bool handled = keyReleased( evt.key );
-                    if (!handled && mEsvr2->mController)
-                        mEsvr2->mController->keyReleased(evt.key);
+                    if (!handled && mCurrentController)
+                        mCurrentController->keyReleased(evt.key);
                 }
                 break;
         }
@@ -953,11 +996,11 @@ namespace esvr2
         if( arg.keysym.scancode == SDL_SCANCODE_N )
         {
             //Make Controller UI Visible
-            if ( mUIStatus == UI_NONE && mEsvr2->mController )
+            if ( mUIStatus == UI_NONE && mCurrentController )
             {
                 mIsUIVisible = true;
                 mUIStatus = UI_CONTROLLER;
-                mUIStatusStr = Ogre::IdString(mEsvr2->mController->getControllerMenuId());
+                mUIStatusStr = Ogre::IdString(mCurrentController->getControllerMenuId());
                 updateOverlayElements();
                 succ = true;
             }
@@ -1225,8 +1268,8 @@ namespace esvr2
     {
         updateVRCamerasNode();
         readHeadGestures();
-        if (mEsvr2->mController )
-            mEsvr2->mController->headPoseUpdated();
+        if (mCurrentController )
+            mCurrentController->headPoseUpdated();
         //update Pointcloud ?
         if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem )
         {

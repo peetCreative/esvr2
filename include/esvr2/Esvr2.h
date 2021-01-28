@@ -172,7 +172,6 @@ namespace esvr2 {
     Distortion getDistortionType( std::string distortion_str );
 
     class VideoLoader;
-    class Controller;
     class LaparoscopeController;
     class PoseState;
     class GraphicsSystem;
@@ -206,7 +205,6 @@ namespace esvr2 {
         bool mIsConfigured;
         std::shared_ptr<Esvr2Config> mConfig;
         std::shared_ptr<VideoLoader> mVideoLoader;
-        std::shared_ptr<Controller> mController;
         std::shared_ptr<LaparoscopeController> mLaparoscopeController;
         std::shared_ptr<PoseState> mPoseState;
 

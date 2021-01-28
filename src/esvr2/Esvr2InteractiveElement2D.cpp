@@ -38,65 +38,83 @@ namespace esvr2
     mDefinitionPtr(def),
     mVisibleInMenu(menu)
     {
-        Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
-        blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
-        mDatablock =
-                dynamic_cast<Ogre::HlmsUnlitDatablock*>(
-                        hlmsUnlit->createDatablock(
-                                mDefinitionPtr->id,
-                                mDefinitionPtr->id,
-                                Ogre::HlmsMacroblock(),
-                                blendBlock,
-                                Ogre::HlmsParamVec() ) );
-        mDatablock->setUseColour(true);
-        mDatablock->setColour( Ogre::ColourValue::Blue);
+        mDatablock = dynamic_cast<Ogre::HlmsUnlitDatablock*>(
+                hlmsUnlit->getDatablock(Ogre::IdString(mDefinitionPtr->id)));
+        if(!mDatablock)
+        {
+            Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
+            blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
+            mDatablock =
+                    dynamic_cast<Ogre::HlmsUnlitDatablock*>(
+                            hlmsUnlit->createDatablock(
+                                    mDefinitionPtr->id,
+                                    mDefinitionPtr->id,
+                                    Ogre::HlmsMacroblock(),
+                                    blendBlock,
+                                    Ogre::HlmsParamVec() ) );
+            mDatablock->setUseColour(true);
+            mDatablock->setColour( Ogre::ColourValue::Blue);
+        }
+
 
         Ogre::String overlayId = def->id;
+        Ogre::String panelId = overlayId + "Panel";
+        Ogre::String textAreaId = overlayId + "TextArea";
+        Ogre::String textAreaShadowId = overlayId + "TextAreaShadow";
         Ogre::v1::OverlayManager &overlayManager =
                 Ogre::v1::OverlayManager::getSingleton();
-        mOverlay = overlayManager.create( overlayId );
+        mOverlay = overlayManager.getByName(overlayId);
+        if(!mOverlay) {
+            mOverlay = overlayManager.create(overlayId);
+            mBorderPanel = dynamic_cast<Ogre::v1::BorderPanelOverlayElement *>(
+                    overlayManager.createOverlayElement("BorderPanel",
+                                                        panelId));
+            mBorderPanel->setPosition(
+                    def->uvX, def->uvY);
+            mBorderPanel->setWidth(def->uvSizeX);
+            mBorderPanel->setHeight(def->uvSizeY);
+            mBorderPanel->setBorderSize(0.001f);
+            mBorderPanel->setBorderMaterialName("ColorWhite");
+            mBorderPanel->setMaterialName(mDefinitionPtr->id);
 
-        Ogre::String panelId = overlayId + "Panel";
-        mBorderPanel = dynamic_cast<Ogre::v1::BorderPanelOverlayElement*>(
-                overlayManager.createOverlayElement("BorderPanel", panelId));
-        mBorderPanel->setPosition(
-                def->uvX, def->uvY );
-        mBorderPanel->setWidth(def->uvSizeX);
-        mBorderPanel->setHeight(def->uvSizeY);
-        mBorderPanel->setBorderSize(0.001f);
-        mBorderPanel->setBorderMaterialName("ColorWhite");
-        mBorderPanel->setMaterialName(mDefinitionPtr->id);
+            mTextArea = static_cast<Ogre::v1::TextAreaOverlayElement *>(
+                    overlayManager.createOverlayElement("TextArea",
+                                                        textAreaId));
+            mTextArea->setFontName(def->font);
+            mTextArea->setCharHeight(def->fontSize);
+            mTextArea->setColour(Ogre::ColourValue::White);
+            //        mTextArea->setPosition(0.0f, 0.0f );
+            mTextAreaShadow = dynamic_cast<Ogre::v1::TextAreaOverlayElement *>(
+                    overlayManager.createOverlayElement("TextArea",
+                                                        textAreaShadowId));
+            mTextAreaShadow->setFontName(def->font);
+            mTextAreaShadow->setCharHeight(def->fontSize);
+            mTextAreaShadow->setColour(Ogre::ColourValue::Black);
+            //        mTextAreaShadow->setMaterialName("White");
+            mTextAreaShadow->setPosition(0.002f, 0.002f);
 
-        Ogre::String textAreaId = overlayId + "TextArea";
-        mTextArea = static_cast<Ogre::v1::TextAreaOverlayElement*>(
-                overlayManager.createOverlayElement( "TextArea", textAreaId ) );
-        mTextArea->setFontName(def->font );
-        mTextArea->setCharHeight(def->fontSize );
-        mTextArea->setColour(Ogre::ColourValue::White );
-//        mTextArea->setPosition(0.0f, 0.0f );
-
-        Ogre::String textAreaShadowId = overlayId + "TextAreaShadow";
-        mTextAreaShadow = dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
-                overlayManager.createOverlayElement( "TextArea", textAreaShadowId ) );
-        mTextAreaShadow->setFontName(def->font );
-        mTextAreaShadow->setCharHeight(def->fontSize );
-        mTextAreaShadow->setColour(Ogre::ColourValue::Black );
-//        mTextAreaShadow->setMaterialName("White");
-        mTextAreaShadow->setPosition(0.002f, 0.002f );
-
-        mBorderPanel->addChild(mTextAreaShadow );
-        mBorderPanel->addChild(mTextArea );
-        mOverlay->add2D( mBorderPanel );
-        mOverlay->setRenderQueueGroup(253);
-        if (mDefinitionPtr->alwaysVisible)
-        {
-            mDatablock->setColour(vectorToColourValue(mDefinitionPtr->bgColor));
-            mOverlay->show();
+            mBorderPanel->addChild(mTextAreaShadow);
+            mBorderPanel->addChild(mTextArea);
+            mOverlay->add2D(mBorderPanel);
+            mOverlay->setRenderQueueGroup(253);
+            if (mDefinitionPtr->alwaysVisible) {
+                mDatablock->setColour(
+                        vectorToColourValue(mDefinitionPtr->bgColor));
+                mOverlay->show();
+            } else
+                mOverlay->hide();
+            mTextAreaShadow->setCaption(def->text);
+            mTextArea->setCaption(def->text);
         }
         else
-            mOverlay->hide();
-        mTextAreaShadow->setCaption(def->text);
-        mTextArea->setCaption(def->text);
+        {
+            mBorderPanel = dynamic_cast<Ogre::v1::BorderPanelOverlayElement*>(
+                    mOverlay->getChild(panelId));
+            mTextArea = static_cast<Ogre::v1::TextAreaOverlayElement*>(
+                    mBorderPanel->getChild(textAreaId));
+            mTextAreaShadow = dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
+                    mBorderPanel->getChild(textAreaShadowId));
+        }
     };
 
     //TODO: add visual effects like changing the color

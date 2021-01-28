@@ -5,9 +5,6 @@
 #include "Esvr2LaparoscopeController.h"
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2TestPose.h"
-#include "Esvr2Opt0Controller.h"
-#include "Esvr2Opt1Controller.h"
-#include "Esvr2Opt2Controller.h"
 #include "Esvr2Barrier.h"
 
 #include "OgreTimer.h"
@@ -129,7 +126,6 @@ namespace esvr2 {
         std::shared_ptr<PoseState> poseState):
             mConfig(config),
             mVideoLoader(videoLoader),
-            mController(nullptr),
             mLaparoscopeController(laparoscopeController),
             mPoseState(poseState),
             mBarrier(new Barrier())
@@ -175,56 +171,7 @@ namespace esvr2 {
 
         mGraphicsSystem = std::make_shared<GraphicsSystem>( this );
 
-        //TODO implement UI
-        //mUi =
-
         mGraphicsSystem->initialize();
-
-        if(mLaparoscopeController)
-        {
-            switch(mConfig->controllerType)
-            {
-                case CT_OPT0:
-                    mController =
-                            std::make_shared<Opt0Controller>(
-                                    mLaparoscopeController,
-                                    mGraphicsSystem->getGameState(),
-                                    mConfig->ctlDelay,
-                                    mConfig->ctlStepYaw,
-                                    mConfig->ctlStepPitch,
-                                    mConfig->ctlStepRoll,
-                                    mConfig->ctlStepTransZ,
-                                    mConfig->ctlOpt0ThresholdTransZ,
-                                    mConfig->ctlOpt0ThresholdYawDeg,
-                                    mConfig->ctlOpt0ThresholdPitchDeg,
-                                    mConfig->ctlOpt0ThresholdRollDeg);
-                    break;
-                case CT_OPT1:
-                    mController =
-                            std::make_shared<Opt1Controller>(
-                                    mLaparoscopeController,
-                                    mGraphicsSystem->getGameState(),
-                                    mConfig->ctlDelay,
-                                    mConfig->ctlStepYaw,
-                                    mConfig->ctlStepPitch,
-                                    mConfig->ctlStepRoll,
-                                    mConfig->ctlStepTransZ);
-                    break;
-                case CT_OPT2:
-                    mController =
-                            std::make_shared<Opt2Controller>(
-                                    mLaparoscopeController,
-                                    mGraphicsSystem->getGameState(),
-                                    mConfig->ctlOpt2TransZFact);
-                    break;
-                default:
-                    mController = nullptr;
-            }
-        }
-        else
-        {
-            LOG << "no laparoscope Controller defined, do not load Controller" << LOGEND;
-        }
 
         //TODO: check configuration
         mIsConfigured = true;

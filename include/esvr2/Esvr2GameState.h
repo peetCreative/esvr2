@@ -3,6 +3,7 @@
 
 #include "Esvr2.h"
 #include "Esvr2GraphicsSystem.h"
+#include "Esvr2Controller.h"
 #include "Esvr2PointCloud.h"
 #include "Esvr2InteractiveElement2D.h"
 #include "Esvr2InteractiveElement2DDef.h"
@@ -47,6 +48,8 @@ namespace esvr2
     private:
         Esvr2                       *mEsvr2;
         GraphicsSystem              *mGraphicsSystem;
+        ControllerPtr               mCurrentController = nullptr;
+        ControllerPtrList           mControllerList = {};
 
 //        HmdConfig                   mHmdConfig;
         StereoCameraConfig          mCameraConfig;
@@ -141,6 +144,7 @@ namespace esvr2
 
         bool setDistortion(Distortion dist);
 
+        void createControllers();
 
         void createVRCamerasNodes();
         void createLaparoscopeCameraNodes();
