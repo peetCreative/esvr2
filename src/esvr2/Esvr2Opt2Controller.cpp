@@ -91,4 +91,8 @@ namespace esvr2
         mGameState->moveScreen(0);
     }
 
+    std::string Opt2Controller::getControllerMenuId() {
+        return MENU_OPT2;
+    }
+
 }

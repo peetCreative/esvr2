@@ -42,6 +42,7 @@ namespace esvr2
                 Ogre::Real thresholdRollDeg);
         void keyPressed();
         void holdPressed(Ogre::uint64 timesincelast);
+        std::string getControllerMenuId() override;
     };
 }
 

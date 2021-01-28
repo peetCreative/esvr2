@@ -127,5 +127,7 @@ namespace esvr2
 //        mGameState->setDebugText(debugText);
     }
 
-
+    std::string Opt0Controller::getControllerMenuId() {
+        return MENU_OPT0;
+    }
 }

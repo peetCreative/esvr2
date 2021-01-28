@@ -26,6 +26,7 @@ namespace esvr2
 
         void startMoving();
         void hold(Ogre::uint64 time);
+        std::string getControllerMenuId() override;
     };
 }
 

@@ -129,4 +129,8 @@ namespace esvr2
         pose.transZ = std::max(pose.transZ, boundaries.transZMin);
         mLaparoscopeController->moveLaparoscopeTo(pose);
     }
+
+    std::string Opt1Controller::getControllerMenuId() {
+        return MENU_OPT1;
+    }
 }

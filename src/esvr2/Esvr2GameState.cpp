@@ -929,14 +929,14 @@ namespace esvr2
     bool GameState::keyPressed( const SDL_KeyboardEvent &arg )
     {
         bool succ = false;
-        if ( arg.keysym.scancode == SDL_SCANCODE_M && mUIStatus == UI_NONE )
+        if ( arg.keysym.scancode == SDL_SCANCODE_M )
         {
             //Make general UI visible
             if ( mUIStatus == UI_NONE )
             {
                 mIsUIVisible = true;
                 mUIStatus = UI_GENERAL;
-                mUIStatusStr = "GeneralMenu";
+                mUIStatusStr = MENU_GENERAL;
                 updateOverlayElements();
                 succ = true;
             }
@@ -953,11 +953,11 @@ namespace esvr2
         if( arg.keysym.scancode == SDL_SCANCODE_N )
         {
             //Make Controller UI Visible
-            if ( mUIStatus == UI_NONE )
+            if ( mUIStatus == UI_NONE && mEsvr2->mController )
             {
                 mIsUIVisible = true;
                 mUIStatus = UI_CONTROLLER;
-                mUIStatusStr = "ControllerMenu";
+                mUIStatusStr = Ogre::IdString(mEsvr2->mController->getControllerMenuId());
                 updateOverlayElements();
                 succ = true;
             }
@@ -1147,9 +1147,9 @@ namespace esvr2
                     elem->setUIState(UIS_HOVER);
                 } else if (elem == mHoverUIElement && mUIActive) {
                     elem->setUIState(UIS_ACTIVATE);
-                } else if (elem != mHoverUIElement && hideOther) {
+                } else if (elem != mHoverUIElement && mUIActive && hideOther) {
                     elem->setUIState(UIS_NONE);
-                } else if (elem != mHoverUIElement && mUIActive) {
+                } else {
                     elem->setUIState(UIS_VISIBLE);
                 }
             } else {

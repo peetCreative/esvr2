@@ -29,7 +29,9 @@ namespace esvr2
         virtual bool keyPressed( const SDL_KeyboardEvent &arg ) {return false;};
         virtual bool keyReleased( const SDL_KeyboardEvent &arg ) {return false;};
         virtual void headPoseUpdated() {};
+        virtual std::string getControllerMenuId() = 0;
     };
+    typedef std::shared_ptr<Controller> ControllerPtr;
 }
 
 #endif //ESVR2_ESVR2CONTROLLER_H

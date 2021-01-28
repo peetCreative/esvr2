@@ -150,7 +150,7 @@ namespace esvr2
             break;
         case UIS_HOVER:
             color = vectorToColourValue(
-                    mDefinitionPtr->bgColor);
+                    mDefinitionPtr->bgHoverColor);
             break;
         case UIS_VISIBLE:
             color = vectorToColourValue(

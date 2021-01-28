@@ -47,6 +47,7 @@ namespace esvr2
                 Ogre::Real stepTransZ);
         void keyPressed();
         void holdBtn(Ogre::uint64 timesincelast, DirectionType dir);
+        std::string getControllerMenuId() override;
     };
 }
 
