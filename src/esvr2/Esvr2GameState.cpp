@@ -1359,17 +1359,19 @@ namespace esvr2
                 *(mInfoScreenDatablock->getNameStr()),
                 Ogre::OT_TRIANGLE_LIST);
 
+        Ogre::Real x = mGraphicsSystem->mInteractiveElementConfig.width/2.0;
+        Ogre::Real y = mGraphicsSystem->mInteractiveElementConfig.height/2.0;
         Ogre::Vector3 edge;
-        edge = Ogre::Vector3( -mInfoScreenDim.x, mInfoScreenDim.y,0);
+        edge = Ogre::Vector3(-x, y,0);
         mVRInfoScreen->position( edge );
         mVRInfoScreen->textureCoord(0 , 0);
-        edge = Ogre::Vector3( mInfoScreenDim.x, mInfoScreenDim.y, 0 );
+        edge = Ogre::Vector3( x, y, 0 );
         mVRInfoScreen->position(edge);
         mVRInfoScreen->textureCoord(1 , 0);
-        edge = Ogre::Vector3( mInfoScreenDim.x, -mInfoScreenDim.y, 0 );
+        edge = Ogre::Vector3( x, -y, 0 );
         mVRInfoScreen->position(edge);
         mVRInfoScreen->textureCoord(1 , 1);
-        edge = Ogre::Vector3( -mInfoScreenDim.x, -mInfoScreenDim.y, 0);
+        edge = Ogre::Vector3( -x, -y, 0);
         mVRInfoScreen->position(edge);
         mVRInfoScreen->textureCoord(0 , 1);
         mVRInfoScreen->quad(3, 2, 1, 0);

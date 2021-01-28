@@ -9,8 +9,8 @@ interactive_bord:
   # or
   # bg_img: a img showing up for inidicating the InfoScreen is there
   #         tip, make it transparent in the middle
-  width: 1.28
-  height: 0.72
+  width: 1.0
+  height: 1.0
 #  bg_img:
   bg_color:
     - 1.0
@@ -34,10 +34,10 @@ interactive_bord:
   # bg_color_active: color of the bg when hovering
   definitions:
     - id: Debug
-      uv_x: 0.0
-      uv_y: 0.05
-      uv_size_x: 0.4
-      uv_size_y: 0.25
+      uv_x: 0.2
+      uv_y: 0.3
+      uv_size_x: 0.6
+      uv_size_y: 0.4
       always_visible: false
       bg_color:
         r: 0.5
@@ -45,38 +45,36 @@ interactive_bord:
         a: 0.4
     - id: ResetProjectionPlaneDistance
       text: Reset Distance
-      uv_x: 0.4
-      uv_y: 0.05
+      uv_x: 0.0
+      uv_y: 0.0
       uv_size_x: 0.2
-      uv_size_y: 0.15
+      uv_size_y: 0.3
     - id: AdjustProjectionPlaneDistance
       text: Change Distance
-      uv_x: 0.4
-      uv_y: 0.2
+      uv_x: 0.2
+      uv_y: 0.0
       uv_size_x: 0.2
-      uv_size_y: 0.1
+      uv_size_y: 0.3
     - id: MoveScreen
       text: Move
-      uv_x: 0.6
-      uv_y: 0.05
+      uv_x: 0.4
+      uv_y: 0.0
       uv_size_x: 0.2
-      uv_size_y: 0.25
-      visible_on_active: false
-      hide_other_on_active: false
+      uv_size_y: 0.3
     - id: AdjustToHeadHight
       text: Adjust
-      uv_x: 0.8
-      uv_y: 0.05
+      uv_x: 0.6
+      uv_y: 0.0
       uv_size_x: 0.2
-      uv_size_y: 0.25
+      uv_size_y: 0.3
       visible_on_active: false
       hide_other_on_active: false
     - id: Close
-      text: X
-      uv_x: -0.05
+      text: Close
+      uv_x: 0.8
       uv_y:  0.0
-      uv_size_x: 0.05
-      uv_size_y: 0.05
+      uv_size_x: 0.2
+      uv_size_y: 0.3
     - id: RawDist
       text: Raw
       uv_x: 0.0

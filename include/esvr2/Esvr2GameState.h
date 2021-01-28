@@ -78,7 +78,6 @@ namespace esvr2
         Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
         Ogre::SceneNode          *mInfoScreenSceneNode;
 
-        const Ogre::Vector2      mInfoScreenDim = Ogre::Vector2(1.28f, 0.72f);
         bool                     mIntersectsInfoScreen;
         UIStatusType             mUIStatus = UI_NONE;
         bool                     mIsUIVisible;
