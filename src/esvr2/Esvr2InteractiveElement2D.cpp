@@ -199,4 +199,7 @@ namespace esvr2
         return mVisibleInMenu == menu;
     }
 
+    bool InteractiveElement2D::isActivatable() {
+        return mToggleCallback || mHoldCallback;
+    }
 }

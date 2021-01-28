@@ -1301,7 +1301,9 @@ namespace esvr2
             for (auto it = mInteractiveElement2DList.begin();
                 it != mInteractiveElement2DList.end(); it++)
             {
-                if((*it)->isVisibleByMenu(mUIStatusStr) && (*it)->isUVinside(mInfoScreenUV))
+                if((*it)->isVisibleByMenu(mUIStatusStr) &&
+                    (*it)->isUVinside(mInfoScreenUV) &&
+                    (*it)->isActivatable())
                 {
                     elem = *it;
                     break;
@@ -1435,8 +1437,10 @@ namespace esvr2
         Ogre::Vector3 intersect = viewingDirection.getPoint(pairIntersections.second);
         Ogre::Vector3 intersect_loc = mInfoScreenSceneNode->convertWorldToLocalPosition(intersect);
         Ogre::Vector2 uv;
-        uv.x = (intersect_loc.x + mInfoScreenDim.x) / (2 * mInfoScreenDim.x);
-        uv.y = (intersect_loc.y - mInfoScreenDim.y) / (-2 * mInfoScreenDim.y);
+        Ogre::Real infoScreenDimX = mGraphicsSystem->mInteractiveElementConfig.width/2.0;
+        Ogre::Real infoScreenDimY = mGraphicsSystem->mInteractiveElementConfig.height/2.0;
+        uv.x = (intersect_loc.x + infoScreenDimX) / (2 * infoScreenDimX);
+        uv.y = (intersect_loc.y - infoScreenDimY) / (-2 * infoScreenDimY);
         mIntersectsInfoScreen = 0.0f < uv.x && uv.x < 1.0f &&  0 < uv.y && uv.y < 1.0f;
         if (mViewingDirectionIndicator)
         {

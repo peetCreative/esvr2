@@ -54,6 +54,7 @@ namespace esvr2
         bool isHideOtherOnActive();
         bool isVisibleOnActive();
         bool isVisibleByMenu(Ogre::IdString menu);
+        bool isActivatable();
     };
 
     typedef std::shared_ptr <InteractiveElement2D> InteractiveElement2DPtr;
