@@ -9,7 +9,7 @@
 #include "boost/bind.hpp"
 #include "SDL.h"
 
-#define MENU_OPT0 "Opt0Menu"
+#define MENU_OPT0 "MenuOpt0"
 
 namespace esvr2
 {
@@ -39,7 +39,7 @@ namespace esvr2
         mGameState->createInteractiveElement2D("CenterButton",
                boost::bind(&Opt0Controller::keyPressed, this),
                boost::bind(&Opt0Controller::holdPressed, this, _1),
-               Ogre::IdString(MENU_OPT0));
+               {Ogre::IdString(MENU_OPT0)});
     }
 
     void Opt0Controller::keyPressed()

@@ -449,38 +449,101 @@ namespace esvr2
     void GameState::createVROverlays(void)
     {
         addViewDirectionIndicator();
-        createInteractiveElement2D("Debug",
-                    (boost::function<void ()>) 0,
-                    (boost::function<void (Ogre::uint64)>) 0,
-                    Ogre::IdString(MENU_GENERAL));
-        createInteractiveElement2D("Close",
+        createInteractiveElement2D("GoBack",
+                                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_GENERAL)),
+                                   (boost::function<void(Ogre::uint64)>) 0,
+                                   {Ogre::IdString(MENU_DISTANCE)
+                                    ,Ogre::IdString(MENU_MOVE)
+                                    ,Ogre::IdString(MENU_ADJUST_TO_HEAD)
+                                    ,Ogre::IdString(MENU_CHANGE_DISTORTION)
+                                    ,Ogre::IdString(MENU_CHANGE_CONTROLLER)
+                                   });
+        createInteractiveElement2D("MenuSlot1",
                 boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
                 (boost::function<void(Ogre::uint64)>) 0,
-                Ogre::IdString(MENU_GENERAL));
-        createInteractiveElement2D("ResetProjectionPlaneDistance",
+                {Ogre::IdString(MENU_GENERAL)},
+                "Close");
+        createInteractiveElement2D("MenuSlot2",
                    boost::bind(&GameState::resetProjectionPlaneDistance, this),
                    (boost::function<void(Ogre::uint64)>) 0,
-                   Ogre::IdString(MENU_GENERAL));
-        createInteractiveElement2D("AdjustProjectionPlaneDistance",
-                   boost::bind(&GameState::initAdjustProjectionPlane, this),
-                   boost::bind(&GameState::holdAdjustProjectionPlane, this, _1),
-                   Ogre::IdString(MENU_GENERAL));
-        createInteractiveElement2D("AdjustToHeadHight",
+                   {Ogre::IdString(MENU_GENERAL)},
+                   "Reset Projection-Plane Distance");
+        createInteractiveElement2D("MenuSlot3",
+                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DISTANCE)),
+                   (boost::function<void(Ogre::uint64)>) 0,
+                   {Ogre::IdString(MENU_GENERAL)},
+                   "Adjust Projection-Plane Distance");
+        createInteractiveElement2D("CenterButton",
+                   boost::bind(&GameState::initAdjustProjectionPlaneDistance, this),
+                   boost::bind(&GameState::holdAdjustProjectionPlaneDistance, this, _1),
+                   {Ogre::IdString(MENU_DISTANCE)});
+        createInteractiveElement2D("MenuSlot4",
+                    boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_ADJUST_TO_HEAD)),
+                    (boost::function<void(Ogre::uint64)>) 0,
+                   {Ogre::IdString(MENU_GENERAL)},
+                   "Adjust to Head Position");
+        createInteractiveElement2D("CenterButton",
                     boost::bind(&GameState::adjustToHeadHight, this),
                     (boost::function<void(Ogre::uint64)>) 0,
-                    Ogre::IdString(MENU_GENERAL));
-        createInteractiveElement2D("MoveScreen",
-                   (boost::function<void()>) 0,
-                   boost::bind(&GameState::moveScreen, this, _1),
-                   Ogre::IdString(MENU_GENERAL));
-        createInteractiveElement2D("RawDist",
+                   {Ogre::IdString(MENU_ADJUST_TO_HEAD)});
+        createInteractiveElement2D("MenuSlot5",
+                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_MOVE)),
+                   (boost::function<void(Ogre::uint64)>) 0,
+                   {Ogre::IdString(MENU_GENERAL)},
+                   "MoveScreen");
+        createInteractiveElement2D("CenterButton",
+                    (boost::function<void()>) 0,
+                    boost::bind(&GameState::moveScreen, this, _1),
+                    {Ogre::IdString(MENU_MOVE)});
+        createInteractiveElement2D("MenuSlot6",
+                     boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_CHANGE_DISTORTION)),
+                       (boost::function<void(Ogre::uint64)>) 0,
+                       {Ogre::IdString(MENU_GENERAL)},
+                       "Change Distortion");
+        createInteractiveElement2D("MenuSlot5",
                     boost::bind(&GameState::setDistortion, this, DIST_RAW),
                     (boost::function<void(Ogre::uint64)>) 0,
-                    Ogre::IdString(MENU_GENERAL));
-        createInteractiveElement2D("UndistRectDist",
+                    {Ogre::IdString(MENU_CHANGE_DISTORTION)},
+                    "RawDist");
+        createInteractiveElement2D("MenuSlot6",
                     boost::bind(&GameState::setDistortion, this, DIST_UNDISTORT_RECTIFY),
                     (boost::function<void(Ogre::uint64)>) 0,
-                    Ogre::IdString(MENU_GENERAL));
+                    {Ogre::IdString(MENU_CHANGE_DISTORTION)},
+                    "UndistRectDist");
+        createInteractiveElement2D("MenuSlot7",
+                     boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_CHANGE_CONTROLLER)),
+                       (boost::function<void(Ogre::uint64)>) 0,
+                       {Ogre::IdString(MENU_GENERAL)},
+                       "Change Controller");
+        createInteractiveElement2D("MenuSlot6",
+                    boost::bind(&GameState::setController, this, CT_OPT0),
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    {Ogre::IdString(MENU_CHANGE_CONTROLLER)},
+                    "Opt0");
+        createInteractiveElement2D("MenuSlot7",
+                    boost::bind(&GameState::setController, this, CT_OPT1),
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    {Ogre::IdString(MENU_CHANGE_CONTROLLER)},
+                    "Opt1");
+        createInteractiveElement2D("MenuSlot8",
+                    boost::bind(&GameState::setController, this, CT_OPT2),
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    {Ogre::IdString(MENU_CHANGE_CONTROLLER)},
+                    "Opt2");
+        createInteractiveElement2D("MenuSlot9",
+                    boost::bind(&GameState::setController, this, CT_NONE),
+                    (boost::function<void(Ogre::uint64)>) 0,
+                    {Ogre::IdString(MENU_CHANGE_CONTROLLER)},
+                    "None");
+        createInteractiveElement2D("MenuSlot8",
+                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DEBUG)),
+                   (boost::function<void(Ogre::uint64)>) 0,
+                   {Ogre::IdString(MENU_GENERAL)},
+                   "ShowDebug");
+        createInteractiveElement2D("Debug",
+                   (boost::function<void ()>) 0,
+                   (boost::function<void (Ogre::uint64)>) 0,
+                   {Ogre::IdString(MENU_DEBUG)});
     }
 
     void GameState::addViewDirectionIndicator()
@@ -506,7 +569,8 @@ namespace esvr2
             Ogre::String defName,
             const boost::function<void()> &togglecb,
             const boost::function<void(Ogre::uint64)> &holdcb,
-            Ogre::IdString menu)
+            std::vector<Ogre::IdString> menus,
+            Ogre::String text)
     {
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
         Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
@@ -520,9 +584,13 @@ namespace esvr2
                     defPtr,
                     togglecb,
                     holdcb,
-                    menu,
+                    menus,
                     hlmsUnlit);
             addInteractiveElement2D(element);
+            if (text != "")
+            {
+                element->setText(text);
+            }
         }
     }
 
@@ -536,7 +604,7 @@ namespace esvr2
     {
         if(mEsvr2->mLaparoscopeController)
         {
-            mControllerList.push_back(
+            mOpt0Controller =
                     std::make_shared<Opt0Controller>(
                     mEsvr2->mLaparoscopeController,
                     this,
@@ -548,8 +616,8 @@ namespace esvr2
                     mEsvr2->mConfig->ctlOpt0ThresholdTransZ,
                     mEsvr2->mConfig->ctlOpt0ThresholdYawDeg,
                     mEsvr2->mConfig->ctlOpt0ThresholdPitchDeg,
-                    mEsvr2->mConfig->ctlOpt0ThresholdRollDeg));
-            mControllerList.push_back(
+                    mEsvr2->mConfig->ctlOpt0ThresholdRollDeg);
+            mOpt1Controller =
                     std::make_shared<Opt1Controller>(
                     mEsvr2->mLaparoscopeController,
                     this,
@@ -557,12 +625,12 @@ namespace esvr2
                     mEsvr2->mConfig->ctlStepYaw,
                     mEsvr2->mConfig->ctlStepPitch,
                     mEsvr2->mConfig->ctlStepRoll,
-                    mEsvr2->mConfig->ctlStepTransZ));
-            mControllerList.push_back(
+                    mEsvr2->mConfig->ctlStepTransZ);
+            mOpt2Controller =
                     std::make_shared<Opt2Controller>(
                     mEsvr2->mLaparoscopeController,
                     this,
-                    mEsvr2->mConfig->ctlOpt2TransZFact));
+                    mEsvr2->mConfig->ctlOpt2TransZFact);
         }
         else
         {
@@ -728,8 +796,7 @@ namespace esvr2
 
         createVROverlays();
         createControllers();
-        if (!mControllerList.empty())
-            mCurrentController = mControllerList.at(0);
+        setController(mEsvr2->mConfig->controllerType);
     }
 
     //-----------------------------------------------------------------------------------
@@ -987,9 +1054,9 @@ namespace esvr2
             //Activate Controller UI
             else if ( mUIStatus == UI_CONTROLLER && mIsUIVisible )
             {
-                toggleUI();
                 mUIActive = true;
                 mActiveUIElement = mHoverUIElement;
+                toggleUI();
                 updateOverlayElements();
                 succ = true;
             }
@@ -1008,9 +1075,9 @@ namespace esvr2
             //Activate general UI
             else if ( mUIStatus == UI_GENERAL && mIsUIVisible )
             {
-                toggleUI();
                 mUIActive = true;
                 mActiveUIElement = mHoverUIElement;
+                toggleUI();
                 updateOverlayElements();
                 succ = true;
             }
@@ -1108,40 +1175,44 @@ namespace esvr2
         }
         if( arg.keysym.scancode == SDL_SCANCODE_M )
         {
-            if( mUIStatus == UI_GENERAL )
+            switch (mUIStatus)
             {
-                mHoverUIElement = nullptr;
-                mIsUIVisible = false;
-                mUIStatus = UI_NONE;
-                updateOverlayElements();
-                succ = true;
-            }
-            else if ( mUIStatus == UI_CONTROLLER )
-            {
-                mActiveUIElement = nullptr;
-                mUIActive = false;
-                updateOverlayElements();
-//            mUIStatus = UIS_NONE;
-                succ = true;
+                case UI_GENERAL:
+                    mHoverUIElement = nullptr;
+                    mIsUIVisible = false;
+                    mUIStatus = UI_NONE;
+                    mUIStatusStr = Ogre::IdString();
+                    updateOverlayElements();
+                    succ = true;
+                    break;
+                case UI_CONTROLLER:
+                case UI_NONE:
+                    mActiveUIElement = nullptr;
+                    mUIActive = false;
+                    updateOverlayElements();
+                    succ = true;
+                    break;
             }
         }
         if( arg.keysym.scancode == SDL_SCANCODE_N )
         {
-            if( mUIStatus == UI_GENERAL )
+            switch(mUIStatus)
             {
-                mActiveUIElement = nullptr;
-                mUIActive = false;
-                updateOverlayElements();
-//            mUIStatus = UIS_NONE;
-                succ = true;
-            }
-            else if ( mUIStatus == UI_CONTROLLER )
-            {
-                mHoverUIElement = nullptr;
-                mIsUIVisible = false;
-                mUIStatus = UI_NONE;
-                updateOverlayElements();
-                succ = true;
+                case UI_CONTROLLER:
+                    mHoverUIElement = nullptr;
+                    mIsUIVisible = false;
+                    mUIStatus = UI_NONE;
+                    mUIStatusStr = Ogre::IdString();
+                    updateOverlayElements();
+                    succ = true;
+                    break;
+                case UI_GENERAL:
+                case UI_NONE:
+                    mActiveUIElement = nullptr;
+                    mUIActive = false;
+                    updateOverlayElements();
+                    succ = true;
+                    break;
             }
         }
         return succ;
@@ -1206,10 +1277,8 @@ namespace esvr2
     {
         if (mIntersectsInfoScreen)
         {
-            InteractiveElement2DPtr toggleElement =
-                    findInteractiveElement2DByUV(mInfoScreenUV);
-            if (toggleElement)
-                toggleElement->activateToggle();
+            if (mActiveUIElement)
+                mActiveUIElement->activateToggle();
         }
     }
 
@@ -1323,8 +1392,10 @@ namespace esvr2
         else
         {
             if (mHoverUIElement)
+            {
                 mHoverUIElement->setUIState(UIS_VISIBLE);
-            mHoverUIElement = nullptr;
+                mHoverUIElement = nullptr;
+            }
         }
     }
 
@@ -1464,6 +1535,7 @@ namespace esvr2
     {
         mVRSceneNodeProjectionPlanesOrigin->setPosition(
                 mVRCamerasNode->getPosition());
+        goToMenu(Ogre::IdString(MENU_GENERAL));
     }
 
     void GameState::moveScreen(Ogre::uint64 time)
@@ -1498,20 +1570,26 @@ namespace esvr2
                     0, 0, -mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] + 0.001 );
     }
 
-    void GameState::initAdjustProjectionPlane()
+    void GameState::goToMenu(Ogre::IdString menu)
+    {
+        mUIStatusStr = Ogre::IdString(menu);
+        mHoverUIElement = nullptr;
+    }
+
+    void GameState::initAdjustProjectionPlaneDistance()
     {
         mAdjustProjectionPlaneInitialPitch =
-                getHeadOrientation().getYaw().valueRadians();
+                getHeadOrientation().getRoll().valueRadians();
         mAdjustProjectionPlaneRawInitialDistance =
                 mVRSceneNodesProjectionPlaneRaw->getPosition().z;
         mAdjustProjectionPlaneRectInitialDistance =
                 mVRSceneNodesProjectionPlaneRect->getPosition().z;
     }
 
-    void GameState::holdAdjustProjectionPlane(Ogre::uint64 time)
+    void GameState::holdAdjustProjectionPlaneDistance(Ogre::uint64 time)
     {
         Ogre::Real increment = mAdjustProjectionPlaneInitialPitch -
-                getHeadOrientation().getYaw().valueRadians();
+                getHeadOrientation().getRoll().valueRadians();
         Ogre::Real newProjectionPlaneDistanceRaw =
                 mAdjustProjectionPlaneRawInitialDistance +
                 (mAdjustProjectionPlaneFact * increment);
@@ -1558,5 +1636,23 @@ namespace esvr2
     void GameState::setDebugText(Ogre::String debugText)
     {
         mDebugText = debugText;
+    }
+
+    void GameState::setController(ControllerType ct)
+    {
+        switch (ct)
+        {
+            case CT_OPT0:
+                mCurrentController = mOpt0Controller;
+                break;
+            case CT_OPT1:
+                mCurrentController = mOpt1Controller;
+                break;
+            case CT_OPT2:
+                mCurrentController = mOpt2Controller;
+                break;
+            default:
+                mCurrentController = nullptr;
+        }
     }
 }

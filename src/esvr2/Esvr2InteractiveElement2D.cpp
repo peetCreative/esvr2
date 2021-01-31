@@ -30,14 +30,15 @@ namespace esvr2
             InteractiveElement2DDefPtr def,
             const boost::function<void()> &togglecb,
             const boost::function<void(Ogre::uint64)> &holdcb,
-            Ogre::IdString menu,
+            std::vector<Ogre::IdString> menus,
             //This feels like abusing Ogre..
             Ogre::HlmsUnlit *hlmsUnlit) :
     mToggleCallback(togglecb),
     mHoldCallback(holdcb),
     mDefinitionPtr(def),
-    mVisibleInMenu(menu)
+    mVisibleInMenus(menus)
     {
+        BOOST_ASSERT(!mVisibleInMenus.empty());
         mDatablock = dynamic_cast<Ogre::HlmsUnlitDatablock*>(
                 hlmsUnlit->getDatablock(Ogre::IdString(mDefinitionPtr->id)));
         if(!mDatablock)
@@ -57,7 +58,7 @@ namespace esvr2
         }
 
 
-        Ogre::String overlayId = def->id;
+        Ogre::String overlayId = def->id + menus.at(0).getFriendlyText();
         Ogre::String panelId = overlayId + "Panel";
         Ogre::String textAreaId = overlayId + "TextArea";
         Ogre::String textAreaShadowId = overlayId + "TextAreaShadow";
@@ -196,7 +197,7 @@ namespace esvr2
 
     bool InteractiveElement2D::isVisibleByMenu(Ogre::IdString menu)
     {
-        return mVisibleInMenu == menu;
+        return std::find(mVisibleInMenus.begin(), mVisibleInMenus.end(), menu) != mVisibleInMenus.end();
     }
 
     bool InteractiveElement2D::isActivatable() {

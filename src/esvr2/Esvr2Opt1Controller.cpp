@@ -8,7 +8,7 @@
 
 #include <boost/bind.hpp>
 
-#define MENU_OPT1 "MenuOpt2"
+#define MENU_OPT1 "MenuOpt1"
 
 namespace esvr2
 {
@@ -32,42 +32,42 @@ namespace esvr2
                 "Opt1Left",
                 boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_LEFT),
-                Ogre::IdString(MENU_OPT1));
+                {Ogre::IdString(MENU_OPT1)});
         gameState->createInteractiveElement2D(
                 "Opt1Right",
                 boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_RIGHT),
-                Ogre::IdString(MENU_OPT1));
+                {Ogre::IdString(MENU_OPT1)});
         gameState->createInteractiveElement2D(
                 "Opt1RollLeft",
                 boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_LEFT),
-                Ogre::IdString(MENU_OPT1));
+                {Ogre::IdString(MENU_OPT1)});
         gameState->createInteractiveElement2D(
                 "Opt1RollRight",
                 boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_RIGHT),
-                Ogre::IdString(MENU_OPT1));
+                {Ogre::IdString(MENU_OPT1)});
         gameState->createInteractiveElement2D(
                 "Opt1Up",
                 boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_UP),
-                Ogre::IdString(MENU_OPT1));
+                {Ogre::IdString(MENU_OPT1)});
         gameState->createInteractiveElement2D(
                 "Opt1Down",
                 boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_DOWN),
-                Ogre::IdString(MENU_OPT1));
+                {Ogre::IdString(MENU_OPT1)});
         gameState->createInteractiveElement2D(
                 "Opt1TransIn",
                 boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_IN),
-                Ogre::IdString(MENU_OPT1));
+                {Ogre::IdString(MENU_OPT1)});
         gameState->createInteractiveElement2D(
                 "Opt1TransOut",
                 boost::bind(&Opt1Controller::keyPressed, this),
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_OUT),
-                Ogre::IdString(MENU_OPT1));
+                {Ogre::IdString(MENU_OPT1)});
     }
 
     void Opt1Controller::keyPressed()

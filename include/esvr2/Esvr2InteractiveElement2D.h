@@ -35,13 +35,13 @@ namespace esvr2
         Ogre::v1::TextAreaOverlayElement *mTextArea = nullptr;
         Ogre::v1::TextAreaOverlayElement *mTextAreaShadow = nullptr;
         InteractiveElement2DDefPtr mDefinitionPtr;
-        Ogre::IdString mVisibleInMenu;
+        std::vector<Ogre::IdString> mVisibleInMenus;
     public:
 
         InteractiveElement2D(InteractiveElement2DDefPtr def,
                              const boost::function<void()> &togglecb,
                              const boost::function<void(Ogre::uint64)> &holdcb,
-                             Ogre::IdString visibleMenu,
+                             std::vector<Ogre::IdString> visibleMenus,
                              Ogre::HlmsUnlit *hlmsUnlit);
 
         void activateToggle();

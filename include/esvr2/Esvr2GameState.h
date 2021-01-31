@@ -17,6 +17,12 @@
 #include "OgreRectangle2D2.h"
 
 #define MENU_GENERAL "GeneralMenu"
+#define MENU_DEBUG "MenuDebug"
+#define MENU_DISTANCE "MenuDistance"
+#define MENU_MOVE "MenuMove"
+#define MENU_ADJUST_TO_HEAD "MenuAdjustToHead"
+#define MENU_CHANGE_DISTORTION "MenuDistortion"
+#define MENU_CHANGE_CONTROLLER "MenuController"
 
 namespace esvr2
 {
@@ -49,7 +55,9 @@ namespace esvr2
         Esvr2                       *mEsvr2;
         GraphicsSystem              *mGraphicsSystem;
         ControllerPtr               mCurrentController = nullptr;
-        ControllerPtrList           mControllerList = {};
+        ControllerPtr               mOpt0Controller = nullptr;
+        ControllerPtr               mOpt1Controller = nullptr;
+        ControllerPtr               mOpt2Controller = nullptr;
 
 //        HmdConfig                   mHmdConfig;
         StereoCameraConfig          mCameraConfig;
@@ -138,6 +146,7 @@ namespace esvr2
                 Ogre::uint64 microSecsSinceLast, Ogre::String &outText );
 
         void updateOverlayElements();
+        void setController(ControllerType ct);
         void toggleUI();
         void holdUI(Ogre::uint64 timeSinceLast);
 
@@ -171,9 +180,11 @@ namespace esvr2
 
         void readHeadGestures();
 
+        void goToMenu(Ogre::IdString menu);
+
         void resetProjectionPlaneDistance();
-        void initAdjustProjectionPlane();
-        void holdAdjustProjectionPlane(Ogre::uint64 time);
+        void initAdjustProjectionPlaneDistance();
+        void holdAdjustProjectionPlaneDistance(Ogre::uint64 time);
 
     public:
 
@@ -197,7 +208,8 @@ namespace esvr2
                 Ogre::String defName,
                 const boost::function<void()> &togglecb,
                 const boost::function<void(Ogre::uint64)> &holdcb,
-                Ogre::IdString menu);
+                std::vector<Ogre::IdString> menus,
+                Ogre::String text = "");
 
         void addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D);
         void adjustToHeadHight();

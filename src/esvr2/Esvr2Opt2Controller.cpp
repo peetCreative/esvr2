@@ -23,7 +23,7 @@ namespace esvr2
                 "CenterButton",
                 boost::bind(&Opt2Controller::startMoving, this),
                 boost::bind(&Opt2Controller::hold, this, _1),
-                Ogre::IdString(MENU_OPT2));
+                {Ogre::IdString(MENU_OPT2)});
     }
 
     void Opt2Controller::startMoving()

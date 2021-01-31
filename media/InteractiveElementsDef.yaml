@@ -33,60 +33,63 @@ interactive_bord:
   # bg_color_hover: color of the bg when hovering
   # bg_color_active: color of the bg when hovering
   definitions:
-    - id: Debug
-      uv_x: 0.2
-      uv_y: 0.3
-      uv_size_x: 0.6
-      uv_size_y: 0.4
-      always_visible: false
-      bg_color:
-        r: 0.5
-        g: 0.5
-        a: 0.4
-    - id: ResetProjectionPlaneDistance
-      text: Reset Distance
+    - id: MenuSlot1
       uv_x: 0.0
-      uv_y: 0.0
-      uv_size_x: 0.2
-      uv_size_y: 0.3
-    - id: AdjustProjectionPlaneDistance
-      text: Change Distance
-      uv_x: 0.2
-      uv_y: 0.0
-      uv_size_x: 0.2
-      uv_size_y: 0.3
-    - id: MoveScreen
-      text: Move
-      uv_x: 0.4
-      uv_y: 0.0
-      uv_size_x: 0.2
-      uv_size_y: 0.3
-    - id: AdjustToHeadHight
-      text: Adjust
-      uv_x: 0.6
-      uv_y: 0.0
-      uv_size_x: 0.2
-      uv_size_y: 0.3
-      visible_on_active: false
-      hide_other_on_active: false
-    - id: Close
-      text: Close
-      uv_x: 0.8
-      uv_y:  0.0
-      uv_size_x: 0.2
-      uv_size_y: 0.3
+      uv_y: 0.2
+      uv_size_x: 1.0
+      uv_size_y: 0.05
+    - id: MenuSlot2
+      uv_x: 0.0
+      uv_y: 0.25
+      uv_size_x: 1.0
+      uv_size_y: 0.05
+    - id: MenuSlot3
+      uv_x: 0.0
+      uv_y: 0.3
+      uv_size_x: 1.0
+      uv_size_y: 0.05
+    - id: MenuSlot4
+      uv_x: 0.0
+      uv_y: 0.35
+      uv_size_x: 1.0
+      uv_size_y: 0.05
+    - id: MenuSlot5
+      uv_x: 0.0
+      uv_y:  0.4
+      uv_size_x: 1.0
+      uv_size_y: 0.05
+    - id: MenuSlot6
+      uv_x: 0.0
+      uv_y: 0.45
+      uv_size_x: 1.0
+      uv_size_y: 0.05
+    - id: MenuSlot7
+      uv_x: 0.0
+      uv_y:  0.5
+      uv_size_x: 1.0
+      uv_size_y: 0.05
+    - id: MenuSlot8
+      uv_x: 0.0
+      uv_y:  0.55
+      uv_size_x: 1.0
+      uv_size_y: 0.05
+    - id: MenuSlot9
+      uv_x: 0.0
+      uv_y:  0.6
+      uv_size_x: 1.0
+      uv_size_y: 0.05
     - id: RawDist
       text: Raw
       uv_x: 0.0
-      uv_y: -0.3
+      uv_y: 0.4
       uv_size_x: 0.5
-      uv_size_y: rest
+      uv_size_y: 0.2
     - id: UndistRectDist
       text: UndistortRect
-      uv_x: -0.5
-      uv_y: -0.3
-      uv_size_x: rest
-      uv_size_y: rest
+      uv_x: 0.5
+      uv_y: 0.4
+      uv_size_x: 0.5
+      uv_size_y: 0.2
     - id: Opt1Left
       text: Left
       uv_x: 0.3
@@ -143,3 +146,19 @@ interactive_bord:
       uv_size_y: 0.04
       visible_on_active: false
       hide_other_on_active: true
+    - id: GoBack
+      text: Go Back
+      uv_x: 0.0
+      uv_y: 0.2
+      uv_size_x: 1.0
+      uv_size_y: 0.1
+    - id: Debug
+      uv_x: 0.2
+      uv_y: 0.3
+      uv_size_x: 0.6
+      uv_size_y: 0.4
+      always_visible: false
+      bg_color:
+        r: 0.5
+        g: 0.5
+        a: 0.4
