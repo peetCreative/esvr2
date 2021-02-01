@@ -495,7 +495,7 @@ namespace esvr2
                    {Ogre::IdString(MENU_GENERAL)},
                    "MoveScreen");
         createInteractiveElement2D("CenterButton",
-                    (boost::function<void()>) 0,
+                    boost::bind(&GameState::moveScreenInit, this),
                     boost::bind(&GameState::moveScreen, this, _1),
                     {Ogre::IdString(MENU_MOVE)});
         createInteractiveElement2D("MenuSlot6",
@@ -1539,6 +1539,12 @@ namespace esvr2
         mVRSceneNodeProjectionPlanesOrigin->setPosition(
                 mVRCamerasNode->getPosition());
         goToMenu(Ogre::IdString(MENU_GENERAL));
+    }
+
+    void GameState::moveScreenInit()
+    {
+        mVRSceneNodeProjectionPlanesOrigin->setPosition(
+                mVRCamerasNode->getPosition());
     }
 
     void GameState::moveScreen(Ogre::uint64 time)

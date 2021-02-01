@@ -186,6 +186,8 @@ namespace esvr2
         void initAdjustProjectionPlaneDistance();
         void holdAdjustProjectionPlaneDistance(Ogre::uint64 time);
 
+        void moveScreenInit();
+
     public:
 
         void update( Ogre::uint64 microSecsSinceLast );
