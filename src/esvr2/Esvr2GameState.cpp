@@ -1261,10 +1261,12 @@ namespace esvr2
             InteractiveElement2DPtr elem = *it;
             if ((mIsUIVisible || mUIActive) &&
                 elem->isVisibleByMenu(mUIStatusStr)) {
-                if (elem == mHoverUIElement && mIsUIVisible) {
+                if (elem == mHoverUIElement && mIsUIVisible && !mUIActive) {
                     elem->setUIState(UIS_HOVER);
-                } else if (elem == mHoverUIElement && mUIActive) {
+                } else if (elem == mActiveUIElement && mUIActive && elem->isVisibleOnActive()) {
                     elem->setUIState(UIS_ACTIVATE);
+                } else if (elem == mActiveUIElement && mUIActive && !elem->isVisibleOnActive()) {
+                    elem->setUIState(UIS_NONE);
                 } else if (elem != mHoverUIElement && mUIActive && hideOther) {
                     elem->setUIState(UIS_NONE);
                 } else {
