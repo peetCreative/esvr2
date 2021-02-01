@@ -139,7 +139,7 @@ namespace esvr2 {
         double ctlStepYaw = 0.01;
         double ctlStepPitch = 0.01;
         double ctlStepRoll = 0.01;
-        double ctlStepTransZ = 0.01;
+        double ctlStepTransZ = 0.001;
         double ctlOpt0ThresholdTransZ = 0.01;
         double ctlOpt0ThresholdYawDeg = 5;
         double ctlOpt0ThresholdPitchDeg = 5;

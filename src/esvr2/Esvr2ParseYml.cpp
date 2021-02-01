@@ -394,6 +394,8 @@ namespace esvr2 {
                 getControllerType(param.as<std::string>());
         if (YAML::Node param = doc["controller_opt01_delay"])
             config->ctlDelay = param.as<int>();
+        if (YAML::Node param = doc["controller_step_trans_z"])
+            config->ctlStepTransZ = param.as<float>();
         if (YAML::Node param = doc["controller_step_yaw"])
             config->ctlStepYaw = param.as<float>();
         if (YAML::Node param = doc["controller_step_pitch"])
