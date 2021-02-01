@@ -450,23 +450,37 @@ namespace esvr2
         createInteractiveElement2D("GoBack",
                                    boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_GENERAL)),
                                    (boost::function<void(Ogre::uint64)>) 0,
-                                   {Ogre::IdString(MENU_DISTANCE)
-                                    ,Ogre::IdString(MENU_MOVE)
-                                    ,Ogre::IdString(MENU_ADJUST_TO_HEAD)
-                                    ,Ogre::IdString(MENU_CHANGE_DISTORTION)
-                                    ,Ogre::IdString(MENU_CHANGE_CONTROLLER)
-                                   });
-        createInteractiveElement2D("MenuSlot1",
+                                   {Ogre::IdString(MENU_DISTANCE),
+                                    Ogre::IdString(MENU_MOVE),
+                                    Ogre::IdString(MENU_ADJUST_TO_HEAD),
+                                    Ogre::IdString(MENU_CHANGE_DISTORTION),
+                                    Ogre::IdString(MENU_CHANGE_CONTROLLER)});
+        createInteractiveElement2D("MenuSlot9",
                 boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
                 (boost::function<void(Ogre::uint64)>) 0,
                 {Ogre::IdString(MENU_GENERAL)},
                 "Close");
+        //TODO: strange bug first element do not show textHopefully get's eaten up
+        createInteractiveElement2D("MenuSlot1",
+                    (boost::function<void()>) 0,
+                   (boost::function<void(Ogre::uint64)>) 0,
+                   {Ogre::IdString(MENU_GENERAL)},
+                   "Esvr2");
         createInteractiveElement2D("MenuSlot2",
+                                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_ADJUST_TO_HEAD)),
+                                   (boost::function<void(Ogre::uint64)>) 0,
+                                   {Ogre::IdString(MENU_GENERAL)},
+                                   "Adjust to Head Position");
+        createInteractiveElement2D("CenterButton",
+                                   boost::bind(&GameState::adjustToHeadHight, this),
+                                   (boost::function<void(Ogre::uint64)>) 0,
+                                   {Ogre::IdString(MENU_ADJUST_TO_HEAD)});
+        createInteractiveElement2D("MenuSlot3",
                    boost::bind(&GameState::resetProjectionPlaneDistance, this),
                    (boost::function<void(Ogre::uint64)>) 0,
                    {Ogre::IdString(MENU_GENERAL)},
                    "Reset Projection-Plane Distance");
-        createInteractiveElement2D("MenuSlot3",
+        createInteractiveElement2D("MenuSlot4",
                    boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DISTANCE)),
                    (boost::function<void(Ogre::uint64)>) 0,
                    {Ogre::IdString(MENU_GENERAL)},
@@ -475,15 +489,6 @@ namespace esvr2
                    boost::bind(&GameState::initAdjustProjectionPlaneDistance, this),
                    boost::bind(&GameState::holdAdjustProjectionPlaneDistance, this, _1),
                    {Ogre::IdString(MENU_DISTANCE)});
-        createInteractiveElement2D("MenuSlot4",
-                    boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_ADJUST_TO_HEAD)),
-                    (boost::function<void(Ogre::uint64)>) 0,
-                   {Ogre::IdString(MENU_GENERAL)},
-                   "Adjust to Head Position");
-        createInteractiveElement2D("CenterButton",
-                    boost::bind(&GameState::adjustToHeadHight, this),
-                    (boost::function<void(Ogre::uint64)>) 0,
-                   {Ogre::IdString(MENU_ADJUST_TO_HEAD)});
         createInteractiveElement2D("MenuSlot5",
                    boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_MOVE)),
                    (boost::function<void(Ogre::uint64)>) 0,
