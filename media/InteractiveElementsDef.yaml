@@ -96,48 +96,64 @@ interactive_bord:
       uv_y: 0.4
       uv_size_x: 0.1
       uv_size_y: 0.2
+      visible_on_active: false
+      hide_other_on_active: true
     - id: Opt1Right
       text: Right
       uv_x: -0.4
       uv_y: 0.4
       uv_size_x: 0.1
       uv_size_y: 0.2
+      visible_on_active: false
+      hide_other_on_active: true
     - id: Opt1RollLeft
       text: RLeft
       uv_x: 0.4
       uv_y: 0.45
       uv_size_x: 0.1
       uv_size_y: 0.1
+      visible_on_active: false
+      hide_other_on_active: true
     - id: Opt1RollRight
       text: RRight
       uv_x: -0.5
       uv_y: 0.45
       uv_size_x: 0.1
       uv_size_y: 0.1
+      visible_on_active: false
+      hide_other_on_active: true
     - id: Opt1Up
       text: Up
       uv_x: 0.4
       uv_y: 0.3
       uv_size_x: 0.2
       uv_size_y: 0.1
+      visible_on_active: false
+      hide_other_on_active: true
     - id: Opt1Down
       text: Down
       uv_x: -0.6
       uv_y: -0.4
       uv_size_x: 0.2
       uv_size_y: 0.1
+      visible_on_active: false
+      hide_other_on_active: true
     - id: Opt1TransIn
       text: In
       uv_x: 0.45
       uv_y: 0.4
       uv_size_x: 0.1
       uv_size_y: 0.05
+      visible_on_active: false
+      hide_other_on_active: true
     - id: Opt1TransOut
       text: Out
       uv_x: 0.45
       uv_y: -0.45
       uv_size_x: 0.1
       uv_size_y: 0.05
+      visible_on_active: false
+      hide_other_on_active: true
     - id: CenterButton
       text: M
       uv_x: 0.48
