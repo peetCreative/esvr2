@@ -102,12 +102,12 @@ namespace esvr2
         if (Ogre::Degree(-mThresholdYawDeg) > yawDeg)
             pose.yaw -= mStepYaw;
 
-        Ogre::Radian rollRad(headOrientationRel.getRoll());
-        Ogre::Degree rollDeg(rollRad);
-        if (Ogre::Degree(mThresholdRollDeg) < rollDeg)
-            pose.roll += mStepRoll;
-        if (Ogre::Degree(-mThresholdRollDeg) > rollDeg)
-            pose.roll -= mStepRoll;
+//        Ogre::Radian rollRad(headOrientationRel.getRoll());
+//        Ogre::Degree rollDeg(rollRad);
+//        if (Ogre::Degree(mThresholdRollDeg) < rollDeg)
+//            pose.roll += mStepRoll;
+//        if (Ogre::Degree(-mThresholdRollDeg) > rollDeg)
+//            pose.roll -= mStepRoll;
 
         pose.yaw = std::min(pose.yaw, boundaries.yawMax);
         pose.yaw = std::max(pose.yaw, boundaries.yawMin);
