@@ -81,20 +81,18 @@ namespace esvr2
             mTextArea = static_cast<Ogre::v1::TextAreaOverlayElement *>(
                     overlayManager.createOverlayElement("TextArea",
                                                         textAreaId));
+            Ogre::v1::TextAreaOverlayElement::Alignment a;
+            if (def->alignment == "Left")
+                a = Ogre::v1::TextAreaOverlayElement::Left;
+            else if (def->alignment == "Right")
+                a = Ogre::v1::TextAreaOverlayElement::Right;
+            else
+                a = Ogre::v1::TextAreaOverlayElement::Center;
             mTextArea->setFontName(def->font);
             mTextArea->setCharHeight(def->fontSize);
             mTextArea->setColour(Ogre::ColourValue::White);
-            //        mTextArea->setPosition(0.0f, 0.0f );
-            mTextAreaShadow = dynamic_cast<Ogre::v1::TextAreaOverlayElement *>(
-                    overlayManager.createOverlayElement("TextArea",
-                                                        textAreaShadowId));
-            mTextAreaShadow->setFontName(def->font);
-            mTextAreaShadow->setCharHeight(def->fontSize);
-            mTextAreaShadow->setColour(Ogre::ColourValue::Black);
-            //        mTextAreaShadow->setMaterialName("White");
-            mTextAreaShadow->setPosition(0.002f, 0.002f);
-
-            mBorderPanel->addChild(mTextAreaShadow);
+            mTextArea->setAlignment(a);
+            mTextArea->setPosition(def->uvSizeX * 0.5f, (def->uvSizeY - def->fontSize)* 0.5f  );
             mBorderPanel->addChild(mTextArea);
             mOverlay->add2D(mBorderPanel);
             mOverlay->setRenderQueueGroup(253);
@@ -104,7 +102,6 @@ namespace esvr2
                 mOverlay->show();
             } else
                 mOverlay->hide();
-            mTextAreaShadow->setCaption(def->text);
             mTextArea->setCaption(def->text);
         }
         else
@@ -113,8 +110,6 @@ namespace esvr2
                     mOverlay->getChild(panelId));
             mTextArea = static_cast<Ogre::v1::TextAreaOverlayElement*>(
                     mBorderPanel->getChild(textAreaId));
-            mTextAreaShadow = dynamic_cast<Ogre::v1::TextAreaOverlayElement*>(
-                    mBorderPanel->getChild(textAreaShadowId));
         }
     };
 
@@ -132,7 +127,7 @@ namespace esvr2
 
     bool InteractiveElement2D::isOverlaySetup()
     {
-        return mOverlay && mBorderPanel && mTextArea && mTextAreaShadow;
+        return mOverlay && mBorderPanel && mTextArea;
     }
 
     bool InteractiveElement2D::isUVinside(Ogre::Vector2 uv)
@@ -152,7 +147,6 @@ namespace esvr2
     {
         if (!isOverlaySetup())
             return false;
-        mTextAreaShadow->setCaption(text);
         mTextArea->setCaption(text);
         return true;
     }

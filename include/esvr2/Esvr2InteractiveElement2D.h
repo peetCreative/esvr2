@@ -33,7 +33,6 @@ namespace esvr2
         Ogre::HlmsUnlitDatablock *mDatablock = nullptr;
         Ogre::v1::BorderPanelOverlayElement *mBorderPanel = nullptr;
         Ogre::v1::TextAreaOverlayElement *mTextArea = nullptr;
-        Ogre::v1::TextAreaOverlayElement *mTextAreaShadow = nullptr;
         InteractiveElement2DDefPtr mDefinitionPtr;
         std::vector<Ogre::IdString> mVisibleInMenus;
     public:

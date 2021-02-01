@@ -28,6 +28,7 @@ namespace esvr2
         float uvSizeY = 0;
         float fontSize = 0.05f;
         std::string font = "FreeSans";
+        std::string alignment = "Center";
         std::vector<float> fontColor = {0,0,0,1};
         bool alwaysVisible = false;
         std::vector<float> bgColor = {1,1,1,0.5};
