@@ -223,8 +223,6 @@ namespace esvr2
                 ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
         mVRSceneNodeProjectionPlanesOrigin->setPosition(
                 0, mEsvr2->mConfig->headHight, 0);
-        mVRSceneNodeProjectionPlanesOrigin->pitch(
-                Ogre::Radian(Ogre::Degree(-30)), Ogre::Node::TS_LOCAL);
 
         mVRSceneNodesProjectionPlaneRaw = mVRSceneNodeProjectionPlanesOrigin
                 ->createChildSceneNode(Ogre::SCENE_DYNAMIC);
