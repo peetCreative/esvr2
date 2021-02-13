@@ -8,6 +8,7 @@
 #include "Esvr2InteractiveElement2D.h"
 #include "Esvr2InteractiveElement2DDef.h"
 #include "Esvr2FootPedal.h"
+#include "Esvr2SettingsEventLog.h"
 
 #include "OgrePrerequisites.h"
 
@@ -128,6 +129,8 @@ namespace esvr2
         Ogre::Real mVRCameraNodeTransZ, mVRCameraNodeTransX;
         Ogre::Real mVRCameraNodeRoll;
 
+        SettingsEventLogList mSettingsEventLogs;
+
         void createProjectionRectangle2D();
         void createVRProjectionPlanes();
         Ogre::ManualObject *createAxisIntern( Ogre::SceneManager *sceneManager );
@@ -190,7 +193,7 @@ namespace esvr2
 
     public:
 
-        void update( Ogre::uint64 microSecsSinceLast );
+        void update( Ogre::uint64 msSinceLast );
 
         //TODO: implement destroyScene
         void destroyScene() {};
@@ -216,6 +219,8 @@ namespace esvr2
         void addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D);
         void adjustToHeadHight();
         void moveScreen(Ogre::uint64 time);
+
+        void addSettingsEventLog(Ogre::String eventStr);
     };
 }
 

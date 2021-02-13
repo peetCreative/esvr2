@@ -108,6 +108,8 @@ namespace esvr2
         int mLastFrameUpdate;
         int mVideoUpdateFrames;
 
+        Ogre::uint64 mLastStartTime = 0;
+
         //intern functions
         void setupResources(void);
         void loadResources(void);
@@ -145,7 +147,7 @@ namespace esvr2
         void initialize( );
         void deinitialize(void);
 
-        void update(Ogre::uint64 microSecsSinceLast);
+        void update(Ogre::uint64 startTimeMs);
 
         //Project getters and setters
         GameState *getGameState();

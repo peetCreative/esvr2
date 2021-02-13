@@ -146,6 +146,7 @@ namespace esvr2 {
         double ctlOpt0ThresholdRollDeg = 5;
         double ctlOpt2TransZFact = 2.0;
         std::string resourcePath = "Resources.cfg";
+        std::string logFolder = ".";
         std::string serialPort = "/dev/ttyUSB0";
         bool centerProjectionPlane = false;
         ControllerType controllerType = CT_NONE;

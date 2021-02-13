@@ -8,6 +8,7 @@
 #include "Esvr2Opt0Controller.h"
 #include "Esvr2Opt1Controller.h"
 #include "Esvr2Opt2Controller.h"
+#include "Esvr2SettingsEventLog.h"
 
 #include "OgreSceneManager.h"
 #include "OgreItem.h"
@@ -1092,7 +1093,7 @@ namespace esvr2
     {
         if( arg.keysym.scancode == SDL_SCANCODE_ESCAPE )
         {
-            mGraphicsSystem->mQuit = true;
+            mGraphicsSystem->quit();
             return true;
         }
         bool succ = false;
@@ -1339,7 +1340,7 @@ namespace esvr2
     }
 
     //-----------------------------------------------------------------------------------
-    void GameState::update( Ogre::uint64 microSecsSinceLast )
+    void GameState::update( Ogre::uint64 msSinceLast )
     {
         updateVRCamerasNode();
         readHeadGestures();
@@ -1359,7 +1360,7 @@ namespace esvr2
             {
                 //Show FPS
                 Ogre::String finalText;
-                generateDebugText( microSecsSinceLast, finalText );
+                generateDebugText(msSinceLast, finalText );
                 InteractiveElement2DPtr interactiveDebug =
                         findInteractiveElement2DByName("Debug");
                 if (interactiveDebug)
@@ -1368,7 +1369,7 @@ namespace esvr2
         }
         if (mUIActive)
         {
-            holdUI(microSecsSinceLast);
+            holdUI(msSinceLast);
         }
         else if (mIsUIVisible)
         {
@@ -1540,6 +1541,7 @@ namespace esvr2
     {
         mVRSceneNodeProjectionPlanesOrigin->setPosition(
                 mVRCamerasNode->getPosition());
+        addSettingsEventLog("adjustToHeadHight");
         goToMenu(Ogre::IdString(MENU_GENERAL));
     }
 
@@ -1563,6 +1565,7 @@ namespace esvr2
         Ogre::Quaternion trans = xAxisTrans.getRotationTo(xAxisNew);
         mVRSceneNodeProjectionPlanesOrigin->setOrientation(
                 trans * headOrientation);
+        addSettingsEventLog("moveScreen");
     }
 
     void GameState::resetProjectionPlaneDistance()
@@ -1579,6 +1582,7 @@ namespace esvr2
         if (dist == DIST_UNDISTORT_RECTIFY)
             mInfoScreenSceneNode->setPosition(
                     0, 0, -mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] + 0.001 );
+        addSettingsEventLog("resetProjectionPlaneDistance");
     }
 
     void GameState::goToMenu(Ogre::IdString menu)
@@ -1619,6 +1623,7 @@ namespace esvr2
         if (dist == DIST_UNDISTORT_RECTIFY)
             mInfoScreenSceneNode->setPosition(
                 0, 0, newProjectionPlaneDistanceRect + 0.001 );
+        addSettingsEventLog("adjustProjectionPlaneDistance");
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()
@@ -1665,5 +1670,25 @@ namespace esvr2
             default:
                 mCurrentController = nullptr;
         }
+    }
+
+    void GameState::addSettingsEventLog(Ogre::String eventStr)
+    {
+        SettingsEventLog log;
+        log.time = mGraphicsSystem->mLastStartTime;
+        log.event = eventStr;
+        log.projectionPlaneDistanceRaw =
+                mVRSceneNodesProjectionPlaneRaw->getPosition().z;
+        log.projectionPlaneDistanceRect =
+                mVRSceneNodesProjectionPlaneRect->getPosition().z;
+        log.projectionPlaneOrientation =
+                mVRSceneNodeProjectionPlanesOrigin->getOrientation();
+        log.headPosition =
+                mVRSceneNodeProjectionPlanesOrigin->getPosition();
+        log.eyeDist =
+                mGraphicsSystem->mVRCameras[RIGHT]->getPosition().x;
+        log.distortion = mEsvr2->mVideoLoader->getDistortion();
+        mSettingsEventLogs.push_back(log);
+
     }
 }

@@ -607,6 +607,7 @@ namespace esvr2
         mGameState->loadDatablocks();
         mGameState->createLaparoscopeScene();
         mGameState->createVRScene();
+        mGameState->addSettingsEventLog("init");
 
         if (mEsvr2->mConfig->debugScreen)
         {
@@ -1036,6 +1037,11 @@ namespace esvr2
 
     void GraphicsSystem::quit()
     {
+        LOG << "write Settings Event Log to File " << mEsvr2->mConfig->logFolder << LOGEND;
+        writeSettingsEventLog(
+                mEsvr2->mConfig->logFolder,
+                mGameState->mSettingsEventLogs,
+                mLastStartTime);
         mQuit = true;
     }
 
@@ -1118,9 +1124,12 @@ namespace esvr2
     }
 #endif //USE_FOOTPEDAL
 
-    void GraphicsSystem::update( Ogre::uint64 microSecsSinceLast)
+    void GraphicsSystem::update( Ogre::uint64 msStartTime)
     {
         mFrameCnt++;
+        Ogre::uint64  msSinceLast = msStartTime - mLastStartTime;
+        msSinceLast = msSinceLast < 1 ? msSinceLast : 1;
+        mLastStartTime = msStartTime;
 
         Ogre::WindowEventUtilities::messagePump();
         pumpSDLEvents();
@@ -1128,12 +1137,12 @@ namespace esvr2
         pumpFootPedalEvents();
 #endif //USE_FOOTPEDAL
         const Ogre::uint64 second = 1000000;
-        if (microSecsSinceLast > second)
+        if (msSinceLast > second)
         {
             uploadVideoData2GPU();
         }
 
-        mGameState->update(microSecsSinceLast);
+        mGameState->update(msSinceLast);
 
         //TODO: manage Window Messages
         if(isRenderWindowVisible())

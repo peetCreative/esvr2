@@ -216,26 +216,21 @@ namespace esvr2 {
 
             Ogre::Timer timer;
 
-            Ogre::uint64 startTime = timer.getMicroseconds();
+            Ogre::uint64 startTimeMs = timer.getMicroseconds();
 
             double timeSinceLast = 1.0 / 60.0;
 
             while( !mGraphicsSystem->getQuit() )
             {
+                startTimeMs = timer.getMicroseconds();
                 mVideoLoader->update();
-                mGraphicsSystem->update( startTime );
+                mGraphicsSystem->update( startTimeMs );
 
                 if( !mGraphicsSystem->isRenderWindowVisible() )
                 {
                     //Don't burn CPU cycles unnecessary when we're minimized.
                     Ogre::Threads::Sleep( 500 );
                 }
-
-                Ogre::uint64 endTime = timer.getMicroseconds();
-                timeSinceLast = (endTime - startTime) / 1000000.0;
-                timeSinceLast = std::min( 1.0, timeSinceLast ); //Prevent from going haywire.
-                startTime = endTime;
-
             }
             LOG << "END GRAPHICS" << LOGEND;
 
@@ -251,23 +246,18 @@ namespace esvr2 {
     {
         Ogre::Timer timer;
 
-        Ogre::uint64 startTime = timer.getMicroseconds();
-
-        Ogre::uint64 timeSinceLast = 1;
+        Ogre::uint64 startTimeMs = timer.getMicroseconds();
 
         while( !getQuit() )
         {
-            mGraphicsSystem->update( timeSinceLast );
+            startTimeMs = timer.getMicroseconds();
+            mGraphicsSystem->update( startTimeMs );
 
             if( !mGraphicsSystem->isRenderWindowVisible() )
             {
                 //Don't burn CPU cycles unnecessary when we're minimized.
                 Ogre::Threads::Sleep( 500 );
             }
-
-            Ogre::uint64 endTime = timer.getMicroseconds();
-            timeSinceLast = endTime - startTime;
-            startTime = endTime;
         }
         LOG << "END GRAPHICS" << LOGEND;
 
