@@ -78,6 +78,22 @@ interactive_bord:
       uv_y:  0.6
       uv_size_x: 1.0
       uv_size_y: 0.05
+    - id: InfoBox
+      uv_x: 0.0
+      uv_y:  0.8
+      uv_size_x: 1.0
+      uv_size_y: 0.2
+      fit_font_size: true
+      text_color:
+        - 1.0
+        - 1.0
+        - 1.0
+        - 1.0
+      bg_color:
+        - 0.0
+        - 0.0
+        - 0.0
+        - 1.0
     - id: RawDist
       text: Raw
       uv_x: 0.0

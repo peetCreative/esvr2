@@ -474,6 +474,9 @@ namespace esvr2
                                    "Adjust to Head Position");
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_ADJUST_TO_HEAD), mAdjustToHeadHightIE));
+        ele = createInteractiveElement2D("InfoBox",
+                                   {Ogre::IdString(MENU_ADJUST_TO_HEAD)},
+                                   "Press right foot to adjust\n the projection plane to head hight");
         //RESET PROJECTION PLANE DISTANCE
         ele = createInteractiveElement2D("MenuSlot3",
                    {Ogre::IdString(MENU_GENERAL)},
@@ -490,6 +493,9 @@ namespace esvr2
                 boost::bind(&GameState::holdAdjustProjectionPlaneDistance, this, _1));
         mAdjustProjectionPlaneDistanceIE->setToggleReleaseFunction(
                 boost::bind(&GameState::addSettingsEventLog, this, "adjustProjectionPlaneDistance"));
+        ele = createInteractiveElement2D("InfoBox",
+                                         {Ogre::IdString(MENU_DISTANCE)},
+                                         "Press and hold right foot to adjust\n the distance of the projection plane \n left tilt ~ push \n right tilt ~ pull");
         ele = createInteractiveElement2D("MenuSlot4",
                                          {Ogre::IdString(MENU_GENERAL)},
                                          "Adjust Projection-Plane Distance");
@@ -508,6 +514,9 @@ namespace esvr2
                    "MoveScreen");
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_MOVE), mMoveIE));
+        ele = createInteractiveElement2D("InfoBox",
+                                         {Ogre::IdString(MENU_MOVE)},
+                                         "Press and hold right foot\n to move the projection plane");
         //CHANGE DISTORTION
         ele = createInteractiveElement2D("MenuSlot6",
                        {Ogre::IdString(MENU_GENERAL)},
@@ -528,6 +537,9 @@ namespace esvr2
                 boost::bind(&GameState::setDistortion, this, DIST_UNDISTORT_RECTIFY));
         ele->setToggleReleaseFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        mInfoBoxDistortionSelect = createInteractiveElement2D("InfoBox",
+                                         {Ogre::IdString(MENU_CHANGE_DISTORTION)},
+                                         "Current Distortion:");
         // CHANGE CONTROLLER
         ele = createInteractiveElement2D("MenuSlot7",
                        {Ogre::IdString(MENU_GENERAL)},
@@ -562,6 +574,9 @@ namespace esvr2
                 boost::bind(&GameState::setController, this, CT_NONE));
         ele->setToggleReleaseFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        mInfoBoxControllerSelect = createInteractiveElement2D("InfoBox",
+                                                        {Ogre::IdString(MENU_CHANGE_CONTROLLER)},
+                                                        "Current Controller:");
         //DEBUG
         ele = createInteractiveElement2D("MenuSlot8",
                    {Ogre::IdString(MENU_GENERAL)},
@@ -1308,17 +1323,21 @@ namespace esvr2
         mEsvr2->mVideoLoader->setDistortion(dist);
         Ogre::uint32 setMask = 0x0;
         Ogre::uint32 unsetMask = 0x0;
+        Ogre::String txt = "";
         if (dist == DIST_RAW)
         {
             setMask = 0x10 | 0x20;
             unsetMask = 0x40 | 0x80;
-
+            txt = "Current: Raw";
         }
-        else
+        else if (dist == DIST_UNDISTORT_RECTIFY)
         {
             setMask = 0x40 | 0x80;
             unsetMask = 0x10 | 0x20;
+            txt = "Current: Undist Rect";
         }
+        if (mInfoBoxDistortionSelect)
+            mInfoBoxDistortionSelect->setText(txt);
         Ogre::SceneManager *sceneManager = mGraphicsSystem->mVRSceneManager;
         Ogre::uint32 visibilityMask = sceneManager->getVisibilityMask( );
         visibilityMask |= setMask;
@@ -1666,20 +1685,27 @@ namespace esvr2
 
     void GameState::setController(ControllerType ct)
     {
+        Ogre::String txt = "";
         switch (ct)
         {
             case CT_OPT0:
                 mCurrentController = mOpt0Controller;
+                txt = "Current: Opt0";
                 break;
             case CT_OPT1:
                 mCurrentController = mOpt1Controller;
+                txt = "Current: Opt1";
                 break;
             case CT_OPT2:
                 mCurrentController = mOpt2Controller;
+                txt = "Current: Opt2";
                 break;
             default:
                 mCurrentController = nullptr;
+                txt = "Current: None";
         }
+        if (mInfoBoxControllerSelect)
+            mInfoBoxControllerSelect->setText(txt);
     }
 
     void GameState::addSettingsEventLog(Ogre::String eventStr)

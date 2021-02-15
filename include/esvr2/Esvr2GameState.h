@@ -104,9 +104,11 @@ namespace esvr2
         Ogre::String mDebugText;
         Ogre::String mHelpDescription;
         InteractiveElement2DList mInteractiveElement2DList;
-        InteractiveElementPtr mAdjustToHeadHightIE;
-        InteractiveElementPtr mAdjustProjectionPlaneDistanceIE;
-        InteractiveElementPtr mMoveIE;
+        InteractiveElementPtr mAdjustToHeadHightIE = nullptr;
+        InteractiveElementPtr mAdjustProjectionPlaneDistanceIE = nullptr;
+        InteractiveElementPtr mMoveIE = nullptr;
+        InteractiveElement2DPtr mInfoBoxDistortionSelect = nullptr;
+        InteractiveElement2DPtr mInfoBoxControllerSelect = nullptr;
 
         Ogre::v1::PanelOverlayElement *mViewingDirectionIndicator;
 
