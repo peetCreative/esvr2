@@ -19,11 +19,8 @@ namespace esvr2
         Controller(laparoscopeController, gameState),
         mTransZFact(transZFact)
     {
-        gameState->createInteractiveElement2D(
-                "CenterButton",
-                boost::bind(&Opt2Controller::startMoving, this),
-                boost::bind(&Opt2Controller::hold, this, _1),
-                {Ogre::IdString(MENU_OPT2)});
+        mTogglePressCallback = boost::bind(&Opt2Controller::startMoving, this);
+        mHoldCallback = boost::bind(&Opt2Controller::hold, this, _1);
     }
 
     void Opt2Controller::startMoving()

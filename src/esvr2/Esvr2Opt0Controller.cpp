@@ -36,10 +36,8 @@ namespace esvr2
         mThresholdPitchDeg(thresholdPitchDeg),
         mThresholdRollDeg(thresholdRollDeg)
     {
-        mGameState->createInteractiveElement2D("CenterButton",
-               boost::bind(&Opt0Controller::keyPressed, this),
-               boost::bind(&Opt0Controller::holdPressed, this, _1),
-               {Ogre::IdString(MENU_OPT0)});
+        mTogglePressCallback = boost::bind(&Opt0Controller::keyPressed, this);
+        mHoldCallback = boost::bind(&Opt0Controller::holdPressed, this, _1);
     }
 
     void Opt0Controller::keyPressed()

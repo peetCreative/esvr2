@@ -28,46 +28,63 @@ namespace esvr2
         mStepTransZ(stepTransZ)
     {
         //Create new device
-        gameState->createInteractiveElement2D(
+        InteractiveElementPtr ele = nullptr;
+        ele = gameState->createInteractiveElement2D(
                 "Opt1Left",
-                boost::bind(&Opt1Controller::keyPressed, this),
-                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_LEFT),
                 {Ogre::IdString(MENU_OPT1)});
-        gameState->createInteractiveElement2D(
+        ele->setTogglePressFunction(
+                boost::bind(&Opt1Controller::keyPressed, this));
+        ele->setHoldFunction(
+                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_LEFT));
+        ele = gameState->createInteractiveElement2D(
                 "Opt1Right",
-                boost::bind(&Opt1Controller::keyPressed, this),
-                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_RIGHT),
                 {Ogre::IdString(MENU_OPT1)});
-        gameState->createInteractiveElement2D(
+        ele->setTogglePressFunction(
+                boost::bind(&Opt1Controller::keyPressed, this));
+        ele->setHoldFunction(
+                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_RIGHT));
+        ele = gameState->createInteractiveElement2D(
                 "Opt1RollLeft",
-                boost::bind(&Opt1Controller::keyPressed, this),
-                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_LEFT),
                 {Ogre::IdString(MENU_OPT1)});
-        gameState->createInteractiveElement2D(
+        ele->setTogglePressFunction(
+                boost::bind(&Opt1Controller::keyPressed, this));
+        ele->setHoldFunction(
+                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_LEFT));
+        ele = gameState->createInteractiveElement2D(
                 "Opt1RollRight",
-                boost::bind(&Opt1Controller::keyPressed, this),
-                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_RIGHT),
                 {Ogre::IdString(MENU_OPT1)});
-        gameState->createInteractiveElement2D(
+        ele->setTogglePressFunction(
+                boost::bind(&Opt1Controller::keyPressed, this));
+        ele->setHoldFunction(
+                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_RIGHT));
+        ele = gameState->createInteractiveElement2D(
                 "Opt1Up",
-                boost::bind(&Opt1Controller::keyPressed, this),
-                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_UP),
                 {Ogre::IdString(MENU_OPT1)});
-        gameState->createInteractiveElement2D(
+        ele->setTogglePressFunction(
+                boost::bind(&Opt1Controller::keyPressed, this));
+        ele->setHoldFunction(
+                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_UP));
+        ele = gameState->createInteractiveElement2D(
                 "Opt1Down",
-                boost::bind(&Opt1Controller::keyPressed, this),
-                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_DOWN),
                 {Ogre::IdString(MENU_OPT1)});
-        gameState->createInteractiveElement2D(
+        ele->setTogglePressFunction(
+                boost::bind(&Opt1Controller::keyPressed, this));
+        ele->setHoldFunction(
+                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_DOWN));
+        ele = gameState->createInteractiveElement2D(
                 "Opt1TransIn",
-                boost::bind(&Opt1Controller::keyPressed, this),
-                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_IN),
                 {Ogre::IdString(MENU_OPT1)});
-        gameState->createInteractiveElement2D(
+        ele->setTogglePressFunction(
+                boost::bind(&Opt1Controller::keyPressed, this));
+        ele->setHoldFunction(
+                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_IN));
+        ele = gameState->createInteractiveElement2D(
                 "Opt1TransOut",
-                boost::bind(&Opt1Controller::keyPressed, this),
-                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_OUT),
                 {Ogre::IdString(MENU_OPT1)});
+        ele->setTogglePressFunction(
+                boost::bind(&Opt1Controller::keyPressed, this));
+        ele->setHoldFunction(
+                boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_OUT));
     }
 
     void Opt1Controller::keyPressed()

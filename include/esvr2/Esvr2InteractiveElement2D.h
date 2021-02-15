@@ -5,6 +5,7 @@
 #ifndef ESVR2_INTERACTIVEELEMENT2D_H
 #define ESVR2_INTERACTIVEELEMENT2D_H
 
+#include "Esvr2InteractiveElement.h"
 #include "Esvr2InteractiveElement2DDef.h"
 
 #include "OgreHlmsUnlitDatablock.h"
@@ -24,11 +25,8 @@ namespace esvr2
         UIS_ACTIVATE
     } ;
 
-    class InteractiveElement2D {
+    class InteractiveElement2D : public InteractiveElement {
     private:
-        const boost::function<void(void)> mToggleCallback;
-        const boost::function<void(Ogre::uint64)> mHoldCallback;
-
         Ogre::v1::Overlay *mOverlay = nullptr;
         Ogre::HlmsUnlitDatablock *mDatablock = nullptr;
         Ogre::v1::BorderPanelOverlayElement *mBorderPanel = nullptr;
@@ -38,13 +36,9 @@ namespace esvr2
     public:
 
         InteractiveElement2D(InteractiveElement2DDefPtr def,
-                             const boost::function<void()> &togglecb,
-                             const boost::function<void(Ogre::uint64)> &holdcb,
                              std::vector<Ogre::IdString> visibleMenus,
                              Ogre::HlmsUnlit *hlmsUnlit);
 
-        void activateToggle();
-        void activateHold(Ogre::uint64);
         bool isOverlaySetup();
         bool isUVinside(Ogre::Vector2 uv);
         Ogre::String getId();
@@ -55,7 +49,6 @@ namespace esvr2
         bool isVisibleByMenu(Ogre::IdString menu);
         bool isActivatable();
     };
-
     typedef std::shared_ptr <InteractiveElement2D> InteractiveElement2DPtr;
     typedef std::vector <InteractiveElement2DPtr> InteractiveElement2DList;
 }

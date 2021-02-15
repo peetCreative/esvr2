@@ -5,6 +5,10 @@
 #ifndef ESVR2_ESVR2CONTROLLER_H
 #define ESVR2_ESVR2CONTROLLER_H
 
+#include "Esvr2InteractiveElement.h"
+#include "Ogre.h"
+
+#include <boost/function.hpp>
 #include <memory>
 #include <vector>
 #include "SDL.h"
@@ -18,7 +22,7 @@ namespace esvr2
      * It can use the OpenVR transforms, add things to the VR scene
      * and to the  Controll UI.
      */
-    class Controller
+    class Controller : public InteractiveElement
     {
     protected:
         std::shared_ptr<LaparoscopeController> mLaparoscopeController;
@@ -31,6 +35,10 @@ namespace esvr2
         virtual bool keyReleased( const SDL_KeyboardEvent &arg ) {return false;};
         virtual void headPoseUpdated() {};
         virtual std::string getControllerMenuId() = 0;
+        virtual bool isActiveOnPress()
+        {
+            return mTogglePressCallback || mHoldCallback || mToggleReleaseCallback;
+        };
     };
     typedef std::shared_ptr<Controller> ControllerPtr;
     typedef std::vector<ControllerPtr> ControllerPtrList;

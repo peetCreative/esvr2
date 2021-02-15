@@ -1,6 +1,7 @@
 //
 // Created by peetcreative on 09.01.21.
 //
+#include "Esvr2InteractiveElement.h"
 #include "Esvr2InteractiveElement2D.h"
 #include "Esvr2InteractiveElement2DDef.h"
 
@@ -28,13 +29,10 @@ namespace esvr2
 
     InteractiveElement2D::InteractiveElement2D(
             InteractiveElement2DDefPtr def,
-            const boost::function<void()> &togglecb,
-            const boost::function<void(Ogre::uint64)> &holdcb,
             std::vector<Ogre::IdString> menus,
             //This feels like abusing Ogre..
             Ogre::HlmsUnlit *hlmsUnlit) :
-    mToggleCallback(togglecb),
-    mHoldCallback(holdcb),
+    InteractiveElement(),
     mDefinitionPtr(def),
     mVisibleInMenus(menus)
     {
@@ -111,19 +109,7 @@ namespace esvr2
             mTextArea = static_cast<Ogre::v1::TextAreaOverlayElement*>(
                     mBorderPanel->getChild(textAreaId));
         }
-    };
-
-    //TODO: add visual effects like changing the color
-    void InteractiveElement2D::activateToggle() {
-        if (mToggleCallback)
-            mToggleCallback();
-    };
-
-    void InteractiveElement2D::activateHold(Ogre::uint64 msSinceLast) {
-        if (mHoldCallback)
-            mHoldCallback(msSinceLast);
-    };
-
+    }
 
     bool InteractiveElement2D::isOverlaySetup()
     {
@@ -195,6 +181,6 @@ namespace esvr2
     }
 
     bool InteractiveElement2D::isActivatable() {
-        return mToggleCallback || mHoldCallback;
+        return mTogglePressCallback || mHoldCallback || mTogglePressCallback;
     }
 }

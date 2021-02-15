@@ -5,6 +5,7 @@
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2Controller.h"
 #include "Esvr2PointCloud.h"
+#include "Esvr2InteractiveElement.h"
 #include "Esvr2InteractiveElement2D.h"
 #include "Esvr2InteractiveElement2DDef.h"
 #include "Esvr2FootPedal.h"
@@ -38,7 +39,8 @@ namespace esvr2
     enum UIStatusType {
         UI_NONE,
         UI_GENERAL,
-        UI_CONTROLLER
+        UI_CONTROLLER,
+        UI_CONTROLLER_ACTIVE
     };
 
     class GameState
@@ -87,13 +89,13 @@ namespace esvr2
         Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
         Ogre::SceneNode          *mInfoScreenSceneNode;
 
-        bool                     mIntersectsInfoScreen;
         UIStatusType             mUIStatus = UI_NONE;
         bool                     mIsUIVisible;
         Ogre::IdString           mUIStatusStr = Ogre::IdString();
-        InteractiveElement2DPtr  mHoverUIElement;
+        InteractiveElement2DPtr  mHoverUIElement = nullptr;
+        InteractiveElementPtr    mBackgroundUIElement = nullptr;
         bool                     mUIActive;
-        InteractiveElement2DPtr  mActiveUIElement;
+        InteractiveElementPtr    mActiveUIElement;
         Ogre::Vector2            mInfoScreenUV;
         bool                     mIsStereo;
         size_t                   mEyeNum;
@@ -102,6 +104,9 @@ namespace esvr2
         Ogre::String mDebugText;
         Ogre::String mHelpDescription;
         InteractiveElement2DList mInteractiveElement2DList;
+        InteractiveElementPtr mAdjustToHeadHightIE;
+        InteractiveElementPtr mAdjustProjectionPlaneDistanceIE;
+        InteractiveElementPtr mMoveIE;
 
         Ogre::v1::PanelOverlayElement *mViewingDirectionIndicator;
 
@@ -150,8 +155,9 @@ namespace esvr2
 
         void updateOverlayElements();
         void setController(ControllerType ct);
-        void toggleUI();
-        void holdUI(Ogre::uint64 timeSinceLast);
+        void toggleUIPress();
+        void holdUI(Ogre::uint64 currentTimeMs);
+        void toggleUIRelease();
 
         bool setDistortion(Distortion dist);
 
@@ -183,7 +189,9 @@ namespace esvr2
 
         void readHeadGestures();
 
-        void goToMenu(Ogre::IdString menu);
+        void goToMenu(
+                Ogre::IdString menu,
+                InteractiveElementPtr backgroundIE = nullptr);
 
         void resetProjectionPlaneDistance();
         void initAdjustProjectionPlaneDistance();
@@ -209,10 +217,8 @@ namespace esvr2
 
 
         void setDebugText(Ogre::String debugText);
-        void createInteractiveElement2D(
+        InteractiveElement2DPtr createInteractiveElement2D(
                 Ogre::String defName,
-                const boost::function<void()> &togglecb,
-                const boost::function<void(Ogre::uint64)> &holdcb,
                 std::vector<Ogre::IdString> menus,
                 Ogre::String text = "");
 

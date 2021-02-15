@@ -135,7 +135,7 @@ namespace esvr2 {
         int screen = 0;
         double headHight = 1.7f;
         double centerEpsilon = 0.1;
-        int ctlDelay = 100;
+        int ctlDelay = 25;
         double ctlStepYaw = 0.01;
         double ctlStepPitch = 0.01;
         double ctlStepRoll = 0.01;

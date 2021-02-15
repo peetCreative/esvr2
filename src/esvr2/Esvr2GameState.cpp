@@ -4,7 +4,6 @@
 #include "Esvr2PointCloud.h"
 #include "Esvr2InteractiveElement2D.h"
 #include "Esvr2Helper.h"
-#include "Esvr2Controller.h"
 #include "Esvr2Opt0Controller.h"
 #include "Esvr2Opt1Controller.h"
 #include "Esvr2Opt2Controller.h"
@@ -51,8 +50,6 @@ namespace esvr2
             mLaparoscopeSceneNodePointCloud( nullptr ),
             mLaparoscopeSceneNodeTooltips( nullptr ),
             mInfoScreenSceneNode(nullptr),
-            mIntersectsInfoScreen(false),
-//            mUIStatus(UIS_NONE),
             mIsUIVisible(false),
             mHoverUIElement(nullptr),
             mUIActive(false),
@@ -448,105 +445,130 @@ namespace esvr2
     void GameState::createVROverlays(void)
     {
         addViewDirectionIndicator();
-        createInteractiveElement2D("GoBack",
-                                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_GENERAL)),
-                                   (boost::function<void(Ogre::uint64)>) 0,
+        InteractiveElementPtr ele = nullptr;
+        ele = createInteractiveElement2D("GoBack",
                                    {Ogre::IdString(MENU_DISTANCE),
                                     Ogre::IdString(MENU_MOVE),
                                     Ogre::IdString(MENU_ADJUST_TO_HEAD),
                                     Ogre::IdString(MENU_CHANGE_DISTORTION),
                                     Ogre::IdString(MENU_CHANGE_CONTROLLER)});
-        createInteractiveElement2D("MenuSlot9",
-                boost::bind(&GraphicsSystem::quit, mGraphicsSystem),
-                (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_GENERAL), nullptr));
+        ele = createInteractiveElement2D("MenuSlot9",
                 {Ogre::IdString(MENU_GENERAL)},
                 "Close");
+        ele->setTogglePressFunction(
+                boost::bind(&GraphicsSystem::quit, mGraphicsSystem));
         //TODO: strange bug first element do not show textHopefully get's eaten up
-        createInteractiveElement2D("MenuSlot1",
-                    (boost::function<void()>) 0,
-                   (boost::function<void(Ogre::uint64)>) 0,
+        ele = createInteractiveElement2D("MenuSlot1",
                    {Ogre::IdString(MENU_GENERAL)},
                    "Esvr2");
-        createInteractiveElement2D("MenuSlot2",
-                                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_ADJUST_TO_HEAD)),
-                                   (boost::function<void(Ogre::uint64)>) 0,
+        //ADJUST TO HEAD HIGHT
+        mAdjustToHeadHightIE = std::make_shared<InteractiveElement>();
+        mAdjustToHeadHightIE->setTogglePressFunction(
+                boost::bind(&GameState::adjustToHeadHight, this));
+        mAdjustToHeadHightIE->setToggleReleaseFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        ele = createInteractiveElement2D("MenuSlot2",
                                    {Ogre::IdString(MENU_GENERAL)},
                                    "Adjust to Head Position");
-        createInteractiveElement2D("CenterButton",
-                                   boost::bind(&GameState::adjustToHeadHight, this),
-                                   (boost::function<void(Ogre::uint64)>) 0,
-                                   {Ogre::IdString(MENU_ADJUST_TO_HEAD)});
-        createInteractiveElement2D("MenuSlot3",
-                   boost::bind(&GameState::resetProjectionPlaneDistance, this),
-                   (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_ADJUST_TO_HEAD), mAdjustToHeadHightIE));
+        //RESET PROJECTION PLANE DISTANCE
+        ele = createInteractiveElement2D("MenuSlot3",
                    {Ogre::IdString(MENU_GENERAL)},
                    "Reset Projection-Plane Distance");
-        createInteractiveElement2D("MenuSlot4",
-                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DISTANCE)),
-                   (boost::function<void(Ogre::uint64)>) 0,
-                   {Ogre::IdString(MENU_GENERAL)},
-                   "Adjust Projection-Plane Distance");
-        createInteractiveElement2D("CenterButton",
-                   boost::bind(&GameState::initAdjustProjectionPlaneDistance, this),
-                   boost::bind(&GameState::holdAdjustProjectionPlaneDistance, this, _1),
-                   {Ogre::IdString(MENU_DISTANCE)});
-        createInteractiveElement2D("MenuSlot5",
-                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_MOVE)),
-                   (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::resetProjectionPlaneDistance, this));
+        ele->setToggleReleaseFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        //ADJUST PROJECTION PLANE DISTANCE
+        mAdjustProjectionPlaneDistanceIE = std::make_shared<InteractiveElement>();
+        mAdjustProjectionPlaneDistanceIE->setTogglePressFunction(
+                boost::bind(&GameState::initAdjustProjectionPlaneDistance, this));
+        mAdjustProjectionPlaneDistanceIE->setHoldFunction(
+                boost::bind(&GameState::holdAdjustProjectionPlaneDistance, this, _1));
+        mAdjustProjectionPlaneDistanceIE->setToggleReleaseFunction(
+                boost::bind(&GameState::addSettingsEventLog, this, "adjustProjectionPlaneDistance"));
+        ele = createInteractiveElement2D("MenuSlot4",
+                                         {Ogre::IdString(MENU_GENERAL)},
+                                         "Adjust Projection-Plane Distance");
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DISTANCE), mAdjustProjectionPlaneDistanceIE));
+        // MOVE SCREEN
+        mMoveIE = std::make_shared<InteractiveElement>();
+        mMoveIE->setTogglePressFunction(
+                boost::bind(&GameState::moveScreenInit, this));
+        mMoveIE->setHoldFunction(
+                boost::bind(&GameState::moveScreen, this, _1));
+        mMoveIE->setToggleReleaseFunction(
+                boost::bind(&GameState::addSettingsEventLog, this, "moveScreen"));
+        ele = createInteractiveElement2D("MenuSlot5",
                    {Ogre::IdString(MENU_GENERAL)},
                    "MoveScreen");
-        createInteractiveElement2D("CenterButton",
-                    boost::bind(&GameState::moveScreenInit, this),
-                    boost::bind(&GameState::moveScreen, this, _1),
-                    {Ogre::IdString(MENU_MOVE)});
-        createInteractiveElement2D("MenuSlot6",
-                     boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_CHANGE_DISTORTION)),
-                       (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_MOVE), mMoveIE));
+        //CHANGE DISTORTION
+        ele = createInteractiveElement2D("MenuSlot6",
                        {Ogre::IdString(MENU_GENERAL)},
                        "Change Distortion");
-        createInteractiveElement2D("MenuSlot5",
-                    boost::bind(&GameState::setDistortion, this, DIST_RAW),
-                    (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_CHANGE_DISTORTION), nullptr));
+        ele = createInteractiveElement2D("MenuSlot5",
                     {Ogre::IdString(MENU_CHANGE_DISTORTION)},
                     "RawDist");
-        createInteractiveElement2D("MenuSlot6",
-                    boost::bind(&GameState::setDistortion, this, DIST_UNDISTORT_RECTIFY),
-                    (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::setDistortion, this, DIST_RAW));
+        ele->setToggleReleaseFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        ele = createInteractiveElement2D("MenuSlot6",
                     {Ogre::IdString(MENU_CHANGE_DISTORTION)},
                     "UndistRectDist");
-        createInteractiveElement2D("MenuSlot7",
-                     boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_CHANGE_CONTROLLER)),
-                       (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::setDistortion, this, DIST_UNDISTORT_RECTIFY));
+        ele->setToggleReleaseFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        // CHANGE CONTROLLER
+        ele = createInteractiveElement2D("MenuSlot7",
                        {Ogre::IdString(MENU_GENERAL)},
                        "Change Controller");
-        createInteractiveElement2D("MenuSlot6",
-                    boost::bind(&GameState::setController, this, CT_OPT0),
-                    (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_CHANGE_CONTROLLER), nullptr));
+        ele = createInteractiveElement2D("MenuSlot6",
                     {Ogre::IdString(MENU_CHANGE_CONTROLLER)},
                     "Opt0");
-        createInteractiveElement2D("MenuSlot7",
-                    boost::bind(&GameState::setController, this, CT_OPT1),
-                    (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::setController, this, CT_OPT0));
+        ele->setToggleReleaseFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        ele = createInteractiveElement2D("MenuSlot7",
                     {Ogre::IdString(MENU_CHANGE_CONTROLLER)},
                     "Opt1");
-        createInteractiveElement2D("MenuSlot8",
-                    boost::bind(&GameState::setController, this, CT_OPT2),
-                    (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::setController, this, CT_OPT1));
+        ele->setToggleReleaseFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        ele = createInteractiveElement2D("MenuSlot8",
                     {Ogre::IdString(MENU_CHANGE_CONTROLLER)},
                     "Opt2");
-        createInteractiveElement2D("MenuSlot9",
-                    boost::bind(&GameState::setController, this, CT_NONE),
-                    (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::setController, this, CT_OPT2));
+        ele->setToggleReleaseFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        ele = createInteractiveElement2D("MenuSlot9",
                     {Ogre::IdString(MENU_CHANGE_CONTROLLER)},
                     "None");
-        createInteractiveElement2D("MenuSlot8",
-                   boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DEBUG)),
-                   (boost::function<void(Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::setController, this, CT_NONE));
+        ele->setToggleReleaseFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
+        //DEBUG
+        ele = createInteractiveElement2D("MenuSlot8",
                    {Ogre::IdString(MENU_GENERAL)},
                    "ShowDebug");
-        createInteractiveElement2D("Debug",
-                   (boost::function<void ()>) 0,
-                   (boost::function<void (Ogre::uint64)>) 0,
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DEBUG), nullptr));
+        ele = createInteractiveElement2D("Debug",
                    {Ogre::IdString(MENU_DEBUG)});
     }
 
@@ -569,10 +591,8 @@ namespace esvr2
 
     }
 
-    void GameState::createInteractiveElement2D(
+    InteractiveElement2DPtr GameState::createInteractiveElement2D(
             Ogre::String defName,
-            const boost::function<void()> &togglecb,
-            const boost::function<void(Ogre::uint64)> &holdcb,
             std::vector<Ogre::IdString> menus,
             Ogre::String text)
     {
@@ -586,8 +606,6 @@ namespace esvr2
         {
             InteractiveElement2DPtr element = std::make_shared<InteractiveElement2D>(
                     defPtr,
-                    togglecb,
-                    holdcb,
                     menus,
                     hlmsUnlit);
             addInteractiveElement2D(element);
@@ -595,7 +613,10 @@ namespace esvr2
             {
                 element->setText(text);
             }
+            return element;
         }
+        else
+            return nullptr;
     }
 
     void GameState::addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D)
@@ -824,7 +845,6 @@ namespace esvr2
         Ogre::Real fps = 1.0 / (microSecsSinceLast * 1000000);
         Ogre::String finalText;
         finalText.reserve( 128 );
-        finalText = mIntersectsInfoScreen ? "View Intersects" : "View not Intersects";
         finalText += "Frame time:\t";
         finalText += Ogre::StringConverter::toString( microSecsSinceLast * 1000.0f );
         finalText += " ms\n";
@@ -1044,47 +1064,59 @@ namespace esvr2
     bool GameState::keyPressed( const SDL_KeyboardEvent &arg )
     {
         bool succ = false;
-        if ( arg.keysym.scancode == SDL_SCANCODE_M )
+        if ( arg.keysym.scancode == SDL_SCANCODE_M ||
+                (mCurrentController && !mCurrentController->isActiveOnPress() && arg.keysym.scancode == SDL_SCANCODE_N ))
         {
             //Make general UI visible
             if ( mUIStatus == UI_NONE )
             {
                 mIsUIVisible = true;
-                mUIStatus = UI_GENERAL;
-                mUIStatusStr = MENU_GENERAL;
+                if (arg.keysym.scancode == SDL_SCANCODE_M)
+                {
+                    mUIStatus = UI_GENERAL;
+                    mUIStatusStr = Ogre::IdString(MENU_GENERAL);
+                }
+                else
+                {
+                    mUIStatus = UI_CONTROLLER;
+                    mUIStatusStr = Ogre::IdString(
+                            mCurrentController->getControllerMenuId());
+                }
                 updateOverlayElements();
                 succ = true;
             }
-            //Activate Controller UI
-            else if ( mUIStatus == UI_CONTROLLER && mIsUIVisible )
+            else if ( (mUIStatus == UI_GENERAL || mUIStatus == UI_CONTROLLER)
+                && mIsUIVisible )
             {
-                mUIActive = true;
-                mActiveUIElement = mHoverUIElement;
-                toggleUI();
+                if (mHoverUIElement)
+                {
+                    mUIActive = true;
+                    mActiveUIElement = mHoverUIElement;
+                    toggleUIPress();
+                }
+                else if (mBackgroundUIElement)
+                {
+                    mUIActive = true;
+                    mActiveUIElement = mBackgroundUIElement;
+                    toggleUIPress();
+                }
+                else
+                {
+                    goToMenu(Ogre::IdString());
+                }
                 updateOverlayElements();
                 succ = true;
             }
         }
-        if( arg.keysym.scancode == SDL_SCANCODE_N )
+        else if (mCurrentController &&
+                mCurrentController->isActiveOnPress() &&
+                arg.keysym.scancode == SDL_SCANCODE_N )
         {
-            //Make Controller UI Visible
-            if ( mUIStatus == UI_NONE && mCurrentController )
-            {
-                mIsUIVisible = true;
-                mUIStatus = UI_CONTROLLER;
-                mUIStatusStr = Ogre::IdString(mCurrentController->getControllerMenuId());
-                updateOverlayElements();
-                succ = true;
-            }
-            //Activate general UI
-            else if ( mUIStatus == UI_GENERAL && mIsUIVisible )
-            {
-                mUIActive = true;
-                mActiveUIElement = mHoverUIElement;
-                toggleUI();
-                updateOverlayElements();
-                succ = true;
-            }
+            mUIActive = true;
+            mActiveUIElement = mCurrentController;
+            mUIStatus = UI_CONTROLLER_ACTIVE;
+            toggleUIPress();
+            succ = true;
         }
         return succ;
     }
@@ -1177,47 +1209,21 @@ namespace esvr2
             mGraphicsSystem->toggleShowVideo();
             succ = true;
         }
-        if( arg.keysym.scancode == SDL_SCANCODE_M )
+
+        if( (arg.keysym.scancode == SDL_SCANCODE_M && mUIStatus == UI_GENERAL) ||
+                (arg.keysym.scancode == SDL_SCANCODE_N &&
+                        (mUIStatus == UI_CONTROLLER || mUIStatus == UI_CONTROLLER_ACTIVE )))
         {
-            switch (mUIStatus)
+            toggleUIRelease();
+            mActiveUIElement = nullptr;
+            mUIActive = false;
+            if (mUIStatus == UI_CONTROLLER_ACTIVE)
             {
-                case UI_GENERAL:
-                    mHoverUIElement = nullptr;
-                    mIsUIVisible = false;
-                    mUIStatus = UI_NONE;
-                    mUIStatusStr = Ogre::IdString();
-                    updateOverlayElements();
-                    succ = true;
-                    break;
-                case UI_CONTROLLER:
-                case UI_NONE:
-                    mActiveUIElement = nullptr;
-                    mUIActive = false;
-                    updateOverlayElements();
-                    succ = true;
-                    break;
+                mBackgroundUIElement = nullptr;
+                mUIStatus = UI_NONE;
             }
-        }
-        if( arg.keysym.scancode == SDL_SCANCODE_N )
-        {
-            switch(mUIStatus)
-            {
-                case UI_CONTROLLER:
-                    mHoverUIElement = nullptr;
-                    mIsUIVisible = false;
-                    mUIStatus = UI_NONE;
-                    mUIStatusStr = Ogre::IdString();
-                    updateOverlayElements();
-                    succ = true;
-                    break;
-                case UI_GENERAL:
-                case UI_NONE:
-                    mActiveUIElement = nullptr;
-                    mUIActive = false;
-                    updateOverlayElements();
-                    succ = true;
-                    break;
-            }
+            updateOverlayElements();
+            succ = true;
         }
         return succ;
     }
@@ -1232,7 +1238,7 @@ namespace esvr2
         }
         if( evt == FPE_ACTIVE_PRESS && mIsUIVisible )
         {
-            toggleUI();
+            toggleUIPress();
             mUIActive = true;
             mActiveUIElement = mHoverUIElement;
             updateOverlayElements();
@@ -1279,22 +1285,22 @@ namespace esvr2
         }
     }
 
-    void GameState::toggleUI()
+    void GameState::toggleUIPress()
     {
-        if (mIntersectsInfoScreen)
-        {
-            if (mActiveUIElement)
-                mActiveUIElement->activateToggle();
-        }
+        if (mActiveUIElement)
+            mActiveUIElement->togglePress();
     }
 
-    void GameState::holdUI(Ogre::uint64 timeSinceLast)
+    void GameState::holdUI(Ogre::uint64 currentTimeMs)
     {
-        if (mIntersectsInfoScreen && mActiveUIElement)
-        {
-            mActiveUIElement->activateHold(timeSinceLast);
-//            mActiveUIElement->setUIState(UIS_ACTIVATE, true);
-        }
+        if (mActiveUIElement)
+            mActiveUIElement->hold(currentTimeMs);
+    }
+
+    void GameState::toggleUIRelease()
+    {
+        if (mActiveUIElement)
+            mActiveUIElement->toggleRelease();
     }
 
     bool GameState::setDistortion(Distortion dist)
@@ -1369,7 +1375,7 @@ namespace esvr2
         }
         if (mUIActive)
         {
-            holdUI(msSinceLast);
+            holdUI(mGraphicsSystem->mLastStartTime);
         }
         else if (mIsUIVisible)
         {
@@ -1521,10 +1527,10 @@ namespace esvr2
         Ogre::Real infoScreenDimY = mGraphicsSystem->mInteractiveElementConfig.height/2.0;
         uv.x = (intersect_loc.x + infoScreenDimX) / (2 * infoScreenDimX);
         uv.y = (intersect_loc.y - infoScreenDimY) / (-2 * infoScreenDimY);
-        mIntersectsInfoScreen = 0.0f < uv.x && uv.x < 1.0f &&  0 < uv.y && uv.y < 1.0f;
+        bool intersectsInfoScreen = 0.0f < uv.x && uv.x < 1.0f &&  0 < uv.y && uv.y < 1.0f;
         if (mViewingDirectionIndicator)
         {
-            if (mIntersectsInfoScreen && mIsUIVisible && !mUIActive)
+            if (intersectsInfoScreen && mIsUIVisible && !mUIActive)
             {
                 mInfoScreenUV = uv;
                 mViewingDirectionIndicator->setPosition(uv.x, uv.y);
@@ -1542,7 +1548,6 @@ namespace esvr2
         mVRSceneNodeProjectionPlanesOrigin->setPosition(
                 mVRCamerasNode->getPosition());
         addSettingsEventLog("adjustToHeadHight");
-        goToMenu(Ogre::IdString(MENU_GENERAL));
     }
 
     void GameState::moveScreenInit()
@@ -1585,9 +1590,15 @@ namespace esvr2
         addSettingsEventLog("resetProjectionPlaneDistance");
     }
 
-    void GameState::goToMenu(Ogre::IdString menu)
+    void GameState::goToMenu(Ogre::IdString menu, InteractiveElementPtr backgroundIE)
     {
+        if(menu == Ogre::IdString())
+        {
+            mIsUIVisible = false;
+            mUIStatus = UI_NONE;
+        }
         mUIStatusStr = Ogre::IdString(menu);
+        mBackgroundUIElement = backgroundIE;
         mHoverUIElement = nullptr;
     }
 
@@ -1623,7 +1634,6 @@ namespace esvr2
         if (dist == DIST_UNDISTORT_RECTIFY)
             mInfoScreenSceneNode->setPosition(
                 0, 0, newProjectionPlaneDistanceRect + 0.001 );
-        addSettingsEventLog("adjustProjectionPlaneDistance");
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()
