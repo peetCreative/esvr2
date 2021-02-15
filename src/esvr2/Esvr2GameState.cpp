@@ -454,11 +454,16 @@ namespace esvr2
                                     Ogre::IdString(MENU_CHANGE_CONTROLLER)});
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_GENERAL), nullptr));
+//        ele = createInteractiveElement2D("MenuSlot9",
+//                {Ogre::IdString(MENU_GENERAL)},
+//                "Close Application");
+//        ele->setTogglePressFunction(
+//                boost::bind(&GraphicsSystem::quit, mGraphicsSystem));
         ele = createInteractiveElement2D("MenuSlot9",
                 {Ogre::IdString(MENU_GENERAL)},
-                "Close");
+                "Close Menu");
         ele->setTogglePressFunction(
-                boost::bind(&GraphicsSystem::quit, mGraphicsSystem));
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
         //TODO: strange bug first element do not show textHopefully get's eaten up
         ele = createInteractiveElement2D("MenuSlot1",
                    {Ogre::IdString(MENU_GENERAL)},
