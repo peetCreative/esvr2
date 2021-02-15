@@ -284,7 +284,9 @@ namespace esvr2 {
                 if (YAML::Node param = elem["font_size"])
                     def.fontSize = param.as<float>();
                 if (YAML::Node param = elem["font_size_rel"])
-                    def.fontSize = 0.05f / param.as<float>();
+                    def.fontSize = 0.05f * param.as<float>();
+                if (YAML::Node param = elem["fit_font_size"])
+                    def.fitFontSize = param.as<bool>();
                 if (YAML::Node param = elem["font_color"])
                 {
                     readColorYmlIntern(param, def.fontColor, config.colorDefList);

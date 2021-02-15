@@ -14,6 +14,7 @@
 #include "Overlay/OgreBorderPanelOverlayElement.h"
 #include "Overlay/OgreTextAreaOverlayElement.h"
 
+#include <algorithm>
 
 namespace esvr2
 {
@@ -86,11 +87,19 @@ namespace esvr2
                 a = Ogre::v1::TextAreaOverlayElement::Right;
             else
                 a = Ogre::v1::TextAreaOverlayElement::Center;
+            int numLines = 1 + std::count(def->text.begin(), def->text.end(), '\n');
+            float fontSize = mDefinitionPtr->fontSize;
+            if (mDefinitionPtr->fitFontSize)
+            {
+                fontSize = mDefinitionPtr->uvSizeY / numLines;
+            }
             mTextArea->setFontName(def->font);
-            mTextArea->setCharHeight(def->fontSize);
+            mTextArea->setCharHeight(fontSize);
             mTextArea->setColour(Ogre::ColourValue::White);
             mTextArea->setAlignment(a);
-            mTextArea->setPosition(def->uvSizeX * 0.5f, (def->uvSizeY - def->fontSize)* 0.5f  );
+            mTextArea->setPosition(
+                    mDefinitionPtr->uvSizeX * 0.5f,
+                    (mDefinitionPtr->uvSizeY - (fontSize * numLines))* 0.5f  );
             mBorderPanel->addChild(mTextArea);
             mOverlay->add2D(mBorderPanel);
             mOverlay->setRenderQueueGroup(253);
@@ -133,6 +142,16 @@ namespace esvr2
     {
         if (!isOverlaySetup())
             return false;
+        int numLines = 1 + std::count(text.begin(), text.end(), '\n');
+        float fontSize = mDefinitionPtr->fontSize;
+        if (mDefinitionPtr->fitFontSize)
+        {
+            fontSize = mDefinitionPtr->uvSizeY / numLines;
+        }
+        mTextArea->setCharHeight(fontSize);
+        mTextArea->setPosition(
+                mDefinitionPtr->uvSizeX * 0.5f,
+                (mDefinitionPtr->uvSizeY - (fontSize * numLines))* 0.5f  );
         mTextArea->setCaption(text);
         return true;
     }
