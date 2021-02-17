@@ -30,9 +30,9 @@ namespace esvr2
         bool fitFontSize = false;
         std::string font = "FreeSans";
         std::string alignment = "Center";
-        std::vector<float> fontColor = {0,0,0,1};
+        std::vector<float> fontColor = {1,1,1,1};
         bool alwaysVisible = false;
-        std::vector<float> bgColor = {1,1,1,0.5};
+        std::vector<float> bgColor = {0,0,0,0.7};
         std::vector<float> bgHoverColor = {1,0,0,1};
         std::vector<float> bgActiveColor = {1,0,1,1};
         bool visibleOnActive = true;

@@ -79,7 +79,7 @@ namespace esvr2
                     overlayManager.createOverlayElement("TextArea",
                                                         textAreaId));
             mTextArea->setFontName(def->font);
-            mTextArea->setColour(Ogre::ColourValue::White);
+            mTextArea->setColour(vectorToColourValue(mDefinitionPtr->fontColor));
             mPanel->addChild(mTextArea);
             mOverlay->add2D(mPanel);
             mOverlay->setRenderQueueGroup(253);
