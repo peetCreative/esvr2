@@ -135,7 +135,7 @@ namespace esvr2
         {
             fontSize = mDefinitionPtr->uvSizeY / numLines;
         }
-        float left = 0.0f;
+        float left = 0.01f;
         if (a == Ogre::v1::TextAreaOverlayElement::Center)
             left = mDefinitionPtr->uvSizeX * 0.5f;
         float top = (mDefinitionPtr->uvSizeY - (fontSize * numLines))* 0.5f;
