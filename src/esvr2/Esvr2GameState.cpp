@@ -604,7 +604,14 @@ namespace esvr2
                                          "");
         ele = createInteractiveElement2D("SetupCenter",
                                          {Ogre::IdString(MENU_SETUP1)},
-                                         "Press the right foot\n to start.");
+                                         "Make sure you see this text as sharp as possible:\n"
+                                         "1. Check the headset sits tight on your head.\n"
+                                         "2. Adjust the eye-distance of the headset\n"
+                                         "using the dial on the lower right of the headset\n\n"
+                                         "You can take off the headset at anytime you want.\n"
+                                         "If you do so make sure\n"
+                                         "that you are not pressing a foot-switch.\n"
+                                         "To continue, press the right foot.");
         mSetupStartIE = std::make_shared<InteractiveElement>();
         mSetupStartIE->setTogglePressFunction(
                 boost::bind(&GameState::setupStart, this));
