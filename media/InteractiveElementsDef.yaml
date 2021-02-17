@@ -11,7 +11,7 @@ interactive_bord:
   #         tip, make it transparent in the middle
   width: 1.0
   height: 1.0
-#  bg_img:
+  #  bg_img:
   bg_color:
     - 1.0
     - 0.0
@@ -83,7 +83,7 @@ interactive_bord:
       uv_y:  0.8
       uv_size_x: 1.0
       uv_size_y: 0.2
-      fit_font_size: true
+      #fit_font_size: true
       text_color:
         - 1.0
         - 1.0
@@ -205,11 +205,11 @@ interactive_bord:
         g: 0.5
         a: 0.4
     - id: SetupCenter
-      uv_x: 0.0
-      uv_y: 0.3
-      uv_size_x: 1.0
+      uv_x: 0.1
+      uv_y: 0.2
+      uv_size_x: 0.8
       uv_size_y: 0.7
-      font_size_rel: 1.3
+      font_size_rel: 1.0
       alignment: Left
       bg_color:
         r: 0.0
@@ -231,8 +231,12 @@ interactive_bord:
       uv_y: 0.1
       uv_size_x: 0.5
       uv_size_y: 0.1
+      bg_color:
+        a: 1.0
     - id: SetupBtn2
       uv_x: 0.5
       uv_y: 0.1
       uv_size_x: 0.5
       uv_size_y: 0.1
+      bg_color:
+        a: 1.0
