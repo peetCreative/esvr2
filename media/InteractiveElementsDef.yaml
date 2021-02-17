@@ -94,6 +94,16 @@ interactive_bord:
         - 0.0
         - 0.0
         - 1.0
+    - id: AVictimBox
+      uv_x: 0.0
+      uv_y:  0.6
+      uv_size_x: 1.0
+      uv_size_y: 0.2
+      bg_color:
+        - 0.0
+        - 0.0
+        - 0.0
+        - 0.0
     - id: RawDist
       text: Raw
       uv_x: 0.0
@@ -194,3 +204,34 @@ interactive_bord:
         r: 0.5
         g: 0.5
         a: 0.4
+    - id: SetupCenter
+      uv_x: 0.0
+      uv_y: 0.3
+      uv_size_x: 1.0
+      uv_size_y: 0.4
+      font_size_rel: 2.5
+      bg_color:
+        r: 0.0
+        g: 0.0
+        a: 1.0
+    - id: SetupExplanation
+      uv_x: 0.0
+      uv_y: 0.2
+      uv_size_x: 1.0
+      uv_size_y: 0.8
+      alignment: Left
+      font_size_rel: 2.0
+      bg_color:
+        r: 0.0
+        g: 0.0
+        a: 1.0
+    - id: SetupBtn1
+      uv_x: 0.0
+      uv_y: 0.1
+      uv_size_x: 0.5
+      uv_size_y: 0.1
+    - id: SetupBtn2
+      uv_x: 0.5
+      uv_y: 0.1
+      uv_size_x: 0.5
+      uv_size_y: 0.1

@@ -25,6 +25,11 @@
 #define MENU_ADJUST_TO_HEAD "MenuAdjustToHead"
 #define MENU_CHANGE_DISTORTION "MenuDistortion"
 #define MENU_CHANGE_CONTROLLER "MenuController"
+#define MENU_SETUP1 "Setup1"
+#define MENU_SETUP_CURSOR "SetupNext"
+#define MENU_SETUP_MOVE "SetupMove"
+#define MENU_SETUP_DISTANCE "SetupDistance"
+#define MENU_SETUP_EXPLANATION "SetupExplanation"
 
 namespace esvr2
 {
@@ -87,7 +92,8 @@ namespace esvr2
         Ogre::SceneNode          *mVRSceneNodesProjectionPlaneRect;
         Ogre::SceneNode          *mLaparoscopeSceneNodePointCloud;
         Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
-        Ogre::SceneNode          *mInfoScreenSceneNode;
+        Ogre::SceneNode          *mInfoScreenStaticSceneNode = nullptr;
+        Ogre::SceneNode          *mInfoScreenSceneNode = nullptr;
 
         UIStatusType             mUIStatus = UI_NONE;
         bool                     mIsUIVisible;
@@ -107,6 +113,8 @@ namespace esvr2
         InteractiveElementPtr mAdjustToHeadHightIE = nullptr;
         InteractiveElementPtr mAdjustProjectionPlaneDistanceIE = nullptr;
         InteractiveElementPtr mMoveIE = nullptr;
+        InteractiveElementPtr mSetupStartIE = nullptr;
+        InteractiveElementPtr mVoidIE = nullptr;
         InteractiveElement2DPtr mInfoBoxDistortionSelect = nullptr;
         InteractiveElement2DPtr mInfoBoxControllerSelect = nullptr;
 
@@ -193,13 +201,16 @@ namespace esvr2
 
         void goToMenu(
                 Ogre::IdString menu,
-                InteractiveElementPtr backgroundIE = nullptr);
+                InteractiveElementPtr backgroundIE);
 
         void resetProjectionPlaneDistance();
         void initAdjustProjectionPlaneDistance();
         void holdAdjustProjectionPlaneDistance(Ogre::uint64 time);
 
         void moveScreenInit();
+
+        void setupStart();
+        void setupFinish();
 
     public:
 

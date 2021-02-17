@@ -10,7 +10,7 @@
 
 #include "OgreHlmsUnlitDatablock.h"
 #include "Overlay/OgreOverlay.h"
-#include "Overlay/OgreBorderPanelOverlayElement.h"
+#include "Overlay/OgrePanelOverlayElement.h"
 #include "Overlay/OgreTextAreaOverlayElement.h"
 
 #include <boost/function.hpp>
@@ -29,7 +29,7 @@ namespace esvr2
     private:
         Ogre::v1::Overlay *mOverlay = nullptr;
         Ogre::HlmsUnlitDatablock *mDatablock = nullptr;
-        Ogre::v1::BorderPanelOverlayElement *mBorderPanel = nullptr;
+        Ogre::v1::PanelOverlayElement *mPanel = nullptr;
         Ogre::v1::TextAreaOverlayElement *mTextArea = nullptr;
         InteractiveElement2DDefPtr mDefinitionPtr;
         std::vector<Ogre::IdString> mVisibleInMenus;

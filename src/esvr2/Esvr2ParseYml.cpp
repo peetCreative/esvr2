@@ -281,6 +281,8 @@ namespace esvr2 {
                     def.text = param.as<std::string>();
                 if (YAML::Node param = elem["font"])
                     def.font = param.as<std::string>();
+                if (YAML::Node param = elem["alignment"])
+                    def.alignment = param.as<std::string>();
                 if (YAML::Node param = elem["font_size"])
                     def.fontSize = param.as<float>();
                 if (YAML::Node param = elem["font_size_rel"])
@@ -385,6 +387,8 @@ namespace esvr2 {
             config->multithreading = param.as<bool>();
         if (YAML::Node param = doc["is_stereo"])
             config->isStereo = param.as<bool>();
+        if (YAML::Node param = doc["start_with_setup"])
+            config->startWithSetup = param.as<bool>();
         if (YAML::Node param = doc["debug_screen"])
             config->debugScreen = param.as<bool>();
         if (YAML::Node param = doc["screen"])

@@ -11,7 +11,7 @@
 #include "OgreHlmsUnlitDatablock.h"
 #include "Overlay/OgreOverlay.h"
 #include "Overlay/OgreOverlayManager.h"
-#include "Overlay/OgreBorderPanelOverlayElement.h"
+#include "Overlay/OgrePanelOverlayElement.h"
 #include "Overlay/OgreTextAreaOverlayElement.h"
 
 #include <algorithm>
@@ -66,42 +66,22 @@ namespace esvr2
         mOverlay = overlayManager.getByName(overlayId);
         if(!mOverlay) {
             mOverlay = overlayManager.create(overlayId);
-            mBorderPanel = dynamic_cast<Ogre::v1::BorderPanelOverlayElement *>(
-                    overlayManager.createOverlayElement("BorderPanel",
+            mPanel = dynamic_cast<Ogre::v1::PanelOverlayElement *>(
+                    overlayManager.createOverlayElement("Panel",
                                                         panelId));
-            mBorderPanel->setPosition(
+            mPanel->setPosition(
                     def->uvX, def->uvY);
-            mBorderPanel->setWidth(def->uvSizeX);
-            mBorderPanel->setHeight(def->uvSizeY);
-            mBorderPanel->setBorderSize(0.001f);
-            mBorderPanel->setBorderMaterialName("ColorWhite");
-            mBorderPanel->setMaterialName(mDefinitionPtr->id);
+            mPanel->setWidth(def->uvSizeX);
+            mPanel->setHeight(def->uvSizeY);
+            mPanel->setMaterialName(mDefinitionPtr->id);
 
             mTextArea = static_cast<Ogre::v1::TextAreaOverlayElement *>(
                     overlayManager.createOverlayElement("TextArea",
                                                         textAreaId));
-            Ogre::v1::TextAreaOverlayElement::Alignment a;
-            if (def->alignment == "Left")
-                a = Ogre::v1::TextAreaOverlayElement::Left;
-            else if (def->alignment == "Right")
-                a = Ogre::v1::TextAreaOverlayElement::Right;
-            else
-                a = Ogre::v1::TextAreaOverlayElement::Center;
-            int numLines = 1 + std::count(def->text.begin(), def->text.end(), '\n');
-            float fontSize = mDefinitionPtr->fontSize;
-            if (mDefinitionPtr->fitFontSize)
-            {
-                fontSize = mDefinitionPtr->uvSizeY / numLines;
-            }
             mTextArea->setFontName(def->font);
-            mTextArea->setCharHeight(fontSize);
             mTextArea->setColour(Ogre::ColourValue::White);
-            mTextArea->setAlignment(a);
-            mTextArea->setPosition(
-                    mDefinitionPtr->uvSizeX * 0.5f,
-                    (mDefinitionPtr->uvSizeY - (fontSize * numLines))* 0.5f  );
-            mBorderPanel->addChild(mTextArea);
-            mOverlay->add2D(mBorderPanel);
+            mPanel->addChild(mTextArea);
+            mOverlay->add2D(mPanel);
             mOverlay->setRenderQueueGroup(253);
             if (mDefinitionPtr->alwaysVisible) {
                 mDatablock->setColour(
@@ -113,16 +93,16 @@ namespace esvr2
         }
         else
         {
-            mBorderPanel = dynamic_cast<Ogre::v1::BorderPanelOverlayElement*>(
+            mPanel = dynamic_cast<Ogre::v1::PanelOverlayElement*>(
                     mOverlay->getChild(panelId));
             mTextArea = static_cast<Ogre::v1::TextAreaOverlayElement*>(
-                    mBorderPanel->getChild(textAreaId));
+                    mPanel->getChild(textAreaId));
         }
     }
 
     bool InteractiveElement2D::isOverlaySetup()
     {
-        return mOverlay && mBorderPanel && mTextArea;
+        return mOverlay && mPanel && mTextArea;
     }
 
     bool InteractiveElement2D::isUVinside(Ogre::Vector2 uv)
@@ -142,16 +122,26 @@ namespace esvr2
     {
         if (!isOverlaySetup())
             return false;
+        Ogre::v1::TextAreaOverlayElement::Alignment a;
+        if (mDefinitionPtr->alignment == "Left")
+            a = Ogre::v1::TextAreaOverlayElement::Left;
+        else if (mDefinitionPtr->alignment == "Right")
+            a = Ogre::v1::TextAreaOverlayElement::Right;
+        else
+            a = Ogre::v1::TextAreaOverlayElement::Center;
         int numLines = 1 + std::count(text.begin(), text.end(), '\n');
         float fontSize = mDefinitionPtr->fontSize;
         if (mDefinitionPtr->fitFontSize)
         {
             fontSize = mDefinitionPtr->uvSizeY / numLines;
         }
+        float left = 0.0f;
+        if (a == Ogre::v1::TextAreaOverlayElement::Center)
+            left = mDefinitionPtr->uvSizeX * 0.5f;
+        float top = (mDefinitionPtr->uvSizeY - (fontSize * numLines))* 0.5f;
         mTextArea->setCharHeight(fontSize);
-        mTextArea->setPosition(
-                mDefinitionPtr->uvSizeX * 0.5f,
-                (mDefinitionPtr->uvSizeY - (fontSize * numLines))* 0.5f  );
+        mTextArea->setAlignment(a);
+        mTextArea->setPosition( left, top );
         mTextArea->setCaption(text);
         return true;
     }

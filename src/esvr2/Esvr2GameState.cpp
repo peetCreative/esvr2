@@ -49,7 +49,6 @@ namespace esvr2
             mVRSceneNodesProjectionPlaneRect(nullptr),
             mLaparoscopeSceneNodePointCloud( nullptr ),
             mLaparoscopeSceneNodeTooltips( nullptr ),
-            mInfoScreenSceneNode(nullptr),
             mIsUIVisible(false),
             mHoverUIElement(nullptr),
             mUIActive(false),
@@ -464,10 +463,6 @@ namespace esvr2
                 "Close Menu");
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
-        //TODO: strange bug first element do not show textHopefully get's eaten up
-        ele = createInteractiveElement2D("MenuSlot1",
-                   {Ogre::IdString(MENU_GENERAL)},
-                   "Esvr2");
         //ADJUST TO HEAD HIGHT
         mAdjustToHeadHightIE = std::make_shared<InteractiveElement>();
         mAdjustToHeadHightIE->setTogglePressFunction(
@@ -476,12 +471,13 @@ namespace esvr2
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(), nullptr));
         ele = createInteractiveElement2D("MenuSlot2",
                                    {Ogre::IdString(MENU_GENERAL)},
-                                   "Adjust to Head Position");
+                                   "Adjust Projection-Plane to Head-Position");
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_ADJUST_TO_HEAD), mAdjustToHeadHightIE));
         ele = createInteractiveElement2D("InfoBox",
                                    {Ogre::IdString(MENU_ADJUST_TO_HEAD)},
-                                   "Press right foot to adjust\n the projection plane to head hight");
+                                   "Press right foot to adjust\n"
+                                   "the projection-plane to hight of head");
         //RESET PROJECTION PLANE DISTANCE
         ele = createInteractiveElement2D("MenuSlot3",
                    {Ogre::IdString(MENU_GENERAL)},
@@ -499,11 +495,15 @@ namespace esvr2
         mAdjustProjectionPlaneDistanceIE->setToggleReleaseFunction(
                 boost::bind(&GameState::addSettingsEventLog, this, "adjustProjectionPlaneDistance"));
         ele = createInteractiveElement2D("InfoBox",
-                                         {Ogre::IdString(MENU_DISTANCE)},
-                                         "Press and hold right foot to adjust\n the distance of the projection plane \n left tilt ~ push \n right tilt ~ pull");
+                                         {Ogre::IdString(MENU_DISTANCE),
+                                          Ogre::IdString(MENU_SETUP_DISTANCE)},
+                                         "Press and hold right foot\n"
+                                         " to adjust the distance of the projection-plane \n"
+                                         "left tilt ~ push \n"
+                                         "right tilt ~ pull");
         ele = createInteractiveElement2D("MenuSlot4",
                                          {Ogre::IdString(MENU_GENERAL)},
-                                         "Adjust Projection-Plane Distance");
+                                         "Adjust Projection-Plane-Distance");
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DISTANCE), mAdjustProjectionPlaneDistanceIE));
         // MOVE SCREEN
@@ -520,8 +520,11 @@ namespace esvr2
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_MOVE), mMoveIE));
         ele = createInteractiveElement2D("InfoBox",
-                                         {Ogre::IdString(MENU_MOVE)},
-                                         "Press and hold right foot\n to move the projection plane");
+                                         {Ogre::IdString(MENU_MOVE),
+                                          Ogre::IdString(MENU_SETUP_MOVE)},
+                                         "Press and hold the right foot\n"
+                                         "to move the projection-plane\n"
+                                         " to a comfortable position.");
         //CHANGE DISTORTION
         ele = createInteractiveElement2D("MenuSlot6",
                        {Ogre::IdString(MENU_GENERAL)},
@@ -590,6 +593,92 @@ namespace esvr2
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DEBUG), nullptr));
         ele = createInteractiveElement2D("Debug",
                    {Ogre::IdString(MENU_DEBUG)});
+
+        //VOID INTERACTIVE ELEMENT
+        //An Interactive Element, which is not doing nothing
+        mVoidIE = std::make_shared<InteractiveElement>();
+
+        //MENU_SETUP
+        ele = createInteractiveElement2D("AVictimBox",
+                                         {Ogre::IdString(MENU_SETUP1)},
+                                         "");
+        ele = createInteractiveElement2D("SetupCenter",
+                                         {Ogre::IdString(MENU_SETUP1)},
+                                         "Press the right foot\n to start.");
+        mSetupStartIE = std::make_shared<InteractiveElement>();
+        mSetupStartIE->setTogglePressFunction(
+                boost::bind(&GameState::setupStart, this));
+
+        //MENU_SETUP_CURSOR
+        ele = createInteractiveElement2D("InfoBox",
+                                         {Ogre::IdString(MENU_SETUP_CURSOR)},
+                                        "Navigate the red dot\n"
+                                        "using your head to Next\n"
+                                        "and press the right foot\n"
+                                        "to select it.");
+        ele = createInteractiveElement2D("AVictimBox",
+                                         {Ogre::IdString(MENU_SETUP_CURSOR)},
+                                         "Victim");
+        ele = createInteractiveElement2D("SetupBtn1",
+                                         {Ogre::IdString(MENU_SETUP_CURSOR)},
+                                         "Skip Setup");
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::setupFinish, this));
+        ele = createInteractiveElement2D("SetupBtn2",
+                                         {Ogre::IdString(MENU_SETUP_CURSOR)},
+                                         "Next\n"
+                                         "Move Projection-Plane");
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_SETUP_MOVE), mMoveIE));
+        //MENU_SETUP_MOVE
+        //InfoBox of the Move Menu is also visible
+        ele = createInteractiveElement2D("SetupBtn1",
+                                         {Ogre::IdString(MENU_SETUP_MOVE)},
+                                         "Back");
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_SETUP_CURSOR), mVoidIE));
+        ele = createInteractiveElement2D("SetupBtn2",
+                                         {Ogre::IdString(MENU_SETUP_MOVE)},
+                                         "Next\n"
+                                         "Adjust Projection-Plane-Distance");
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_SETUP_DISTANCE), mAdjustProjectionPlaneDistanceIE));
+        //MENU_SETUP_DISTANCE
+        //InfoBox of the Adjust Projection Plane Distance Menu is also visible
+        ele = createInteractiveElement2D("SetupBtn1",
+                                         {Ogre::IdString(MENU_SETUP_DISTANCE)},
+                                         "Back\n"
+                                         "Move Projection-Plane");
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_SETUP_MOVE), mMoveIE));
+        ele = createInteractiveElement2D("SetupBtn2",
+                                         {Ogre::IdString(MENU_SETUP_DISTANCE)},
+                                         "Next\n"
+                                         "Explanations");
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_SETUP_EXPLANATION), mVoidIE));
+        //MENU_SETUP_EXPLANATION
+        ele = createInteractiveElement2D("SetupExplanation",
+                                         {Ogre::IdString(MENU_SETUP_EXPLANATION)},
+                                         "The setup is now finished.\n"
+                                         "After finish, this UI will disappear.\n"
+                                         "By pressing the right foot again\n"
+                                         "a menu will show up.\n"
+                                         "There you can also set\n"
+                                         "the camera-controller and the distortion.\n"
+                                         "By pressing the left foot you activate\n"
+                                         "the camera-controller");
+        ele = createInteractiveElement2D("SetupBtn1",
+                                         {Ogre::IdString(MENU_SETUP_EXPLANATION)},
+                                         "Back\n"
+                                         "Adjust Projection-Plane-Distance");
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_SETUP_DISTANCE), mAdjustProjectionPlaneDistanceIE));
+        ele = createInteractiveElement2D("SetupBtn2",
+                                         {Ogre::IdString(MENU_SETUP_EXPLANATION)},
+                                         "Finish");
+        ele->setTogglePressFunction(
+                boost::bind(&GameState::setupFinish, this));
     }
 
     void GameState::addViewDirectionIndicator()
@@ -616,6 +705,7 @@ namespace esvr2
             std::vector<Ogre::IdString> menus,
             Ogre::String text)
     {
+        bool a = defName == "HnfoBox1" || defName == "InfoBox1";
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
         Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
                 hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
@@ -629,10 +719,9 @@ namespace esvr2
                     menus,
                     hlmsUnlit);
             addInteractiveElement2D(element);
-            if (text != "")
-            {
-                element->setText(text);
-            }
+            if (text == "")
+                text = defPtr->text;
+            element->setText(text);
             return element;
         }
         else
@@ -641,7 +730,6 @@ namespace esvr2
 
     void GameState::addInteractiveElement2D(InteractiveElement2DPtr interactiveElement2D)
     {
-
         mInteractiveElement2DList.push_back( interactiveElement2D );
     }
 
@@ -841,7 +929,25 @@ namespace esvr2
 
         createVROverlays();
         createControllers();
-        setController(mEsvr2->mConfig->controllerType);
+
+        if (mEsvr2->mConfig->startWithSetup)
+        {
+            mInfoScreenSceneNode->detachObject(mVRInfoScreen);
+            mInfoScreenStaticSceneNode = mVRCamerasNode->
+                    createChildSceneNode( Ogre::SCENE_DYNAMIC );
+            mInfoScreenStaticSceneNode->setName("InfoScreenStaticNode");
+            mInfoScreenStaticSceneNode->setPosition( 0, 0, -1);
+            mInfoScreenStaticSceneNode->attachObject(mVRInfoScreen);
+            mInfoScreenStaticSceneNode->setVisible(true);
+            mVRSceneNodeProjectionPlanesOrigin->setVisible(false, true);
+            goToMenu(Ogre::IdString(MENU_SETUP1), mSetupStartIE);
+            //need to call this to show the first menu
+            updateOverlayElements();
+        }
+        else
+        {
+            setController(mEsvr2->mConfig->controllerType);
+        }
     }
 
     //-----------------------------------------------------------------------------------
@@ -1122,7 +1228,7 @@ namespace esvr2
                 }
                 else
                 {
-                    goToMenu(Ogre::IdString());
+                    goToMenu(Ogre::IdString(), nullptr);
                 }
                 updateOverlayElements();
                 succ = true;
@@ -1377,7 +1483,7 @@ namespace esvr2
         if (mCurrentController )
             mCurrentController->headPoseUpdated();
         //update Pointcloud ?
-        if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem )
+        if( mDisplayHelpMode && mGraphicsSystem->mOverlaySystem && mUIStatusStr == Ogre::IdString(MENU_DEBUG) )
         {
             if (mDebugText != "")
             {
@@ -1540,8 +1646,8 @@ namespace esvr2
         Ogre::Ray viewingDirection = Ogre::Ray(origin, direction);
 
         Ogre::Plane infoScreenPlane(
-            mInfoScreenSceneNode->convertLocalToWorldDirectionUpdated(Ogre::Vector3::UNIT_Z, true),
-            mInfoScreenSceneNode->convertLocalToWorldPositionUpdated(Ogre::Vector3::ZERO));
+                mInfoScreenSceneNode->convertLocalToWorldDirectionUpdated(Ogre::Vector3::UNIT_Z, true),
+                mInfoScreenSceneNode->convertLocalToWorldPositionUpdated(Ogre::Vector3::ZERO));
         std::pair<bool, Ogre::Real> pairIntersections =
                 Ogre::Math::intersects(viewingDirection, infoScreenPlane);
         Ogre::Vector3 intersect = viewingDirection.getPoint(pairIntersections.second);
@@ -1594,7 +1700,6 @@ namespace esvr2
         Ogre::Quaternion trans = xAxisTrans.getRotationTo(xAxisNew);
         mVRSceneNodeProjectionPlanesOrigin->setOrientation(
                 trans * headOrientation);
-        addSettingsEventLog("moveScreen");
     }
 
     void GameState::resetProjectionPlaneDistance()
@@ -1621,7 +1726,12 @@ namespace esvr2
             mIsUIVisible = false;
             mUIStatus = UI_NONE;
         }
-        mUIStatusStr = Ogre::IdString(menu);
+        else
+        {
+            mIsUIVisible = true;
+            mUIStatus = UI_GENERAL;
+        }
+        mUIStatusStr = menu;
         mBackgroundUIElement = backgroundIE;
         mHoverUIElement = nullptr;
     }
@@ -1730,6 +1840,23 @@ namespace esvr2
                 mGraphicsSystem->mVRCameras[RIGHT]->getPosition().x;
         log.distortion = mEsvr2->mVideoLoader->getDistortion();
         mSettingsEventLogs.push_back(log);
+    }
 
+    void GameState::setupStart()
+    {
+        adjustToHeadHight();
+        moveScreen(0);
+        //detach from parent
+        mInfoScreenStaticSceneNode->detachObject(mVRInfoScreen);
+        mInfoScreenSceneNode->attachObject(mVRInfoScreen);
+        mVRSceneNodeProjectionPlanesOrigin->setVisible(true, true);
+        //TODO: if I callthis in the target Menu
+        // in the alphanumeric lowest Interactive Element the Text disappears
+        goToMenu(Ogre::IdString(MENU_SETUP_CURSOR), mVoidIE);
+    }
+    void GameState::setupFinish()
+    {
+        setController(mEsvr2->mConfig->controllerType);
+        goToMenu(Ogre::IdString(), nullptr);
     }
 }

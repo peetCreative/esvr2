@@ -131,6 +131,7 @@ namespace esvr2 {
         bool showOgreDialog = false;
         bool multithreading = false;
         bool isStereo = true;
+        bool startWithSetup = true;
         bool debugScreen = false;
         int screen = 0;
         double headHight = 1.7f;
