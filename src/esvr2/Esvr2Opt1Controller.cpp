@@ -102,13 +102,6 @@ namespace esvr2
             return;
         mTimeSinceLast = timesincelast;
 
-        Ogre::Quaternion headOrientationWORLD =
-                mGameState->getHeadOrientation();
-        Ogre::Quaternion toScreenOrientationWORLD =
-                mGameState->getProjectionPlanesOrientation();
-        Ogre::Quaternion headOrientationRel =
-//                headOrientationWORLD;
-                headOrientationWORLD * toScreenOrientationWORLD.Inverse();
 
         DOFBoundaries boundaries;
         DOFPose pose;

@@ -218,8 +218,6 @@ namespace esvr2 {
 
             Ogre::uint64 startTimeMs = timer.getMicroseconds();
 
-            double timeSinceLast = 1.0 / 60.0;
-
             while( !mGraphicsSystem->getQuit() )
             {
                 startTimeMs = timer.getMicroseconds();
@@ -275,8 +273,6 @@ namespace esvr2 {
         Ogre::Timer timer;
         //TODO: compansate YieldTimer
         //    Demo::YieldTimer yieldTimer( &timer );
-
-        Ogre::uint64 startTime = timer.getMicroseconds();
 
         while( !mVideoLoader->getQuit() && !mGraphicsSystem->getQuit() )
         {

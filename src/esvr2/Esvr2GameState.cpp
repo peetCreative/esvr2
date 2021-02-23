@@ -712,7 +712,6 @@ namespace esvr2
             std::vector<Ogre::IdString> menus,
             Ogre::String text)
     {
-        bool a = defName == "HnfoBox1" || defName == "InfoBox1";
         Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
         Ogre::HlmsUnlit *hlmsUnlit = dynamic_cast<Ogre::HlmsUnlit*>(
                 hlmsManager->getHlms(Ogre::HLMS_UNLIT) );
@@ -1461,6 +1460,7 @@ namespace esvr2
         visibilityMask |= setMask;
         visibilityMask &= ~unsetMask;
         sceneManager->setVisibilityMask( visibilityMask );
+        return true;
     }
 
     void GameState::updateVRCamerasNode(void)
@@ -1624,7 +1624,7 @@ namespace esvr2
         Ogre::SceneManager *sceneManager = mGraphicsSystem->mVRSceneManager;
         Ogre::Item *item = sceneManager->createItem( planeMesh, Ogre::SCENE_DYNAMIC );
 
-        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
+//        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
         item->setDatablock( "Marble" );
         Ogre::SceneNode *sceneNode = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
                 createChildSceneNode( Ogre::SCENE_DYNAMIC );
