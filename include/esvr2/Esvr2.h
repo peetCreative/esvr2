@@ -136,7 +136,10 @@ namespace esvr2 {
         int screen = 0;
         double headHight = 1.7f;
         double centerEpsilon = 0.1;
+        //the laparoscope is 30° tilted
         int ctlDelay = 25;
+        double ctlCameraTilt = 0.52359;
+        double ctlFocusDistance = 0.2;
         double ctlStepYaw = 0.01;
         double ctlStepPitch = 0.01;
         double ctlStepRoll = 0.01;

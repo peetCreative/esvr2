@@ -20,12 +20,16 @@ namespace esvr2
         Ogre::Vector3 mStartPosition = Ogre::Vector3::ZERO;
         DOFPose mStartPose;
         Ogre::Real mTransZFact = 2.0;
+        Ogre::Real mCamereaTilt;
+        Ogre::Real mFocusDistance;
         bool mBlocked = false;
     public:
         Opt2Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,
                 GameState *gameState,
-                Ogre::Real transZFact);
+                Ogre::Real transZFact,
+                Ogre::Real cameraTilt,
+                Ogre::Real focusDistance);
 
         void startMoving();
         void hold(Ogre::uint64 time);

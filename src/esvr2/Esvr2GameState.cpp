@@ -769,7 +769,9 @@ namespace esvr2
                     std::make_shared<Opt2Controller>(
                     mEsvr2->mLaparoscopeController,
                     this,
-                    mEsvr2->mConfig->ctlOpt2TransZFact);
+                    mEsvr2->mConfig->ctlOpt2TransZFact,
+                    mEsvr2->mConfig->ctlCameraTilt,
+                    mEsvr2->mConfig->ctlFocusDistance);
         }
         else
         {

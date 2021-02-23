@@ -8,6 +8,7 @@
 
 #include "PivotControlMessages.h"
 
+#include <cmath>
 #include <boost/bind.hpp>
 
 #define MENU_OPT2 "MenuOpt2"
@@ -19,12 +20,16 @@ namespace esvr2
     Opt2Controller::Opt2Controller(
             std::shared_ptr<LaparoscopeController> laparoscopeController,
             GameState *gameState,
-            Ogre::Real transZFact) :
+            Ogre::Real transZFact,
+            Ogre::Real cameraTilt,
+            Ogre::Real focusDistance) :
         Controller(laparoscopeController, gameState),
         mTransZFact(transZFact)
     {
         mTogglePressCallback = boost::bind(&Opt2Controller::startMoving, this);
         mHoldCallback = boost::bind(&Opt2Controller::hold, this, _1);
+        mCamereaTilt = cameraTilt;
+        mFocusDistance = focusDistance;
     }
 
     void Opt2Controller::startMoving()
@@ -78,6 +83,14 @@ namespace esvr2
         pose.roll = mStartPose.roll + rollDiff.valueRadians();
         pose.transZ = mStartPose.transZ +
                 mTransZFact * (posDiff.length() * zAxis.dotProduct(posDiff));
+
+        Ogre::Real transPitch = std::asin(
+                (std::sin(M_PI - mCamereaTilt) * mStartPose.transZ)/
+                mFocusDistance);
+        Ogre::Real transPitchNew = std::asin(
+                (std::sin(M_PI - mCamereaTilt) * pose.transZ)/
+                mFocusDistance);
+        pose.pitch -= transPitchNew - transPitch;
 
         pose.yaw = std::min(pose.yaw, boundaries.yawMax);
         pose.yaw = std::max(pose.yaw, boundaries.yawMin);
