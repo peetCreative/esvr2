@@ -41,7 +41,7 @@ endif("${isSystemDir}" STREQUAL "-1")
 set( EXECUTABLE_OUTPUT_PATH "${CMAKE_CURRENT_BINARY_DIR}/bin" )
 set( LIBRARY_OUTPUT_PATH  "${CMAKE_CURRENT_BINARY_DIR}/lib" )
 
-
+add_subdirectory(pivot_control_messages)
 
 macro(SUBDIRLIST result curdir)
     FILE(GLOB_RECURSE children LIST_DIRECTORIES true ${curdir}/*)
@@ -153,7 +153,9 @@ link_libraries(stdc++fs)
 
 SET(ESVR2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/esvr2)
 
-include_directories(${ESVR2_INCLUDE_DIR})
+include_directories(
+        "${ESVR2_INCLUDE_DIR}"
+        "pivot_control_messages/include")
 
 add_library(
     ${PROJECT_NAME}_lib SHARED
@@ -173,6 +175,7 @@ target_link_libraries(
     ${YAML_CPP_LIBRARIES}
     ${CMAKE_DL_LIBS}
     ${SerialPort_LIBRARIES}
+    pivot_control_messages
 #    ${BLACKMAGIC_LIBRARIES}
 )
 

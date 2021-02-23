@@ -6,37 +6,20 @@
 #define ESVR2_ESVR2LAPAROSCOPECONTROLLER_H
 
 #include "Esvr2Component.h"
+#include "PivotControlMessages.h"
+#include <memory>
+
+using namespace pivot_control_messages;
 
 namespace esvr2
 {
-    typedef struct {
-        float yaw = 0;
-        float pitch = 0;
-        float roll = 0;
-        float transZ = 0;
-    } LaparoscopeDOFPose;
-
-    typedef struct {
-        float yawMax, yawMin;
-        float pitchMax, pitchMin;
-        float rollMax, rollMin;
-        float transZMax, transZMin;
-    } LaparoscopeDOFBoundaries;
-
-    class LaparoscopeController : virtual public Component {
-    protected:
-        bool mLaparoscopeDofPoseReady = false;
-        bool mLaparoscopeDofBoundariesReady = false;
+    class LaparoscopeController :
+            virtual public Component,
+            virtual public PivotController {
     public:
-        virtual bool moveLaparoscopeTo(
-                LaparoscopeDOFPose) = 0;
-        virtual bool getLaparoscopePose(
-                LaparoscopeDOFPose &laparoscopeDofPose) = 0;
-        virtual bool getLaparoscopeBoundaries(
-                LaparoscopeDOFBoundaries &laparoscopeDofBoundaries) = 0;
-        bool isReady() {
-            return mLaparoscopeDofBoundariesReady && mLaparoscopeDofPoseReady;};
+        bool isReady() {return PivotController::isReady();};
     };
+    typedef std::shared_ptr<LaparoscopeController> LaparoscopeControllerPtr;
 }
 
 #endif //ESVR2_ESVR2LAPAROSCOPECONTROLLER_H

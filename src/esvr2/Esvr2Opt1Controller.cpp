@@ -6,9 +6,13 @@
 #include "Esvr2GameState.h"
 #include "Esvr2LaparoscopeController.h"
 
+#include "PivotControlMessages.h"
+
 #include <boost/bind.hpp>
 
 #define MENU_OPT1 "MenuOpt1"
+
+using namespace pivot_control_messages;
 
 namespace esvr2
 {
@@ -106,10 +110,10 @@ namespace esvr2
 //                headOrientationWORLD;
                 headOrientationWORLD * toScreenOrientationWORLD.Inverse();
 
-        LaparoscopeDOFBoundaries boundaries;
-        LaparoscopeDOFPose pose;
-        if (!mLaparoscopeController->getLaparoscopeBoundaries(boundaries) ||
-            !mLaparoscopeController->getLaparoscopePose(pose))
+        DOFBoundaries boundaries;
+        DOFPose pose;
+        if (!mLaparoscopeController->getDOFBoundaries(boundaries) ||
+            !mLaparoscopeController->getCurrentDOFPose(pose))
         {
             LOG << "In Move mode but did not get DOFPose or DOFBoundaries" << LOGEND;
             return;
@@ -144,7 +148,7 @@ namespace esvr2
         pose.roll = std::max(pose.roll, boundaries.rollMin);
         pose.transZ = std::min(pose.transZ, boundaries.transZMax);
         pose.transZ = std::max(pose.transZ, boundaries.transZMin);
-        mLaparoscopeController->moveLaparoscopeTo(pose);
+        mLaparoscopeController->setTargetDOFPose(pose);
     }
 
     std::string Opt1Controller::getControllerMenuId() {

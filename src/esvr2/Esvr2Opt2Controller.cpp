@@ -6,9 +6,13 @@
 #include "Esvr2Controller.h"
 #include "Esvr2LaparoscopeController.h"
 
+#include "PivotControlMessages.h"
+
 #include <boost/bind.hpp>
 
 #define MENU_OPT2 "MenuOpt2"
+
+using namespace pivot_control_messages;
 
 namespace esvr2
 {
@@ -28,7 +32,7 @@ namespace esvr2
         mStartOrientation = mGameState->getHeadOrientation();
         mStartPosition = mGameState->getHeadPosition();
         //TODO: guard
-        if (!mLaparoscopeController->getLaparoscopePose(mStartPose))
+        if (!mLaparoscopeController->getCurrentDOFPose(mStartPose))
             return;
         mBlocked = !mGameState->isHeadPositionCentered();
         if (mBlocked)
@@ -43,12 +47,12 @@ namespace esvr2
             return;
         Ogre::Quaternion currentOrientation = mGameState->getHeadOrientation();
         Ogre::Vector3 currentPosition = mGameState->getHeadPosition();
-        LaparoscopeDOFBoundaries boundaries;
-        LaparoscopeDOFPose pose = mStartPose;
+        DOFBoundaries boundaries;
+        DOFPose pose = mStartPose;
 
-        if (!mLaparoscopeController->getLaparoscopeBoundaries(boundaries) )
+        if (!mLaparoscopeController->getDOFBoundaries(boundaries) )
         {
-            LOG << "In Move mode but did not get DOFPose or DOFBoundaries" << LOGEND;
+            LOG << "In Move mode but did not get DOFBoundaries" << LOGEND;
             return;
         }
         Ogre::Vector3 xAxisTrans = currentOrientation.xAxis();
@@ -84,7 +88,7 @@ namespace esvr2
         pose.transZ = std::min(pose.transZ, boundaries.transZMax);
         pose.transZ = std::max(pose.transZ, boundaries.transZMin);
 
-        mLaparoscopeController->moveLaparoscopeTo(pose);
+        mLaparoscopeController->setTargetDOFPose(pose);
 //        mGameState->moveScreen(0);
     }
 

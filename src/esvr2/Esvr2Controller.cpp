@@ -17,11 +17,5 @@ namespace esvr2
             InteractiveElement(),
             mLaparoscopeController(std::move(laparoscopeController)),
             mGameState(gameState)
-    {
-        LaparoscopeDOFPose lapPose = LaparoscopeDOFPose();
-        lapPose.yaw = 0;
-        lapPose.pitch = 0;
-        lapPose.transZ = 0;
-        lapPose.roll = 0;
-    }
+    {}
 }

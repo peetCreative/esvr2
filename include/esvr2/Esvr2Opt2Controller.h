@@ -8,6 +8,9 @@
 #include "Esvr2LaparoscopeController.h"
 #include "Esvr2GameState.h"
 
+#include "PivotControlMessages.h"
+using namespace pivot_control_messages;
+
 namespace esvr2
 {
     class Opt2Controller : public Controller
@@ -15,7 +18,7 @@ namespace esvr2
     private:
         Ogre::Quaternion mStartOrientation = Ogre::Quaternion::ZERO;
         Ogre::Vector3 mStartPosition = Ogre::Vector3::ZERO;
-        LaparoscopeDOFPose mStartPose;
+        DOFPose mStartPose;
         Ogre::Real mTransZFact = 2.0;
         bool mBlocked = false;
     public:

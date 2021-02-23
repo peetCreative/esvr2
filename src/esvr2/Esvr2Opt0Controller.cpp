@@ -9,6 +9,8 @@
 #include "boost/bind.hpp"
 #include "SDL.h"
 
+#include "PivotControlMessages.h"
+
 #define MENU_OPT0 "MenuOpt0"
 
 namespace esvr2
@@ -72,10 +74,10 @@ namespace esvr2
 //                headOrientationWORLD;
             headOrientationWORLD * mStartOrientation.Inverse();
         //TODO: guard
-        LaparoscopeDOFBoundaries boundaries;
-        LaparoscopeDOFPose pose;
-        if (!mLaparoscopeController->getLaparoscopeBoundaries(boundaries) ||
-                !mLaparoscopeController->getLaparoscopePose(pose))
+        DOFBoundaries boundaries;
+        DOFPose pose;
+        if (!mLaparoscopeController->getDOFBoundaries(boundaries) ||
+                !mLaparoscopeController->getCurrentDOFPose(pose))
         {
             LOG << "In Move mode but did not get DOFPose or DOFBoundaries" << LOGEND;
             return;
@@ -115,7 +117,7 @@ namespace esvr2
         pose.roll = std::max(pose.roll, boundaries.rollMin);
         pose.transZ = std::min(pose.transZ, boundaries.transZMax);
         pose.transZ = std::max(pose.transZ, boundaries.transZMin);
-        mLaparoscopeController->moveLaparoscopeTo(pose);
+        mLaparoscopeController->setTargetDOFPose(pose);
 //        Ogre::String debugText = "mMoveMode ";
 //        debugText += "Trans Z: " + Ogre::StringConverter::toString(headPositionRel) + "\n";
 //        debugText += "Pitch Rad: " + Ogre::StringConverter::toString(pitchRad) + "\n";
