@@ -119,6 +119,7 @@ namespace esvr2
         InteractiveElement2DPtr mInfoBoxControllerSelect = nullptr;
 
         Ogre::v1::PanelOverlayElement *mViewingDirectionIndicator;
+        bool mShowViewingDirectionIndicator = false;
 
         //correct Distance
         Ogre::Real mCorrectProjPlaneDistance[4],

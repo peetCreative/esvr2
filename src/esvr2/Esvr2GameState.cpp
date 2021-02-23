@@ -1669,7 +1669,9 @@ namespace esvr2
         bool intersectsInfoScreen = 0.0f < uv.x && uv.x < 1.0f &&  0 < uv.y && uv.y < 1.0f;
         if (mViewingDirectionIndicator)
         {
-            if (intersectsInfoScreen && mIsUIVisible && !mUIActive)
+            if (intersectsInfoScreen &&
+                mIsUIVisible && !mUIActive &&
+                mShowViewingDirectionIndicator)
             {
                 mInfoScreenUV = uv;
                 mViewingDirectionIndicator->setPosition(uv.x, uv.y);
@@ -1859,6 +1861,7 @@ namespace esvr2
         mInfoScreenStaticSceneNode->detachObject(mVRInfoScreen);
         mInfoScreenSceneNode->attachObject(mVRInfoScreen);
         mVRSceneNodeProjectionPlanesOrigin->setVisible(true, true);
+        mShowViewingDirectionIndicator = true;
         //TODO: if I callthis in the target Menu
         // in the alphanumeric lowest Interactive Element the Text disappears
         goToMenu(Ogre::IdString(MENU_SETUP_CURSOR), mVoidIE);
