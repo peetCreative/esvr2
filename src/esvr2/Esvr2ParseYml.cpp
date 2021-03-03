@@ -376,7 +376,7 @@ namespace esvr2 {
 
     bool readConfigYmlIntern(std::istream& in,
                        std::shared_ptr<Esvr2Config> config,
-                       std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig = nullptr)
+                       VideoInputConfigPtr videoInputConfig = nullptr)
     {
         YAML::Node doc = YAML::Load(in);
         if (YAML::Node param = doc["show_video"])
@@ -472,7 +472,7 @@ namespace esvr2 {
 
     bool readConfigYml(const std::string& file_name,
                        std::shared_ptr<Esvr2Config> config,
-                       std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig)
+                       VideoInputConfigPtr videoInputConfig)
     {
         LOG << "file_name:" << file_name << LOGEND;
         std::ifstream fin(file_name.c_str());

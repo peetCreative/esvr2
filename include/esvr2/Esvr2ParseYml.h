@@ -21,7 +21,7 @@ bool readInteractiveElementConfigYml(
         InteractiveElementConfig& config);
 bool readConfigYml(const std::string& file_name,
                    std::shared_ptr<Esvr2Config> config,
-                   std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig = nullptr);
+                   VideoInputConfigPtr videoInputConfig = nullptr);
 
 } //namespace esvr2
 

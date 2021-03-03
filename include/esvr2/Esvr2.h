@@ -167,7 +167,8 @@ namespace esvr2 {
         Distortion distortion = DIST_RAW;
         bool wait4CameraConfig = false;
         StereoCameraConfig stereoCameraConfig = StereoCameraConfig();
-    } Esvr2VideoInputConfig;
+    } VideoInputConfig;
+    typedef std::shared_ptr<VideoInputConfig> VideoInputConfigPtr;
 
     ControllerType getControllerType(std::string input_str);
     VideoInputType getVideoInputType(std::string input_str);

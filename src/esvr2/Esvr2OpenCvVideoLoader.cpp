@@ -9,7 +9,7 @@
 namespace esvr2
 {
     OpenCvVideoLoader::OpenCvVideoLoader(
-            const std::shared_ptr<Esvr2VideoInputConfig>& videoInputConfig):
+            const VideoInputConfigPtr videoInputConfig):
         VideoLoader( videoInputConfig->distortion, videoInputConfig->isStereo ),
         mPath( videoInputConfig->path ),
         mVideoInputType(videoInputConfig->videoInputType),

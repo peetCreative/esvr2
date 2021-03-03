@@ -22,7 +22,7 @@ namespace esvr2 {
 
     public:
         OpenCvVideoLoader(
-                const std::shared_ptr<Esvr2VideoInputConfig>& videoInputConfig);
+                const VideoInputConfigPtr videoInputConfig);
         ~OpenCvVideoLoader();
 
         bool initialize(void);

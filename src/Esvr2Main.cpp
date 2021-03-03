@@ -17,8 +17,8 @@ int main(int argc, char *argv[])
     bool use_test_pose = false;
     std::shared_ptr<esvr2::Esvr2Config> config =
             std::make_shared<esvr2::Esvr2Config>();
-    std::shared_ptr<esvr2::Esvr2VideoInputConfig> videoInputConfig =
-            std::make_shared<esvr2::Esvr2VideoInputConfig>();
+    esvr2::VideoInputConfigPtr videoInputConfig =
+            std::make_shared<esvr2::VideoInputConfig>();
 
 //    config->hmdConfig = {
 //            { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY },
@@ -90,8 +90,8 @@ int main(int argc, char *argv[])
             break;
         case esvr2::IT_VIDEO_BLACKMAGIC:
 #ifdef USE_BLACKMAGICCAMERA
-            video_lader = std::make_shared<BlackMagicVideoLoader>(
-                    videoInput, cameraConfig, config->distortion, config->isStereo);
+            videoLoader = std::make_shared<BlackMagicVideoLoader>(
+                    videoInputConfig);
 #endif
             break;
             case esvr2::IT_NONE:

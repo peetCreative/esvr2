@@ -13,7 +13,7 @@ namespace esvr2 {
     {
         public:
             LowLatencyVideoLoader(
-                std::shared_ptr<Esvr2VideoInputConfig> videoInputConfig,
+                VideoInputConfigPtr videoInputConfig,
                 bool profilingEnabled);
             ~LowLatencyVideoLoader();
 
