@@ -2,7 +2,7 @@
 #ifndef _Esvr2_BlackMagicVideoLoader_H_
 #define _Esvr2_BlackMagicVideoLoader_H_
 #ifdef USE_BLACKMAGICCAMERA
-#include "Esvr2StereoRendering.h"
+#include "Esvr2.h"
 
 #include "Esvr2VideoLoader.h"
 
@@ -15,17 +15,14 @@ namespace esvr2 {
 
     class BlackMagicVideoLoader : public VideoLoader
     {
-        VideoInput mVideoInput;
+        VideoInputConfigPtr mVideoInputConfig;
         CBlackMagicCapture mCapture;
         int mCaptureFrameWidth;
         int mCaptureFrameHeight;
 
     public:
         BlackMagicVideoLoader(
-            VideoInput vInput,
-            StereoCameraConfig cameraConfig,
-            Distortion distortion,
-            bool stereo);
+                VideoInputConfigPtr videoInputConfig);
         ~BlackMagicVideoLoader();
 
         bool initialize(void);

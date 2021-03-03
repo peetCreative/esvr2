@@ -121,9 +121,10 @@ message("OpenVR_INCLUDE_DIRS:${OpenVR_INCLUDE_DIRS}")
 message("OpenVR_LIBRARIES:${OpenVR_LIBRARIES}")
 message("OpenVR_LIBRARY:${OpenVR_LIBRARY_DBG}")
 
-find_package(BlackMagic)
-if(BlackMagic_FOUND)
+if(DEFINED BLACKMAGIC_HOME)
     add_definitions(-DUSE_BLACKMAGICCAMERA)
+    set(BLACKMAGIC_INCLUDE_DIRS ${BLACKMAGIC_HOME}/include)
+    set(BLACKMAGIC_LIBRARIES ${BLACKMAGIC_HOME}/lib/libblackmagic.so )
 endif()
 
 SET(ESVR2_MEDIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/media)
@@ -176,7 +177,7 @@ target_link_libraries(
     ${CMAKE_DL_LIBS}
     ${SerialPort_LIBRARIES}
     pivot_control_messages
-#    ${BLACKMAGIC_LIBRARIES}
+    ${BLACKMAGIC_LIBRARIES}
 )
 
 target_link_libraries(

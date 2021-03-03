@@ -1,5 +1,6 @@
 #include "Esvr2.h"
 #include "Esvr2ParseYml.h"
+#include "Esvr2BlackMagicVideoLoader.h"
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2OpenCvVideoLoader.h"
 #include "Esvr2PoseState.h"
@@ -90,7 +91,7 @@ int main(int argc, char *argv[])
             break;
         case esvr2::IT_VIDEO_BLACKMAGIC:
 #ifdef USE_BLACKMAGICCAMERA
-            videoLoader = std::make_shared<BlackMagicVideoLoader>(
+        videoLoader = std::make_shared<esvr2::BlackMagicVideoLoader>(
                     videoInputConfig);
 #endif
             break;

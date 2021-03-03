@@ -14,16 +14,14 @@
 namespace esvr2
 {
     BlackMagicVideoLoader::BlackMagicVideoLoader(
-            VideoInput vInput,
-            StereoCameraConfig cameraConfig,
-            Distortion distortion, bool stereo):
-        VideoLoader( distortion, stereo ),
-        mVideoInput( vInput ),
+            VideoInputConfigPtr videoInputConfig):
+        VideoLoader( videoInputConfig->distortion, videoInputConfig->isStereo ),
+        mVideoInputConfig(videoInputConfig),
         mCapture( 1, CBlackMagicCapture::eHD1080p50, false ),
         mCaptureFrameWidth( 0 ),
         mCaptureFrameHeight( 0 )
     {
-        mCameraConfig = cameraConfig;
+        mCameraConfig = videoInputConfig->stereoCameraConfig;
     }
 
     BlackMagicVideoLoader::~BlackMagicVideoLoader() {}
@@ -43,13 +41,13 @@ namespace esvr2
         {
             return false;
         }
-        if (mStereo && mVideoInput.videoInputType == VIT_MONO)
+        if (mStereo && mVideoInputConfig->videoInputType == VIT_MONO)
         {
             return false;
         }
         updateDestinationSize(
-            mCameraConfig.cfg[LEFT].width, mCameraConfig.cfg[LEFT].height, 4u,
-            mCameraConfig.cfg[LEFT].width* mCameraConfig.cfg[LEFT].height* 4u );
+            mCameraConfig.cfg[LEFT]->width, mCameraConfig.cfg[LEFT]->height, 4u,
+            mCameraConfig.cfg[LEFT]->width* mCameraConfig.cfg[LEFT]->height* 4u );
         updateMaps();
         mReady = true;
         return true;
@@ -73,7 +71,7 @@ namespace esvr2
         mSeq++;
         cv::Rect lrect, rrect;
         cv::Mat imageOrigLeft, imageOrigRight;
-        switch ( mVideoInput.videoInputType )
+        switch ( mVideoInputConfig->videoInputType )
         {
             case VIT_MONO:
                 setImageDataFromRaw(&image, nullptr);
