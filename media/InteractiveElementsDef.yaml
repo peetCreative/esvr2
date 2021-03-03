@@ -99,11 +99,10 @@ interactive_bord:
       uv_y:  0.6
       uv_size_x: 1.0
       uv_size_y: 0.2
+      font_color:
+        a: 0.0
       bg_color:
-        - 0.0
-        - 0.0
-        - 0.0
-        - 0.0
+        a: 0.0
     - id: RawDist
       text: Raw
       uv_x: 0.0
