@@ -178,7 +178,7 @@ compositor_node StereoRenderingNode
 			//Don't be affected by the modifier, apply to the whole screen
 			viewport_modifier_mask	0x00
 
-			colour_value			0.2 0.4 0.6 1
+			colour_value			0.0 0.0 0.0 1
 
 			// Only write to the MSAA surface (don't resolve!)
 			// because overlays due to a legacy problem break the pass

@@ -927,10 +927,10 @@ namespace esvr2
         light->setDirection( Ogre::Vector3( -1, -1, -1 ).normalisedCopy() );
 
         //Follow the tip make the upper Hemisphere little more blue
-        mGraphicsSystem->mVRSceneManager->setAmbientLight(
-                Ogre::ColourValue(0.6f, 0.8, 1.0),
-                Ogre::ColourValue(1.0f, 0.8, 0.6),
-                Ogre::Vector3(0.0f, 1.0f, 0.0f));
+//        mGraphicsSystem->mVRSceneManager->setAmbientLight(
+//                Ogre::ColourValue(0.6f, 0.8, 1.0),
+//                Ogre::ColourValue(1.0f, 0.8, 0.6),
+//                Ogre::Vector3(0.0f, 1.0f, 0.0f));
 
 
         mGraphicsSystem->mVRSceneManager->setVisibilityMask(0xFFFFFF30);
@@ -1614,8 +1614,8 @@ namespace esvr2
         Ogre::v1::MeshPtr planeMeshV1 = Ogre::v1::MeshManager::getSingleton().createPlane(
                 "Plane v1",
                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-               Ogre::Plane( Ogre::Vector3::UNIT_Y, 0.0f ), 50.0f, 50.0f,
-               1, 1, true, 1, 4.0f, 4.0f, Ogre::Vector3::UNIT_Z,
+               Ogre::Plane( Ogre::Vector3::UNIT_Y, 0.0f ), 5.0f, 5.0f,
+               1, 1, true, 1, 0.5f, 0.5f, Ogre::Vector3::UNIT_Z,
                Ogre::v1::HardwareBuffer::HBU_STATIC,
                Ogre::v1::HardwareBuffer::HBU_STATIC );
 
