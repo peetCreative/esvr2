@@ -209,7 +209,6 @@ interactive_bord:
       uv_size_x: 0.8
       uv_size_y: 0.7
       font_size_rel: 1.0
-      alignment: Left
       bg_color:
         r: 0.0
         g: 0.0
@@ -219,8 +218,7 @@ interactive_bord:
       uv_y: 0.2
       uv_size_x: 1.0
       uv_size_y: 0.8
-      alignment: Left
-      font_size_rel: 2.0
+      font_size_rel: 1.0
       bg_color:
         r: 0.0
         g: 0.0
