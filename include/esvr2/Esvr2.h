@@ -137,7 +137,7 @@ namespace esvr2 {
         double headHight = 1.7f;
         double centerEpsilon = 0.1;
         double initialProjectionPlaneDistance = 2.0f;
-        double infoScreenDistance = 0.5f;
+        double infoScreenDistance = 1.0f;
         //the laparoscope is 30° tilted
         int ctlDelay = 25;
         double ctlCameraTilt = 0.52359;

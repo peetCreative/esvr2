@@ -944,7 +944,7 @@ namespace esvr2
             mInfoScreenStaticSceneNode = mVRCamerasNode->
                     createChildSceneNode( Ogre::SCENE_DYNAMIC );
             mInfoScreenStaticSceneNode->setName("InfoScreenStaticNode");
-            mInfoScreenStaticSceneNode->setPosition( 0, 0, -1);
+            mInfoScreenStaticSceneNode->setPosition( 0, 0, -mEsvr2->mConfig->infoScreenDistance);
             mInfoScreenStaticSceneNode->attachObject(mVRInfoScreen);
             mInfoScreenStaticSceneNode->setVisible(true);
             mVRSceneNodeProjectionPlanesOrigin->setVisible(false, true);
@@ -1606,7 +1606,7 @@ namespace esvr2
         //for debugging
 //        mInfoScreenSceneNode->attachObject( createAxisIntern(sceneManager));
         Ogre::Real dist = mCorrectProjPlaneDistance[DIST_RAW];
-        mInfoScreenSceneNode->setPosition( 0, 0, -(dist-mEsvr2->mConfig->infoScreenDistance));
+        mInfoScreenSceneNode->setPosition( 0, 0, -mEsvr2->mConfig->infoScreenDistance);
     }
 
     void GameState::createVRFloor()
@@ -1719,14 +1719,6 @@ namespace esvr2
                 0, 0, -mCorrectProjPlaneDistance[DIST_RAW]);
         mVRSceneNodesProjectionPlaneRect->setPosition(
                 0, 0, -mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] );
-        //We need to add because distance is negative
-        Distortion dist = mEsvr2->mVideoLoader->getDistortion();
-        if (dist == DIST_RAW || dist == DIST_UNDISTORT)
-            mInfoScreenSceneNode->setPosition(
-                    0, 0, -mCorrectProjPlaneDistance[DIST_RAW] + 0.001 );
-        if (dist == DIST_UNDISTORT_RECTIFY)
-            mInfoScreenSceneNode->setPosition(
-                    0, 0, -mCorrectProjPlaneDistance[DIST_UNDISTORT_RECTIFY] + 0.001 );
         addSettingsEventLog("resetProjectionPlaneDistance");
     }
 
@@ -1772,13 +1764,6 @@ namespace esvr2
         mVRSceneNodesProjectionPlaneRect->setPosition(
                 0, 0, mAdjustProjectionPlaneRectInitialDistance +
                       (mAdjustProjectionPlaneFact * increment) );
-        Distortion dist = mEsvr2->mVideoLoader->getDistortion();
-        if (dist == DIST_RAW || dist == DIST_UNDISTORT)
-            mInfoScreenSceneNode->setPosition(
-                0, 0, newProjectionPlaneDistanceRaw + 0.001 );
-        if (dist == DIST_UNDISTORT_RECTIFY)
-            mInfoScreenSceneNode->setPosition(
-                0, 0, newProjectionPlaneDistanceRect + 0.001 );
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()
