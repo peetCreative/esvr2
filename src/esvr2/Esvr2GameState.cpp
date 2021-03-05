@@ -106,7 +106,6 @@ namespace esvr2
 
     void GameState::calcAlign(bool center)
     {
-        float projPlaneDistance = 1.0f;
         StereoCameraConfig cameraConfig =
             mEsvr2->mVideoLoader->getStereoCameraConfig();
         if ( cameraConfig.leftToRight != 0.0f )
@@ -128,7 +127,8 @@ namespace esvr2
                     c_x = cfg->K[2];
                     c_y = cfg->K[5];
                 }
-                mCorrectProjPlaneDistance[eye] = projPlaneDistance;
+                mCorrectProjPlaneDistance[eye] =
+                        mEsvr2->mConfig->initialProjectionPlaneDistance;
             }
             else
             {
@@ -141,7 +141,7 @@ namespace esvr2
                 }
 
                 mCorrectProjPlaneDistance[eye] =
-                        projPlaneDistance;
+                        mEsvr2->mConfig->initialProjectionPlaneDistance;
 //                    mGraphicsSystem->mVrData.mLeftToRight.length() * f_x /
 //                    -cameraConfig.cfg[RIGHT]->P[3];
             }
@@ -1606,7 +1606,7 @@ namespace esvr2
         //for debugging
 //        mInfoScreenSceneNode->attachObject( createAxisIntern(sceneManager));
         Ogre::Real dist = mCorrectProjPlaneDistance[DIST_RAW];
-        mInfoScreenSceneNode->setPosition( 0, 0, -(dist-0.01));
+        mInfoScreenSceneNode->setPosition( 0, 0, -(dist-mEsvr2->mConfig->infoScreenDistance));
     }
 
     void GameState::createVRFloor()
