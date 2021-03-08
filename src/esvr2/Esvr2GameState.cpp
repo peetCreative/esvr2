@@ -1614,8 +1614,8 @@ namespace esvr2
         Ogre::v1::MeshPtr planeMeshV1 = Ogre::v1::MeshManager::getSingleton().createPlane(
                 "Plane v1",
                 Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME,
-               Ogre::Plane( Ogre::Vector3::UNIT_Y, 0.0f ), 5.0f, 5.0f,
-               1, 1, true, 1, 0.5f, 0.5f, Ogre::Vector3::UNIT_Z,
+               Ogre::Plane( Ogre::Vector3::UNIT_Y, 0.0f ), 1.0f, 1.0f,
+               1, 1, true, 1, 0.1f, 0.1f, Ogre::Vector3::UNIT_Z,
                Ogre::v1::HardwareBuffer::HBU_STATIC,
                Ogre::v1::HardwareBuffer::HBU_STATIC );
 
@@ -1628,10 +1628,10 @@ namespace esvr2
 
 //        Ogre::HlmsManager *hlmsManager = mGraphicsSystem->mRoot->getHlmsManager();
         item->setDatablock( "Marble" );
-        Ogre::SceneNode *sceneNode = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
+        mFloorSceneNode = sceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )->
                 createChildSceneNode( Ogre::SCENE_DYNAMIC );
-        sceneNode->setPosition( 0, 0, 0 );
-        sceneNode->attachObject( item );
+        mFloorSceneNode->setPosition( 0, 0, 0 );
+        mFloorSceneNode->attachObject( item );
 
         //Change the addressing mode of the roughness map to wrap via code.
         //Detail maps default to wrap, but the rest to clamp.
@@ -1686,8 +1686,11 @@ namespace esvr2
 
     void GameState::adjustToHeadHight()
     {
+        Ogre::Vector3 headPose = mVRCamerasNode->getPosition();
         mVRSceneNodeProjectionPlanesOrigin->setPosition(
                 mVRCamerasNode->getPosition());
+        mFloorSceneNode->setPosition(
+                Ogre::Vector3(headPose.x, 0, headPose.z));
         addSettingsEventLog("adjustToHeadHight");
     }
 

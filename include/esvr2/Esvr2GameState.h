@@ -94,6 +94,7 @@ namespace esvr2
         Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
         Ogre::SceneNode          *mInfoScreenStaticSceneNode = nullptr;
         Ogre::SceneNode          *mInfoScreenSceneNode = nullptr;
+        Ogre::SceneNode          *mFloorSceneNode {nullptr};
 
         UIStatusType             mUIStatus = UI_NONE;
         bool                     mIsUIVisible;
