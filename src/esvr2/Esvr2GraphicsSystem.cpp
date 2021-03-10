@@ -15,6 +15,7 @@
 #include "OgreRoot.h"
 #include "OgreWindow.h"
 #include "OgreResource.h"
+#include "OgrePlatformInformation.h"
 #include "Compositor/OgreCompositorManager2.h"
 #include "Compositor/OgreCompositorNode.h"
 #include "Compositor/OgreCompositorWorkspace.h"
