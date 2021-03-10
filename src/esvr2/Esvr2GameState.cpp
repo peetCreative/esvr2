@@ -793,6 +793,7 @@ namespace esvr2
         {
             ColorDef def = *it;
             Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
+            blendBlock.mBlockType = Ogre::BLOCK_BLEND;
             if (def.color[INDEX_ALPHA] < 1.0)
             {
                 blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
@@ -813,18 +814,21 @@ namespace esvr2
 
         for( size_t eye = 0; eye < mEyeNum; eye++ )
         {
+            Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
+            blendBlock.mBlockType = Ogre::BLOCK_BLEND;
             mVideoDatablock[eye] = dynamic_cast<Ogre::HlmsUnlitDatablock*>(
                     hlmsUnlit->createDatablock(
                             mDatablockName[eye],
                             mDatablockName[eye],
                             Ogre::HlmsMacroblock(),
-                            Ogre::HlmsBlendblock(),
+                            blendBlock,
                             Ogre::HlmsParamVec() ) );
 
             mVideoDatablock[eye]->setTexture( 0, mTextureName[eye] );
         }
 
         Ogre::HlmsBlendblock blendBlock = Ogre::HlmsBlendblock();
+        blendBlock.mBlockType = Ogre::BLOCK_BLEND;
         blendBlock.setBlendType(Ogre::SBT_TRANSPARENT_ALPHA);
         Ogre::String infoScreenDatablockName = "InfoScreenDatablock";
         mInfoScreenDatablock = dynamic_cast<Ogre::HlmsUnlitDatablock*>(
