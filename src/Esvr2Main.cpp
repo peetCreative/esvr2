@@ -6,6 +6,7 @@
 #include "Esvr2PoseState.h"
 #include "Esvr2TestPose.h"
 
+#include <string>
 #include <memory>
 #include <experimental/filesystem>
 
@@ -29,34 +30,36 @@ int main(int argc, char *argv[])
 
     for (int i = 1; i < argc; i++)
     {
-        if ( std::strcmp(argv[i], "--config") == 0 && i+1 < argc )
+        std::string argument(argv[i]);
+        if (argument == "--config" && i+1 < argc )
         {
             i++;
             config_files_begin = i;
             config_files_end = i;
-            while( i < argc && std::strncmp(argv[i], "--", 2) != 0 )
+            std::string config_file(argv[i]);
+            while( i < argc && config_file.at(0) != '-')
             {
                 //we can handle as many config-files as possible
                 config_files_end++;
-                i++;
+                config_file = std::string(argv[i++]);
             }
             if( i >= argc )
                 break;
         }
-        if ( std::strcmp(argv[i], "--input-type") == 0 && i+1 < argc )
+        if ( argument == "--input-type" && i+1 < argc )
         {
             videoInputConfig->inputType = esvr2::getInputType(argv[i+1]);
         }
-        if ( std::strcmp(argv[i], "--video-path") == 0 && i+1 < argc )
+        if ( argument == "--video-path" && i+1 < argc )
         {
             videoInputConfig->inputType = esvr2::IT_VIDEO_OPENCV;
             videoInputConfig->path = std::string(argv[i+1]);
         }
-        if ( std::strcmp(argv[i], "--show-ogre-dialog") == 0 )
+        if ( argument == "--show-ogre-dialog" )
             config->showOgreDialog = true;
-        if ( std::strcmp(argv[i], "--multithreading") == 0 )
+        if ( argument == "--multithreading" )
             config->multithreading = true;
-        if ( std::strcmp(argv[i], "--test-pose") == 0 )
+        if ( argument == "--test-pose" )
             use_test_pose = true;
     }
 
