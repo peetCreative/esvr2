@@ -1,3 +1,4 @@
+#ifdef USE_LOWLATENCYVIDEOLOADER
 #include "Esvr2LowLatencyVideoLoader.h"
 
 #include "Esvr2.h"
@@ -199,3 +200,4 @@ void LowLatencyVideoLoader::update( ) {
 }
 
 }
+#endif

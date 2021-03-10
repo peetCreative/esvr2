@@ -1,3 +1,4 @@
+#ifdef USE_LOWLATENCYVIDEOLOADER
 #pragma once
 
 
@@ -31,3 +32,4 @@ namespace esvr2 {
     };
 
 }
+#endif

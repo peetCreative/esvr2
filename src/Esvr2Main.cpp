@@ -85,8 +85,10 @@ int main(int argc, char *argv[])
     std::shared_ptr<esvr2::VideoLoader> videoLoader = nullptr;
     switch(videoInputConfig->inputType) {
         case esvr2::IT_VIDEO_LOW_LATENCY:
+#ifdef USE_LOWLATENCYVIDEOLOADER
             videoLoader = std::make_shared<esvr2::LowLatencyVideoLoader>(
                     videoInputConfig, false);
+#endif
             break;
         case esvr2::IT_VIDEO_OPENCV:
             videoLoader = std::make_shared<esvr2::OpenCvVideoLoader>(
