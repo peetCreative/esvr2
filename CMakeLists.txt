@@ -173,6 +173,8 @@ if(ESVR2_DOUBLE_PRECISION)
     add_definitions(-DUSE_DOUBLE_PRECISION)
 endif()
 
+SET(ESVR2_CONFIG_DIR ${CMAKE_CURRENT_SOURCE_DIR}/config)
+
 SET(ESVR2_MEDIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/media)
 SET(ESVR2_MEDIA_DIR_DEST ${ESVR2_MEDIA_DIR})
 configure_file(
@@ -199,22 +201,24 @@ include_directories(
 link_libraries(stdc++fs)
 
 SET(ESVR2_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/include/esvr2)
+SET(ESVR2_LIB ${PROJECT_NAME})
+SET(ESVR2_APPLICATION ${PROJECT_NAME}Application)
 
 include_directories(
         "${ESVR2_INCLUDE_DIR}"
         "pivot_control_messages/include")
 
 add_library(
-    ${PROJECT_NAME}_lib SHARED
+    ${ESVR2_LIB} SHARED
     ${SOURCES_LIB} ${HEADERS_LIB} ${RESOURCES})
 
 add_executable(
-    ${PROJECT_NAME}
+    ${ESVR2_APPLICATION}
     ${CMAKE_CURRENT_SOURCE_DIR}/src/Esvr2Main.cpp
 )
 
 target_link_libraries(
-    ${PROJECT_NAME}_lib
+    ${ESVR2_LIB}
     ${OGRE_LIBRARIES}
     ${SDL2_LIBRARY}
     ${OpenVR_LIBRARIES}
@@ -227,8 +231,8 @@ target_link_libraries(
 )
 
 target_link_libraries(
-    ${PROJECT_NAME}
-    ${PROJECT_NAME}_lib
+    ${ESVR2_APPLICATION}
+    ${ESVR2_LIB}
 )
 
 SET(ESVR2_MEDIA_DIR_DEST ${CMAKE_INSTALL_PREFIX}/media)
@@ -237,12 +241,13 @@ configure_file(
         ${CMAKE_BINARY_DIR}/Resource/Resources.cfg
 )
 
-install( TARGETS ${PROJECT_NAME} ${PROJECT_NAME}_lib
+install( TARGETS ${ESVR2_LIB} ${ESVR2_APPLICATION}
         DESTINATION bin
-        LIBRARY DESTINATION lib)
+        LIBRARY DESTINATION lib
+        RUNTIME DESTINATION bin)
 install( DIRECTORY ${ESVR2_INCLUDE_DIR}
         DESTINATION include)
 install( DIRECTORY ${ESVR2_MEDIA_DIR}
         DESTINATION ${CMAKE_INSTALL_PREFIX})
-install( FILES  ${CMAKE_BINARY_DIR}/Resource/Resources.cfg
+install( FILES  ${CMAKE_BINARY_DIR}/Resource/Resources.cfg ${ESVR2_CONFIG_DIR}/general.yml
         DESTINATION bin)
