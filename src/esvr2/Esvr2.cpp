@@ -184,8 +184,9 @@ namespace esvr2 {
 
     bool Esvr2::getQuit()
     {
-        return mGraphicsSystem->getQuit() ||
-            mVideoLoader->getQuit();
+        return
+            !mGraphicsSystem || mGraphicsSystem->getQuit() ||
+            !mVideoLoader || mVideoLoader->getQuit();
     }
 
     int Esvr2::run()
@@ -215,7 +216,7 @@ namespace esvr2 {
 
             Ogre::uint64 startTimeMs = timer.getMicroseconds();
 
-            while( !mGraphicsSystem->getQuit() )
+            while( !getQuit() )
             {
                 startTimeMs = timer.getMicroseconds();
                 mVideoLoader->update();
@@ -267,7 +268,7 @@ namespace esvr2 {
     //---------------------------------------------------------------------
     unsigned long Esvr2::logicThread1()
     {
-        while( !mVideoLoader->getQuit() && !mGraphicsSystem->getQuit() )
+        while( !getQuit() )
         {
             mVideoLoader->update( );
 
