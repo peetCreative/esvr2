@@ -1,4 +1,3 @@
-#define USE_POINTCLOUD
 #ifdef USE_POINTCLOUD
 
 #include "Esvr2PointCloud.h"

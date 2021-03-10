@@ -4,7 +4,6 @@
  */
 #ifndef _Esvr2_POINTCLOUD_H_
 #define _Esvr2_POINTCLOUD_H_
-#define USE_POINTCLOUD
 #ifdef USE_POINTCLOUD
 
 #include "OgreHardwareVertexBuffer.h"

@@ -41,13 +41,11 @@ namespace esvr2
             mAxis( nullptr ),
             mAxisCameras( nullptr ),
             mTooltips( nullptr ),
-            mPointCloud( nullptr ),
             mVRSceneNodeLight( nullptr ),
             mVRSceneNodeMesh( nullptr ),
             mVRSceneNodeProjectionPlanesOrigin(nullptr),
             mVRSceneNodesProjectionPlaneRaw(nullptr),
             mVRSceneNodesProjectionPlaneRect(nullptr),
-            mLaparoscopeSceneNodePointCloud( nullptr ),
             mLaparoscopeSceneNodeTooltips( nullptr ),
             mIsUIVisible(false),
             mHoverUIElement(nullptr),
@@ -407,6 +405,7 @@ namespace esvr2
         mVRSceneNodeMesh->attachObject( mCube );
     }
 
+#ifdef USE_POINTCLOUD
     void GameState::createPointCloud( void )
     {
         size_t numpoints = 100;
@@ -440,7 +439,7 @@ namespace esvr2
         mLaparoscopeSceneNodePointCloud->attachObject( pcEnt );
         pcEnt->setVisibilityFlags( 0x1 << 2 );
     }
-
+#endif
     void GameState::createVROverlays(void)
     {
         addViewDirectionIndicator();

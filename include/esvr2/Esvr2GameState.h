@@ -84,13 +84,11 @@ namespace esvr2
         Ogre::ManualObject       *mAxisVRCameras;
 
         Ogre::v1::BillboardSet   *mTooltips;
-        PointCloud               *mPointCloud;
         Ogre::SceneNode          *mVRSceneNodeLight;
         Ogre::SceneNode          *mVRSceneNodeMesh;
         Ogre::SceneNode          *mVRSceneNodeProjectionPlanesOrigin;
         Ogre::SceneNode          *mVRSceneNodesProjectionPlaneRaw;
         Ogre::SceneNode          *mVRSceneNodesProjectionPlaneRect;
-        Ogre::SceneNode          *mLaparoscopeSceneNodePointCloud;
         Ogre::SceneNode          *mLaparoscopeSceneNodeTooltips;
         Ogre::SceneNode          *mInfoScreenStaticSceneNode = nullptr;
         Ogre::SceneNode          *mInfoScreenSceneNode = nullptr;
@@ -154,7 +152,6 @@ namespace esvr2
         void createLaparoscopeAxisCamera(void );
         void createVRAxisCamera(void);
         void createTooltips();
-        void createPointCloud();
         void createVROverlays(void);
         void addViewDirectionIndicator();
         void createMesh();
@@ -214,6 +211,11 @@ namespace esvr2
         void setupStart();
         void setupFinish();
 
+#ifdef USE_POINTCLOUD
+        PointCloud               *mPointCloud {nullptr};
+        Ogre::SceneNode          *mLaparoscopeSceneNodePointCloud {nullptr};
+        void createPointCloud();
+#endif
     public:
 
         void update( Ogre::uint64 msSinceLast );
