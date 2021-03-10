@@ -20,6 +20,11 @@
 #endif
 
 namespace esvr2 {
+#ifdef USE_DOUBLE_PRECISION
+    typedef double Real;
+#else
+    typedef float Real;
+#endif
     typedef enum {
         CT_NONE,
         CT_OPT0,
@@ -58,7 +63,7 @@ namespace esvr2 {
         WS_TWO_CAMERAS_STEREO,
         WS_INSTANCED_STEREO
     } WorkspaceType;
-    typedef std::vector<float> RealVector;
+    typedef std::vector<Real> RealVector;
     typedef struct {
         RealVector initialPose = RealVector(3);
         RealVector eyeToHeadLeft = RealVector(3);
@@ -104,7 +109,7 @@ namespace esvr2 {
         CameraConfig  leftCameraConfig = CameraConfig();
         CameraConfig  rightCameraConfig = CameraConfig();
         CameraConfig* cfg[2] = {&leftCameraConfig, &rightCameraConfig};
-        float leftToRight = 0;
+        Real leftToRight = 0;
     } StereoCameraConfig;
     //similar implementation to cv::Mat*
     typedef struct {
@@ -134,23 +139,23 @@ namespace esvr2 {
         bool startWithSetup = true;
         bool debugScreen = false;
         int screen = 0;
-        double headHight = 1.7f;
-        double centerEpsilon = 0.1;
-        double initialProjectionPlaneDistance = 2.0f;
-        double infoScreenDistance = 1.0f;
+        Real headHight = 1.7f;
+        Real centerEpsilon = 0.1;
+        Real initialProjectionPlaneDistance = 2.0f;
+        Real infoScreenDistance = 1.0f;
         //the laparoscope is 30° tilted
         int ctlDelay = 25;
-        double ctlCameraTilt = 0.52359;
-        double ctlFocusDistance = 0.2;
-        double ctlStepYaw = 0.01;
-        double ctlStepPitch = 0.01;
-        double ctlStepRoll = 0.01;
-        double ctlStepTransZ = 0.001;
-        double ctlOpt0ThresholdTransZ = 0.01;
-        double ctlOpt0ThresholdYawDeg = 5;
-        double ctlOpt0ThresholdPitchDeg = 5;
-        double ctlOpt0ThresholdRollDeg = 5;
-        double ctlOpt2TransZFact = 2.0;
+        Real ctlCameraTilt = 0.52359;
+        Real ctlFocusDistance = 0.2;
+        Real ctlStepYaw = 0.01;
+        Real ctlStepPitch = 0.01;
+        Real ctlStepRoll = 0.01;
+        Real ctlStepTransZ = 0.001;
+        Real ctlOpt0ThresholdTransZ = 0.01;
+        Real ctlOpt0ThresholdYawDeg = 5;
+        Real ctlOpt0ThresholdPitchDeg = 5;
+        Real ctlOpt0ThresholdRollDeg = 5;
+        Real ctlOpt2TransZFact = 2.0;
         std::string resourcePath = "Resources.cfg";
         std::string logFolder = ".";
         std::string serialPort = "/dev/ttyUSB0";

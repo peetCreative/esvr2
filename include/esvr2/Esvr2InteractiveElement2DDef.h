@@ -4,6 +4,7 @@
 
 #ifndef ESVR2_ESVR2INTERACTIVEELEMENT2DDEF_H
 #define ESVR2_ESVR2INTERACTIVEELEMENT2DDEF_H
+#include "Esvr2.h"
 
 #include <memory>
 #include <vector>
@@ -22,19 +23,19 @@ namespace esvr2
     struct InteractiveElement2DDef {
         std::string id = "";
         std::string text = "";
-        float uvX = 0;
-        float uvY = 0;
-        float uvSizeX = 0;
-        float uvSizeY = 0;
-        float fontSize = 0.05f;
+        Real uvX = 0;
+        Real uvY = 0;
+        Real uvSizeX = 0;
+        Real uvSizeY = 0;
+        Real fontSize = 0.05f;
         bool fitFontSize = false;
         std::string font = "FreeSans";
         std::string alignment = "Center";
-        std::vector<float> fontColor = {1,1,1,1};
+        std::vector<Real> fontColor = {1,1,1,1};
         bool alwaysVisible = false;
-        std::vector<float> bgColor = {0,0,0,0.7};
-        std::vector<float> bgHoverColor = {1,0,0,1};
-        std::vector<float> bgActiveColor = {1,0,1,1};
+        std::vector<Real> bgColor = {0,0,0,0.7};
+        std::vector<Real> bgHoverColor = {1,0,0,1};
+        std::vector<Real> bgActiveColor = {1,0,1,1};
         bool visibleOnActive = true;
         bool hideOtherOnActive = false;
     };
@@ -43,15 +44,15 @@ namespace esvr2
 
     struct ColorDef {
         std::string name = "";
-        std::vector<float> color = {0,0,0,0};
+        std::vector<Real> color = {0,0,0,0};
     };
     typedef std::vector<ColorDef> ColorDefList;
 
     struct InteractiveElementConfig {
-        float width = 1.28;
-        float height = 0.72;
+        Real width = 1.28;
+        Real height = 0.72;
         std::string bgImg = "";
-        std::vector<float> bgColor = {0, 0, 0, 0.01};
+        std::vector<Real> bgColor = {0, 0, 0, 0.01};
         ColorDefList colorDefList = {
                 {"Transparent", {0,0,0,0}},
                 {"ColorRed", {1,0,0,1}},

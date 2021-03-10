@@ -15,9 +15,6 @@
 #include <memory>
 
 namespace esvr2 {
-    extern const double cFrametime;
-    const double cFrametime = 1.0 / 25.0;
-
     unsigned long renderThread(Ogre::ThreadHandle *threadHandle)
     {
         Esvr2 *esvr2 = reinterpret_cast<Esvr2*>( threadHandle->getUserParam() );
@@ -244,7 +241,7 @@ namespace esvr2 {
     {
         Ogre::Timer timer;
 
-        Ogre::uint64 startTimeMs = timer.getMicroseconds();
+        Ogre::uint64 startTimeMs;
 
         while( !getQuit() )
         {
@@ -270,10 +267,6 @@ namespace esvr2 {
     //---------------------------------------------------------------------
     unsigned long Esvr2::logicThread1()
     {
-        Ogre::Timer timer;
-        //TODO: compansate YieldTimer
-        //    Demo::YieldTimer yieldTimer( &timer );
-
         while( !mVideoLoader->getQuit() && !mGraphicsSystem->getQuit() )
         {
             mVideoLoader->update( );
@@ -283,10 +276,6 @@ namespace esvr2 {
                 //Don't burn CPU cycles unnecessary when we're minimized.
                 Ogre::Threads::Sleep( 500 );
             }
-
-            //YieldTimer will wait until the current time is greater than startTime + cFrametime
-            //TODO: compansate yield Timer
-    //        startTime = yieldTimer.yield( cFrametime, startTime );
         }
 
         mBarrier->sync();

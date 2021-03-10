@@ -22,9 +22,9 @@ namespace esvr2 {
     {
       int rows;
       int cols;
-      float* data;
+      Real* data;
 
-      SimpleMatrix(int rows, int cols, float* data)
+      SimpleMatrix(int rows, int cols, Real* data)
         : rows(rows), cols(cols), data(data)
       {}
     };
@@ -133,7 +133,7 @@ namespace esvr2 {
         {
             if (i >= length)
                 return false;
-            vec->at(i++) = it->as<float>();
+            vec->at(i++) = it->as<Real>();
         }
         if (i != length)
             return false;
@@ -141,20 +141,20 @@ namespace esvr2 {
     }
 
     bool readColorYmlIntern(
-            YAML::Node node, std::vector<float> &colorVal,
+            YAML::Node node, std::vector<Real> &colorVal,
             ColorDefList &colorDefList)
     {
         ColorDef colorDef;
         if (node.Type() == YAML::NodeType::Map)
         {
             if (YAML::Node param = node["r"])
-                colorDef.color[INDEX_RED] = param.as<float>();
+                colorDef.color[INDEX_RED] = param.as<Real>();
             if (YAML::Node param = node["g"])
-                colorDef.color[INDEX_GREEN] = param.as<float>();
+                colorDef.color[INDEX_GREEN] = param.as<Real>();
             if (YAML::Node param = node["b"])
-                colorDef.color[INDEX_BLUE] = param.as<float>();
+                colorDef.color[INDEX_BLUE] = param.as<Real>();
             if (YAML::Node param = node["a"])
-                colorDef.color[INDEX_ALPHA] = param.as<float>();
+                colorDef.color[INDEX_ALPHA] = param.as<Real>();
         }
         else if(node.Type() == YAML::NodeType::Sequence)
         {
@@ -165,7 +165,7 @@ namespace esvr2 {
                 {
                     if (!(*it))
                         return false;
-                    colorDef.color[i++] = it->as<float>();
+                    colorDef.color[i++] = it->as<Real>();
                 }
             }
         }
@@ -228,9 +228,9 @@ namespace esvr2 {
             YAML::Node node, InteractiveElementConfig& config)
     {
         if (YAML::Node param = node["width"])
-            config.width = param.as<float>();
+            config.width = param.as<Real>();
         if (YAML::Node param = node["height"])
-            config.height = param.as<float>();
+            config.height = param.as<Real>();
         if (YAML::Node param = node["bg_img"])
             config.bgImg = param.as<std::string>();
         if (YAML::Node param = node["bg_color"])
@@ -252,12 +252,12 @@ namespace esvr2 {
                     def.id = param.as<std::string>();
                 if (YAML::Node param = elem["uv_x"])
                 {
-                    float uvx = param.as<float>();
+                    Real uvx = param.as<Real>();
                     def.uvX = uvx >= 0 ? uvx : 1.0 + uvx;
                 }
                 if (YAML::Node param = elem["uv_y"])
                 {
-                    float uvy = param.as<float>();
+                    Real uvy = param.as<Real>();
                     def.uvY = uvy >= 0 ? uvy : 1.0 + uvy;
 
                 }
@@ -267,7 +267,7 @@ namespace esvr2 {
                     if ( str == "rest")
                         def.uvSizeX = 1.0 - def.uvX;
                     else
-                        def.uvSizeX = param.as<float>();
+                        def.uvSizeX = param.as<Real>();
                 }
                 if (YAML::Node param = elem["uv_size_y"])
                 {
@@ -275,7 +275,7 @@ namespace esvr2 {
                     if ( str == "rest")
                         def.uvSizeY = 1.0 - def.uvY;
                     else
-                        def.uvSizeY = param.as<float>();
+                        def.uvSizeY = param.as<Real>();
                 }
                 if (YAML::Node param = elem["text"])
                     def.text = param.as<std::string>();
@@ -284,9 +284,9 @@ namespace esvr2 {
                 if (YAML::Node param = elem["alignment"])
                     def.alignment = param.as<std::string>();
                 if (YAML::Node param = elem["font_size"])
-                    def.fontSize = param.as<float>();
+                    def.fontSize = param.as<Real>();
                 if (YAML::Node param = elem["font_size_rel"])
-                    def.fontSize = 0.05f * param.as<float>();
+                    def.fontSize = 0.05f * param.as<Real>();
                 if (YAML::Node param = elem["fit_font_size"])
                     def.fitFontSize = param.as<bool>();
                 if (YAML::Node param = elem["font_color"])
@@ -401,21 +401,21 @@ namespace esvr2 {
         if (YAML::Node param = doc["controller_opt01_delay"])
             config->ctlDelay = param.as<int>();
         if (YAML::Node param = doc["controller_step_trans_z"])
-            config->ctlStepTransZ = param.as<float>();
+            config->ctlStepTransZ = param.as<Real>();
         if (YAML::Node param = doc["controller_step_yaw"])
-            config->ctlStepYaw = param.as<float>();
+            config->ctlStepYaw = param.as<Real>();
         if (YAML::Node param = doc["controller_step_pitch"])
-            config->ctlStepPitch = param.as<float>();
+            config->ctlStepPitch = param.as<Real>();
         if (YAML::Node param = doc["controller_step_roll"])
-            config->ctlStepRoll = param.as<float>();
+            config->ctlStepRoll = param.as<Real>();
         if (YAML::Node param = doc["controller_opt0_threshold_trans_z"])
-            config->ctlOpt0ThresholdTransZ = param.as<float>();
+            config->ctlOpt0ThresholdTransZ = param.as<Real>();
         if (YAML::Node param = doc["controller_opt0_threshold_yaw_deg"])
-            config->ctlOpt0ThresholdYawDeg = param.as<float>();
+            config->ctlOpt0ThresholdYawDeg = param.as<Real>();
         if (YAML::Node param = doc["controller_opt0_threshold_pitch_deg"])
-            config->ctlOpt0ThresholdPitchDeg = param.as<float>();
+            config->ctlOpt0ThresholdPitchDeg = param.as<Real>();
         if (YAML::Node param = doc["controller_opt0_threshold_roll_deg"])
-            config->ctlOpt0ThresholdRollDeg = param.as<float>();
+            config->ctlOpt0ThresholdRollDeg = param.as<Real>();
         if (YAML::Node param = doc["workspace_type"])
             config->workspaceType =
                 getWorkspaceType(param.as<std::string>());

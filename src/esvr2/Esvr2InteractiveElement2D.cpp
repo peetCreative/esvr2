@@ -1,6 +1,7 @@
 //
 // Created by peetcreative on 09.01.21.
 //
+#include "Esvr2.h"
 #include "Esvr2InteractiveElement.h"
 #include "Esvr2InteractiveElement2D.h"
 #include "Esvr2InteractiveElement2DDef.h"
@@ -18,7 +19,7 @@
 
 namespace esvr2
 {
-    Ogre::ColourValue vectorToColourValue(const std::vector<float> &valVec)
+    Ogre::ColourValue vectorToColourValue(const std::vector<Real> &valVec)
     {
         if(valVec.size() == 4)
         {
@@ -130,15 +131,15 @@ namespace esvr2
         else
             a = Ogre::v1::TextAreaOverlayElement::Center;
         int numLines = 1 + std::count(text.begin(), text.end(), '\n');
-        float fontSize = mDefinitionPtr->fontSize;
+        Ogre::Real fontSize = mDefinitionPtr->fontSize;
         if (mDefinitionPtr->fitFontSize)
         {
             fontSize = mDefinitionPtr->uvSizeY / numLines;
         }
-        float left = 0.01f;
+        Ogre::Real left = 0.01f;
         if (a == Ogre::v1::TextAreaOverlayElement::Center)
             left = mDefinitionPtr->uvSizeX * 0.5f;
-        float top = (mDefinitionPtr->uvSizeY - (fontSize * numLines))* 0.5f;
+        Ogre::Real top = (mDefinitionPtr->uvSizeY - (fontSize * numLines))* 0.5f;
         mTextArea->setCharHeight(fontSize);
         mTextArea->setAlignment(a);
         mTextArea->setPosition( left, top );

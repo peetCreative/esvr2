@@ -287,7 +287,7 @@ namespace esvr2
                     cameraCullFrustumExtents.z,
                     Ogre::FET_TAN_HALF_ANGLES );
 
-            const float ipd = mGraphicsSystem->mVrData.mLeftToRight.x;
+            const Ogre::Real ipd = mGraphicsSystem->mVrData.mLeftToRight.x;
             Ogre::Vector3 cullCameraOffset = Ogre::Vector3::ZERO;
             cullCameraOffset.z = (ipd / 2.0f) /
                                  Ogre::Math::Abs( cameraCullFrustumExtents.x );

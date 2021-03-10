@@ -64,6 +64,7 @@ option(ESVR2_BLACKMAGIC_VIDEOLOADER "Compile the BlackMagic VideoLoader" True)
 SET(ESVR2_BLACKMAGIC_HOME "BLACKMAGIC_NOT_FOUND" CACHE PATH "path to install folder of blackmagic")
 option(ESVR2_ANALOG_FOOTPEDAL "Compile the Low-Latency-Videoloader" False)
 option(ESVR2_POINTCLOUD "Compile Pointcloud overlays. (Not Working)" False)
+option(ESVR2_DOUBLE_PRECISION "Compile with double precision. Depend Ogre OGRE_CONFIG_DOUBLE" False)
 
 #SUBDIRLIST( OGRE_INCLUDE_DIRS ${OGRE_HOME}/include)
 SET(OGRE_HOME ${ESVR2_OGRE_HOME})
@@ -166,6 +167,10 @@ endif()
 
 if(ESVR2_POINTCLOUD)
     add_definitions(-DUSE_POINTCLOUD)
+endif()
+
+if(ESVR2_DOUBLE_PRECISION)
+    add_definitions(-DUSE_DOUBLE_PRECISION)
 endif()
 
 SET(ESVR2_MEDIA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/media)

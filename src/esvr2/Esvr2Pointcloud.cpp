@@ -1,5 +1,6 @@
 #ifdef USE_POINTCLOUD
 
+#include "Esvr2.h"
 #include "Esvr2PointCloud.h"
 
 #include "OgreSubMesh.h"
@@ -14,7 +15,7 @@ namespace esvr2
 {
     PointCloud::PointCloud(
         const std::string& name, const std::string& resourcegroup,
-        const int numpoints, float *parray, float *carray)
+        const int numpoints, Ogre::Real *parray, Ogre::Real *carray)
     {
         /// Create the mesh via the MeshManager
         mMeshPtr = Ogre::v1::MeshManager::getSingleton().createManual(name, resourcegroup);
@@ -31,7 +32,7 @@ namespace esvr2
         Ogre::v1::VertexDeclaration* decl =
             vtData->vertexDeclaration;
 
-        decl->addElement(0, 0, Ogre::VET_FLOAT3, Ogre::VES_POSITION);
+        decl->addElement(0, 0, Ogre::VET_Ogre::Real3, Ogre::VES_POSITION);
 
         vbuf = Ogre::v1::HardwareBufferManager::getSingleton().createVertexBuffer(
             decl->getVertexSize(0),
@@ -79,9 +80,9 @@ namespace esvr2
         sub->operationType = Ogre::OperationType::OT_POINT_LIST;
         mMeshPtr->load();
     }
-    void PointCloud::updateVertexPositions(int size, float *points)
+    void PointCloud::updateVertexPositions(int size, Ogre::Real *points)
     {
-        float *pPArray = static_cast<float*>(vbuf->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD));
+        Ogre::Real *pPArray = static_cast<Ogre::Real*>(vbuf->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD));
         for(int i=0; i<size*3; i+=3)
         {
             pPArray[i] = points[i];
@@ -91,9 +92,9 @@ namespace esvr2
         vbuf->unlock();
     }
 
-    void PointCloud::updateVertexColours(int size, float *colours)
+    void PointCloud::updateVertexColours(int size, Ogre::Real *colours)
     {
-        float *pCArray = static_cast<float*>(cbuf->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD));
+        Ogre::Real *pCArray = static_cast<Ogre::Real*>(cbuf->lock(Ogre::v1::HardwareBuffer::HBL_DISCARD));
         for(int i=0; i<size*3; i+=3)
         {
             pCArray[i] = colours[i];

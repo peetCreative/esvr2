@@ -6,6 +6,7 @@
 #define _Esvr2_POINTCLOUD_H_
 #ifdef USE_POINTCLOUD
 
+#include "Esvr2.h"
 #include "OgreHardwareVertexBuffer.h"
 
 namespace esvr2
@@ -16,14 +17,14 @@ namespace esvr2
         PointCloud(
             const std::string& name,
             const std::string& resourcegroup,
-            const int numpoints, float *parray, float *carray);
+            const int numpoints, Ogre::Real *parray, Ogre::Real *carray);
         ~PointCloud();
 
         /// Update a created pointcloud with size points.
-        void updateVertexPositions(int size, float *points);
+        void updateVertexPositions(int size, Ogre::Real *points);
 
         /// Update vertex colours
-        void updateVertexColours(int size, float *colours);
+        void updateVertexColours(int size, Ogre::Real *colours);
 
         Ogre::v1::MeshPtr getMeshPtr( void );
 
