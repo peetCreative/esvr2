@@ -6,6 +6,7 @@
 namespace esvr2
 {
     VideoLoader::VideoLoader( Distortion distortion, bool stereo ):
+        Component(),
         mDistortion(distortion),
         mStereo(stereo),
         mCur(0), mLoad(0),

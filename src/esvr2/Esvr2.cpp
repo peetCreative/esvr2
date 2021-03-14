@@ -4,8 +4,7 @@
 #include "Esvr2VideoLoader.h"
 #include "Esvr2LaparoscopeController.h"
 #include "Esvr2LowLatencyVideoLoader.h"
-#include "Esvr2TestPose.h"
-#include "Esvr2Barrier.h"
+#include "Esvr2PoseState.h"
 
 #include "OgreTimer.h"
 
@@ -13,22 +12,27 @@
 
 #include <mutex>
 #include <memory>
+#include <boost/bind.hpp>
 
 namespace esvr2 {
-    unsigned long renderThread(Ogre::ThreadHandle *threadHandle)
-    {
-        Esvr2 *esvr2 = reinterpret_cast<Esvr2*>( threadHandle->getUserParam() );
-        return esvr2->renderThread1();
-    };
 
-    unsigned long logicThread(Ogre::ThreadHandle *threadHandle)
-    {
-        Esvr2 *esvr2 = reinterpret_cast<Esvr2*>( threadHandle->getUserParam() );
-        return esvr2->logicThread1();
+    struct ThreadParams {
+        Esvr2* mEsvr2 {nullptr};
+        boost::function<void(Ogre::uint64)> mUpdateFct;
+        ThreadParams(Esvr2 *esvr2, boost::function<void(Ogre::uint64)> updateFct):
+            mEsvr2(esvr2), mUpdateFct(updateFct) {};
     };
+    typedef std::unique_ptr<ThreadParams> ThreadParamsPtr;
+    typedef std::vector<ThreadParamsPtr> ThreadParamsVec;
 
-    THREAD_DECLARE( renderThread );
-    THREAD_DECLARE( logicThread );
+    unsigned long updateThread(Ogre::ThreadHandle *threadHandle)
+    {
+        ThreadParams *tp =
+                reinterpret_cast<ThreadParams*>( threadHandle->getUserParam() );
+        return tp->mEsvr2->updateThread(tp->mUpdateFct);
+    }
+
+    THREAD_DECLARE( updateThread )
 
     ControllerType getControllerType(std::string input_str)
     {
@@ -100,81 +104,11 @@ namespace esvr2 {
         return distortion;
     }
 
-    Esvr2::Esvr2(
-            Esvr2Config *config,
-            VideoLoader *videoLoader,
-            LaparoscopeController *laparoscopeController,
-            PoseState *poseState)
+    Esvr2::Esvr2(std::shared_ptr<Esvr2Config> config):
+            mConfig(config)
     {
-        std::shared_ptr<Esvr2Config> sConfig(config);
-        std::shared_ptr<VideoLoader> sVideoLoader(videoLoader);
-        std::shared_ptr<LaparoscopeController> sLaparoscopeController(laparoscopeController);
-        std::shared_ptr<PoseState> sPoseState(poseState);
-        Esvr2(sConfig, sVideoLoader,
-              sLaparoscopeController,
-              sPoseState );
-    }
-
-
-    Esvr2::Esvr2(
-        std::shared_ptr<Esvr2Config> config,
-        std::shared_ptr<VideoLoader> videoLoader,
-        std::shared_ptr<LaparoscopeController> laparoscopeController,
-        std::shared_ptr<PoseState> poseState):
-            mConfig(config),
-            mVideoLoader(videoLoader),
-            mLaparoscopeController(laparoscopeController),
-            mPoseState(poseState),
-            mBarrier(new Barrier())
-    {
-        if ( !mVideoLoader || ! mVideoLoader->initialize() )
-        {
-            LOG << "no videoloader or could not be initialized, Quitting" << LOGEND;
-            return;
-        }
-
-        if ( !poseState )
-        {
-            mPoseState = std::make_shared<TestPose>();
-            LOG << "no PoseState, using TestPose" << LOGEND;
-        }
-
-        // cycle until videoLoader is finished or quits
-        while( !mVideoLoader->isReady() )
-        {
-            //TODO: look we can quit here
-            Ogre::Threads::Sleep( 50 );
-            mVideoLoader->update();
-            if (mVideoLoader->getQuit())
-            {
-                LOG << "quit videoLoader" << LOGEND;
-                return;
-            }
-        }
-        if (mLaparoscopeController)
-        {
-            while( !mLaparoscopeController->isReady() )
-            {
-                Ogre::Threads::Sleep( 50 );
-                mLaparoscopeController->update();
-                if (mLaparoscopeController->getQuit())
-                {
-                    LOG << "could not get laparoscopeController ready" << LOGEND;
-                    return;
-                }
-            }
-        }
-
-
-        mGraphicsSystem = std::make_shared<GraphicsSystem>( this );
-
-        mGraphicsSystem->initialize();
-
-        //TODO: check configuration
-        mIsConfigured = true;
-
-
-
+        mGraphicsSystem = std::make_shared<GraphicsSystem>(this);
+        mComponents.push_back(mGraphicsSystem);
     }
 
     Esvr2::~Esvr2()
@@ -185,42 +119,110 @@ namespace esvr2 {
     bool Esvr2::getQuit()
     {
         return
-            !mGraphicsSystem || mGraphicsSystem->getQuit() ||
-            !mVideoLoader || mVideoLoader->getQuit();
+            mGraphicsSystem->getQuit() ||
+            mComponents.end() != find_if(
+                    mComponents.begin(), mComponents.end(),
+                    [](ComponentPtr c){return c->getQuit();});
+    }
+
+    bool Esvr2::setVideoLoader(VideoLoaderPtr videoLoader)
+    {
+        if (mIsConfigured)
+        {
+            LOG_ERROR << "Called setLaparoscopeController() after run()" << LOGEND;
+            return false;
+        }
+        mComponents.push_back(videoLoader);
+        mVideoLoader = videoLoader;
+        return true;
+    }
+
+    bool Esvr2::setLaparoscopeController(
+            LaparoscopeControllerPtr laparoscopeController)
+    {
+        if (mIsConfigured)
+        {
+            LOG_ERROR << "Called setLaparoscopeController() after run()" << LOGEND;
+            return false;
+        }
+        mComponents.push_back(laparoscopeController);
+        mLaparoscopeController = laparoscopeController;
+        return true;
+    }
+
+    bool Esvr2::setPoseState(PoseStatePtr poseState)
+    {
+        if (mIsConfigured)
+        {
+            LOG_ERROR << "Called setPoseState() after run()" << LOGEND;
+            return false;
+        }
+        mComponents.push_back(poseState);
+        mPoseState = poseState;
+        return true;
+    }
+
+    bool Esvr2::registerUpdateCallback(
+            const boost::function<void(uint64)> updateFunction)
+    {
+        mUpdateCallbacks.push_back(updateFunction);
+        return true;
     }
 
     int Esvr2::run()
     {
-        if ( ! mIsConfigured )
-            return 1;
+        mIsConfigured = true;
+        for(auto componentIt: mComponents)
+        {
+            if (componentIt)
+            {
+                if(!componentIt->initialize() )
+                {
+                    LOG_ERROR << "Could not initialize a Component" << LOGEND;
+                    return 1;
+                }
+            }
+        }
+        // cycle until videoLoader is finished or quits
+        bool allComponentsReady {false};
+        while (!allComponentsReady){
+            Ogre::Timer timer;
+            for(auto fctIt: mUpdateCallbacks)
+            {
+                (fctIt)(timer.getMicroseconds());
+            }
+            allComponentsReady = mComponents.end() == std::find_if(
+                    mComponents.begin(), mComponents.end(),
+                    [](ComponentPtr a){return !a->isReady();});
+        }
+        registerUpdateCallback(
+                boost::bind(&GraphicsSystem::update, mGraphicsSystem, _1));
         if ( mConfig->multithreading )
         {
             LOG << "multiThreading" << LOGEND;
-            Ogre::ThreadHandlePtr mThreadHandles[2];
-            mThreadHandles[0] = Ogre::Threads::CreateThread(
-                    THREAD_GET( renderThread ), 0, this );
-            mThreadHandles[1] = Ogre::Threads::CreateThread(
-                    THREAD_GET( logicThread ), 1, this );
-
-            LOG << "Render Tread " << mThreadHandles[0]->getThreadIdx() << LOGEND;
-            LOG << "Video Source Tread " << mThreadHandles[1]->getThreadIdx() << LOGEND;
-
-            Ogre::Threads::WaitForThreads( 2, mThreadHandles );
+            ThreadParamsVec threadParams;
+            Ogre::ThreadHandleVec mThreadHandles;
+            for (auto updateCallback: mUpdateCallbacks)
+            {
+                threadParams.push_back(std::make_unique<ThreadParams>(
+                        this, updateCallback));
+                mThreadHandles.push_back(Ogre::Threads::CreateThread(
+                        THREAD_GET( updateThread ), 0, this ));
+            }
+            Ogre::Threads::WaitForThreads( mThreadHandles );
         }
             //SINGLETHREADED
         else
         {
             LOG << "singleThreading" << LOGEND;
-
-            Ogre::Timer timer;
-
-            Ogre::uint64 startTimeMs = timer.getMicroseconds();
-
             while( !getQuit() )
             {
-                startTimeMs = timer.getMicroseconds();
-                mVideoLoader->update();
-                mGraphicsSystem->update( startTimeMs );
+                Ogre::Timer timer;
+                for(auto fctIt: mUpdateCallbacks)
+                {
+                    (fctIt)(timer.getMicroseconds());
+                }
+                mGraphicsSystem->update( timer.getMicroseconds() );
 
                 if( !mGraphicsSystem->isRenderWindowVisible() )
                 {
@@ -230,60 +232,29 @@ namespace esvr2 {
             }
             LOG << "END GRAPHICS" << LOGEND;
 
-            //This is not doing any thing
-            mGraphicsSystem->deinitialize();
-            mVideoLoader->deinitialize();
         }
+        //This is not doing any thing
+        mGraphicsSystem->deinitialize();
+        for (auto component : mComponents)
+            component->deinitialize();
         return 0;
     }
 
     //---------------------------------------------------------------------
-    unsigned long Esvr2::renderThread1()
+    unsigned long Esvr2::updateThread(
+            boost::function<void(Ogre::uint64)> updateFct)
     {
         Ogre::Timer timer;
 
-        Ogre::uint64 startTimeMs;
-
         while( !getQuit() )
         {
-            startTimeMs = timer.getMicroseconds();
-            mGraphicsSystem->update( startTimeMs );
-
+            updateFct(timer.getMicroseconds());
             if( !mGraphicsSystem->isRenderWindowVisible() )
             {
                 //Don't burn CPU cycles unnecessary when we're minimized.
                 Ogre::Threads::Sleep( 500 );
             }
         }
-        LOG << "END GRAPHICS" << LOGEND;
-
-        mBarrier->sync();
-
-        mGraphicsSystem->deinitialize();
-        mBarrier->sync();
-
-        return 0;
-    };
-
-    //---------------------------------------------------------------------
-    unsigned long Esvr2::logicThread1()
-    {
-        while( !getQuit() )
-        {
-            mVideoLoader->update( );
-
-            if( !mGraphicsSystem->isRenderWindowVisible() )
-            {
-                //Don't burn CPU cycles unnecessary when we're minimized.
-                Ogre::Threads::Sleep( 500 );
-            }
-        }
-
-        mBarrier->sync();
-
-        mVideoLoader->deinitialize();
-        mBarrier->sync();
-
         return 0;
     };
 }

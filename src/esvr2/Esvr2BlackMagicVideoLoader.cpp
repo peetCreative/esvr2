@@ -58,7 +58,7 @@ namespace esvr2
         mCapture.CloseCamera();
     }
 
-    void BlackMagicVideoLoader::update( )
+    void BlackMagicVideoLoader::update( uint64 time )
     {
         cv::Mat image(mCaptureFrameHeight, mCaptureFrameWidth, CV_8UC4);
 

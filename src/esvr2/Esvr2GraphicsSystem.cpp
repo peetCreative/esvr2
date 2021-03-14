@@ -33,9 +33,7 @@
 #include <SDL.h>
 #include <SDL_syswm.h>
 
-#include "opencv2/opencv.hpp"
 #include <sstream>
-#include <cmath>
 #include <mutex>
 #include <vector>
 
@@ -44,44 +42,7 @@ namespace esvr2
     GraphicsSystem::GraphicsSystem(
             Esvr2 *esvr2):
             mEsvr2(esvr2),
-            mGameState(nullptr),
-            mOvrCompositorListener( nullptr ),
-            mRoot(nullptr),
-            mGL3PlusPlugin(nullptr),
-            mWindow(nullptr),
-            mWindowTitle("Esvr2"),
-            mPluginsFolder(),
-            mWriteAccessFolder(),
-            mUseHlmsDiskCache(true),
-            mUseMicrocodeCache(true),
-            mLaparoscopeWorkspaces{ nullptr, nullptr },
-            mVRWorkspaces{ nullptr, nullptr },
-            mMirrorWorkspace( nullptr ),
-            mInfoScreenWorkspace(nullptr),
-            mLaparoscopeSceneManager(nullptr),
-            mVRSceneManager(nullptr),
-            mEmptySceneManager(nullptr),
-            mOverlaySystem(nullptr),
-            mLaparoscopeCameras{nullptr, nullptr },
-            mVRCameraNear(0.3),
-            mVRCameraFar(30.0),
-            mVRCameras{nullptr, nullptr },
-            mVRCullCamera( nullptr ),
-            mVRTexture( nullptr ),
-            mVideoTexture{nullptr, nullptr },
-            mInfoScreenTexture(nullptr),
-            mStagingTextures{nullptr, nullptr },
-            mDebugWindow(nullptr),
-            mDebugWS(nullptr),
-            mDebugCamera(nullptr),
-            mDebugCameraNode(nullptr),
-            mSdlWindow(nullptr),
-            mInteractiveElementConfig(),
-            mQuit(false),
-            mShowVideo(true),
-            mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 ),
-            mLastFrameUpdate(0),
-            mVideoUpdateFrames(0)
+            mEyeNum( esvr2->mConfig->isStereo ? 2 : 1 )
     {
         const Ogre::Matrix4 id[2] =
                 { Ogre::Matrix4::IDENTITY, Ogre::Matrix4::IDENTITY };
@@ -170,8 +131,8 @@ namespace esvr2
 
         //At this point rootHlmsFolder should be a valid path to the Hlms data folder
 
-        Ogre::HlmsUnlit *hlmsUnlit = 0;
-        Ogre::HlmsPbs *hlmsPbs = 0;
+        Ogre::HlmsUnlit *hlmsUnlit = nullptr;
+        Ogre::HlmsPbs *hlmsPbs = nullptr;
 
         //For retrieval of the paths to the different folders needed
         Ogre::String mainFolderPath;
@@ -433,7 +394,7 @@ namespace esvr2
 
     //-----------------------------------------------------------------------------------
     // Just little bit modified code from GraphicsSystem
-    void GraphicsSystem::initialize()
+    bool GraphicsSystem::initialize()
     {
         Ogre::String pluginsPath;
         // only use plugins.cfg if not static
@@ -478,7 +439,7 @@ namespace esvr2
             if( !mRoot->showConfigDialog() )
             {
                 mQuit = true;
-                return;
+                return false;
             }
         }
 
@@ -634,13 +595,15 @@ namespace esvr2
                     mWriteAccessFolder + "ProfileAccum" );
     #endif
 #endif
+        mReady = true;
+        return true;
     }
 
     void GraphicsSystem::deinitialize(void)
     {
 
         delete mOvrCompositorListener;
-        mOvrCompositorListener = 0;
+        mOvrCompositorListener = nullptr;
 
         Ogre::TextureGpuManager *textureManager =
                 mRoot->getRenderSystem()->getTextureGpuManager();
@@ -648,7 +611,7 @@ namespace esvr2
         if( mVRTexture )
         {
             textureManager->destroyTexture( mVRTexture );
-            mVRTexture = 0;
+            mVRTexture = nullptr;
         }
 
         for( size_t eye = 0; eye < 2; eye++ )
@@ -657,11 +620,11 @@ namespace esvr2
             {
                 //Tell the TextureGpuManager we're done with this StagingTexture. Otherwise it will leak.
                 textureManager->removeStagingTexture(mStagingTextures[eye] );
-                mStagingTextures[eye] = 0;
+                mStagingTextures[eye] = nullptr;
             }
 
             //Don't need to be destroyed compositorManager is doing it
-            mVideoTexture[eye] = 0;
+            mVideoTexture[eye] = nullptr;
 
             if( mLaparoscopeCameras[eye] )
             {
@@ -673,7 +636,7 @@ namespace esvr2
         if( mVRCullCamera )
         {
             mVRSceneManager->destroyCamera( mVRCullCamera );
-            mVRCullCamera = 0;
+            mVRCullCamera = nullptr;
         }
 
         Ogre::CompositorManager2 *compositorManager2 =
@@ -686,98 +649,10 @@ namespace esvr2
             // Restore desktop resolution on exit
             SDL_SetWindowFullscreen( mSdlWindow, 0 );
             SDL_DestroyWindow( mSdlWindow );
-            mSdlWindow = 0;
+            mSdlWindow = nullptr;
         }
 
         SDL_Quit();
-    }
-
-    //configure Laparoscope Cameras according to CameraConfig
-    bool GraphicsSystem::configureLaparoscopeCamera()
-    {
-//        Ogre::CompositorManager2 *compositorManager =
-//                mRoot->getCompositorManager2();
-//        // for some reason we can only update every n frames.
-//        //which is limited by this function
-//        mVideoUpdateFrames = compositorManager->getRenderSystem()->getVaoManager()->getDynamicBufferMultiplier();
-//        StereoCameraConfig cameraConfig =
-//                mEsvr2->mVideoLoader->getStereoCameraConfig();
-//        for (size_t eye = 0; eye < mEyeNum; eye++)
-//        {
-//            float far_plane = 100.0;
-//            float near_plane = 0.001;
-//            float img_width = cameraConfig.cfg[eye]->width;
-//            float img_height = cameraConfig.cfg[eye]->height;
-//            float f_x = cameraConfig.cfg[eye]->P[0] * mZoom;
-//            float f_y = cameraConfig.cfg[eye]->P[5] * mZoom;
-//            float c_x = cameraConfig.cfg[eye]->P[2];
-//            float c_y = cameraConfig.cfg[eye]->P[6];
-//            float win_width = mHmdConfig.width;
-//            float win_height = mHmdConfig.height;
-//            float zoom_x = 1.0f;
-//            float zoom_y = zoom_x;
-//
-//            // Preserve aspect ratio
-////                 if (win_width != 0 && win_height != 0)
-////                 {
-////                     float img_aspect = (img_width / f_x) / (img_height / f_y);
-////                     float win_aspect = win_width / win_height;
-////
-////                     if (img_aspect > win_aspect)
-////                     {
-////                         zoom_y = zoom_y / img_aspect * win_aspect;
-////                     }
-////                     else
-////                     {
-////                         zoom_x = zoom_x / win_aspect * img_aspect;
-////                     }
-////                 }
-//
-//            eyeToHead[eye] = Ogre::Matrix4::IDENTITY;
-//            proj_matrix[eye] = Ogre::Matrix4::ZERO;
-//
-//            proj_matrix[eye][0][0] = 2.0 * f_x / img_width * zoom_x;
-//            proj_matrix[eye][1][1] = 2.0 * f_y / img_height * zoom_y;
-//
-//            proj_matrix[eye][0][2] = 2.0 * (0.5 - c_x / img_width) * zoom_x;
-//            proj_matrix[eye][1][2] = 2.0 * (c_y / img_height - 0.5) * zoom_y;
-//
-//            proj_matrix[eye][2][2] = -(far_plane + near_plane) / (far_plane - near_plane);
-//            proj_matrix[eye][2][3] = -2.0 * far_plane * near_plane / (far_plane - near_plane);
-//
-//            proj_matrix[eye][3][2] = -1;
-//            // we have also to set position and orientation
-////                 mEyeCameras[eye]->setCustomProjectionMatrix( true, proj_matrix);
-//            //2.0f ~= cameraConfig.cfg[eye].P[0]
-//            // x   ~= cameraConfig.cfg[eye].P[3]
-//            eyeToHead[eye][0][3] = cameraConfig.cfg[eye]->P[3] *2.0f / cameraConfig.cfg[eye]->P[0];
-////                 mEyeCameras[eye]->setPosition(position );
-////                 Ogre::Vector3 focusPoint = Ogre::Vector3( 0.0f, 0.0f, -1.0f );
-////                 mCameraNode[eye]->lookAt( focusPoint, Ogre::Node::TS_LOCAL );
-//            Ogre::Matrix4 proj_matrix_rs;
-//            mRoot->getRenderSystem()->_convertOpenVrProjectionMatrix(
-//                    proj_matrix[eye], proj_matrix_rs );
-//
-//            mVRCameras[eye]->setCustomProjectionMatrix(true, proj_matrix[eye] );
-////                 mEyeCameras[eye]->setAutoAspectRatio( true );
-//            mVRCameras[eye]->setNearClipDistance(0.0001 );
-//            mVRCameras[eye]->setFarClipDistance(mCamFar );
-//            double tx = (cameraConfig.cfg[eye]->P[3] / f_x);
-//            Ogre::Vector3 position = Ogre::Vector3::UNIT_X * tx;
-//            LOG << "Pos "<< cameraConfig.cfg[eye]->eye_str << eye << ": " << position.x << " " << position.y << " " <<position.z <<LOGEND;
-//            mVRCameras[eye]->setPosition(position );
-//            mVRCameras[eye]->lookAt(0, 0, 1);
-//        }
-//        // now as we have camera config we use it.
-//        mVrData.set( eyeToHead, proj_matrix);
-        return true;
-    }
-
-    //configure VR Cameras according to CameraConfig
-    bool GraphicsSystem::configureVRCamera()
-    {
-
-        return true;
     }
 
     void GraphicsSystem::setupVRTextures(void)
@@ -990,7 +865,7 @@ namespace esvr2
                                 bytesPerRow );
                 mStagingTextures[eye]->stopMapRegion();
                 mStagingTextures[eye]->upload(
-                        texBox, mVideoTexture[eye], 0, 0, 0, false );
+                        texBox, mVideoTexture[eye], 0, nullptr, nullptr, false );
 
                 mVideoTexture[eye]->notifyDataIsReady();
             }
@@ -1125,7 +1000,7 @@ namespace esvr2
     }
 #endif //USE_FOOTPEDAL
 
-    void GraphicsSystem::update( Ogre::uint64 msStartTime)
+    void GraphicsSystem::update( uint64 msStartTime)
     {
         mFrameCnt++;
         Ogre::uint64  msSinceLast = msStartTime - mLastStartTime;

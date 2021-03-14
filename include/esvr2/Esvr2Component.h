@@ -1,14 +1,15 @@
 #ifndef ESVR2_COMPONENT_H
 #define ESVR2_COMPONENT_H
 
+#include <memory>
+
 namespace esvr2
 {
     class Component
     {
     public:
-        virtual bool initialize( void ) = 0;
-        virtual void deinitialize(void) = 0;
-        virtual void update( ) {};
+        virtual bool initialize( void ) {return true;};
+        virtual void deinitialize(void) {};
         virtual bool getQuit() {return mQuit;};
 
         virtual bool isReady() {return mReady;};
@@ -17,9 +18,9 @@ namespace esvr2
         bool mReady = false;
         bool mQuit = false;
 
-        void quit() {mQuit = true;};
+        virtual void quit() {mQuit = true;};
     };
-
+    typedef std::shared_ptr<Component> ComponentPtr;
 }
 
 #endif //ESVR2_COMPONENT_H

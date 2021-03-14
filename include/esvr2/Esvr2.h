@@ -1,6 +1,8 @@
 #ifndef _Esvr2_H_
 #define _Esvr2_H_
 
+#include <boost/function.hpp>
+
 #include <vector>
 #include <string>
 #include <memory>
@@ -9,7 +11,8 @@
 #define LEFT 0
 #define RIGHT 1
 #define MONO 0
-#define LOG std::cout
+#define LOG std::cout << "[esvr2] "
+#define LOG_ERROR std::cout << "[esvr2] *ERROR* "
 #define LOGEND std::endl
 
 #ifndef RESOURCE_FOLDER
@@ -25,6 +28,7 @@ namespace esvr2 {
 #else
     typedef float Real;
 #endif
+    typedef unsigned long long uint64;
     typedef enum {
         CT_NONE,
         CT_OPT0,
@@ -165,6 +169,7 @@ namespace esvr2 {
         VideoRenderTarget videoRenderTarget = VRT_TO_SQUARE;
         HmdConfig hmdConfig = HmdConfig();
     } Esvr2Config;
+    typedef std::shared_ptr<Esvr2Config> Esvr2ConfigPtr;
 
     typedef struct {
         InputType inputType = IT_NONE;
@@ -190,40 +195,38 @@ namespace esvr2 {
     class GraphicsSystem;
     class GameState;
     class OpenVRCompositorListener;
-    //Really dirty wrapping Ogre::Barrier so we don't need to put Ogre in Esvr2.h
-    class Barrier;
-
+    class Component;
     class Esvr2 {
         friend GraphicsSystem;
         friend GameState;
         friend OpenVRCompositorListener;
     public:
-        Esvr2( Esvr2Config *config,
-               VideoLoader *videoLoader,
-               LaparoscopeController *laparoscopeController,
-               PoseState *poseState);
-        Esvr2( std::shared_ptr<Esvr2Config> config,
-               std::shared_ptr<VideoLoader> videoLoader,
-               std::shared_ptr<LaparoscopeController> laparoscopeController,
-               std::shared_ptr<PoseState> poseState);
+        Esvr2( Esvr2ConfigPtr config);
+        bool setVideoLoader(
+                std::shared_ptr<VideoLoader> videoLoader);
+        bool setLaparoscopeController(
+                std::shared_ptr<LaparoscopeController> laparoscopeController);
+        bool setPoseState(
+                std::shared_ptr<PoseState> poseState);
+        bool registerUpdateCallback(const boost::function<void(uint64)>);
         ~Esvr2();
         int run();
-        unsigned long renderThread1();
-        unsigned long logicThread1();
+        unsigned long updateThread(
+                boost::function<void(uint64)> updateFct);
 
     private:
         bool getQuit();
     private:
 
-        bool mIsConfigured;
-        std::shared_ptr<Esvr2Config> mConfig;
-        std::shared_ptr<VideoLoader> mVideoLoader;
-        std::shared_ptr<LaparoscopeController> mLaparoscopeController;
-        std::shared_ptr<PoseState> mPoseState;
+        bool mIsConfigured {false};
+        Esvr2ConfigPtr mConfig {nullptr};
+        std::shared_ptr<VideoLoader> mVideoLoader {nullptr};
+        std::shared_ptr<LaparoscopeController> mLaparoscopeController {nullptr};
+        std::shared_ptr<PoseState> mPoseState {nullptr};
+        std::vector<std::shared_ptr<Component>> mComponents {};
+        std::vector<boost::function<void(uint64)>> mUpdateCallbacks{};
 
         std::shared_ptr<GraphicsSystem> mGraphicsSystem;
-
-        Barrier *mBarrier;
     };
 }
 

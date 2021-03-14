@@ -34,7 +34,8 @@ namespace esvr2
 
     class VideoLoader;
 
-    class GraphicsSystem
+    class GraphicsSystem :
+            public virtual Component
     {
     friend GameState;
     friend OpenVRCompositorListener;
@@ -42,73 +43,73 @@ namespace esvr2
         Esvr2 *mEsvr2;
 
         //Esvr2 Components
-        GameState *mGameState;
-        OpenVRCompositorListener    *mOvrCompositorListener;
+        GameState *mGameState {nullptr};
+        OpenVRCompositorListener    *mOvrCompositorListener {nullptr};
 
         //Ogre
-        Ogre::Root                  *mRoot;
-        Ogre::GL3PlusPlugin         *mGL3PlusPlugin;
-        Ogre::Window                *mWindow;
-        Ogre::String                mWindowTitle;
+        Ogre::Root                  *mRoot {nullptr};
+        Ogre::GL3PlusPlugin         *mGL3PlusPlugin {nullptr};
+        Ogre::Window                *mWindow {nullptr};
+        Ogre::String                mWindowTitle {"Esvr2"};
 
         //Other Ogre stuff
-        Ogre::String                mPluginsFolder;
-        Ogre::String                mWriteAccessFolder;
-        bool mUseMicrocodeCache;
-        bool mUseHlmsDiskCache;
+        Ogre::String                mPluginsFolder {""};
+        Ogre::String                mWriteAccessFolder {""};
+        bool                        mUseMicrocodeCache {true};
+        bool                        mUseHlmsDiskCache {true};
 
         //Ogre Workspaces
-        Ogre::CompositorWorkspace   *mLaparoscopeWorkspaces[2];
-        Ogre::CompositorWorkspace   *mVRWorkspaces[2];
-        Ogre::CompositorWorkspace   *mMirrorWorkspace;
-        Ogre::CompositorWorkspace   *mInfoScreenWorkspace;
+        Ogre::CompositorWorkspace *mLaparoscopeWorkspaces[2] {nullptr, nullptr};
+        Ogre::CompositorWorkspace *mVRWorkspaces[2] {nullptr, nullptr};
+        Ogre::CompositorWorkspace   *mMirrorWorkspace {nullptr};
+        Ogre::CompositorWorkspace   *mInfoScreenWorkspace {nullptr};
 
         //Ogre SceneManger
-        Ogre::SceneManager          *mLaparoscopeSceneManager;
-        Ogre::SceneManager          *mVRSceneManager;
-        Ogre::SceneManager          *mEmptySceneManager;
+        Ogre::SceneManager          *mLaparoscopeSceneManager {nullptr};
+        Ogre::SceneManager          *mVRSceneManager {nullptr};
+        Ogre::SceneManager          *mEmptySceneManager {nullptr};
 
-        Ogre::v1::OverlaySystem     *mOverlaySystem;
+        Ogre::v1::OverlaySystem     *mOverlaySystem {nullptr};
 
         //Ogre Cameras
         //two real cameras and two workspaces (two cameras rendering) or
         //only use one VR Camera and workspace (Instanced Rendering)
-        Ogre::Camera                *mLaparoscopeCameras[2];
-        Ogre::Real                  mVRCameraNear, mVRCameraFar;
-        Ogre::Camera                *mVRCameras[2];
-        Ogre::Camera                *mVRCullCamera;
+        Ogre::Camera                *mLaparoscopeCameras[2] {nullptr, nullptr};
+        Ogre::Real                  mVRCameraNear {0.3}, mVRCameraFar {30.0};
+        Ogre::Camera                *mVRCameras[2] {nullptr, nullptr};
+        Ogre::Camera                *mVRCullCamera {nullptr};
         Ogre::VrData                mVrData;
 
         //Ogre Textures
-        Ogre::TextureGpu            *mVRTexture;
-        Ogre::TextureGpu            *mVideoTexture[2];
-        Ogre::TextureGpu            *mLaparoscopeViewTexture[2];
-        Ogre::TextureGpu            *mInfoScreenTexture;
-        Ogre::StagingTexture        *mStagingTextures[2];
+        Ogre::TextureGpu            *mVRTexture {nullptr};
+        Ogre::TextureGpu            *mVideoTexture[2] {nullptr, nullptr};
+        Ogre::TextureGpu            *mLaparoscopeViewTexture[2] {nullptr, nullptr};
+        Ogre::TextureGpu            *mInfoScreenTexture {nullptr};
+        Ogre::StagingTexture        *mStagingTextures[2] {nullptr, nullptr};
 
         //Ogre Debug stuff
-        Ogre::Window *mDebugWindow;
-        Ogre::CompositorWorkspace *mDebugWS;
-        Ogre::Camera *mDebugCamera;
-        Ogre::SceneNode *mDebugCameraNode;
+        Ogre::Window                *mDebugWindow {nullptr};
+        Ogre::CompositorWorkspace   *mDebugWS {nullptr};
+        Ogre::Camera                *mDebugCamera {nullptr};
+        Ogre::SceneNode             *mDebugCameraNode {nullptr};
 
         //SDL for input and output
-        SDL_Window *mSdlWindow;
+        SDL_Window                  *mSdlWindow {nullptr};
 #ifdef USE_FOOTPEDAL
-        FootPedal *mFootPedal = nullptr;
+        FootPedal *mFootPedal {nullptr};
 #endif //USE_FOOTPEDAL
 
         //Class Variables
         InteractiveElementConfig mInteractiveElementConfig;
-        bool mQuit;
+        bool mQuit {false};
         size_t mEyeNum;
-        bool mShowVideo;
+        bool mShowVideo {true};
 
-        int mFrameCnt;
-        int mLastFrameUpdate;
-        int mVideoUpdateFrames;
+        int mFrameCnt {0};
+        int mLastFrameUpdate {0};
+        int mVideoUpdateFrames {0};
 
-        Ogre::uint64 mLastStartTime = 0;
+        Ogre::uint64 mLastStartTime {0};
 
         //intern functions
         void setupResources(void);
@@ -134,9 +135,6 @@ namespace esvr2
         void pumpFootPedalEvents();
 #endif // USE_FOOTPEDAL
 
-        bool configureLaparoscopeCamera(void);
-        bool configureVRCamera(void);
-
         void setupInfoScreenTextures();
         void setupInfoScreenCompositor();
 
@@ -144,10 +142,10 @@ namespace esvr2
         GraphicsSystem( Esvr2 *esvr2);
         ~GraphicsSystem() {};
 
-        void initialize( );
-        void deinitialize(void);
+        bool initialize( ) override;
+        void deinitialize(void) override;
 
-        void update(Ogre::uint64 startTimeMs);
+        void update(uint64 startTimeMs);
 
         //Project getters and setters
         GameState *getGameState();
@@ -155,15 +153,11 @@ namespace esvr2
         //Ogre getters and setters
 
         //get variables
-        void quit();
-        bool getQuit();
+        void quit() override;
+        bool getQuit() override;
         bool isRenderWindowVisible( void );
         bool getShowVideo( void ) { return mShowVideo; };
         void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
-        void setDistortion(Distortion dist);
-
-        Ogre::Real getZoom();
-        void setZoom( Ogre::Real );
     };
 }
 

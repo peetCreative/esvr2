@@ -3,7 +3,6 @@
 #define _Esvr2_OpenCvVideoLoader_H_
 
 #include "Esvr2.h"
-
 #include "Esvr2VideoLoader.h"
 
 #include "opencv2/opencv.hpp"
@@ -25,11 +24,11 @@ namespace esvr2 {
                 const VideoInputConfigPtr videoInputConfig);
         ~OpenCvVideoLoader();
 
-        bool initialize(void);
-        void deinitialize(void);
-        void update( );
-
+        bool initialize() override;
+        void deinitialize() override;
+        void update(uint64 time);
     };
+    typedef std::shared_ptr<OpenCvVideoLoader> OpenCvVideoLoaderPtr;
 }
 
 #endif

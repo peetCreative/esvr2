@@ -30,6 +30,7 @@ namespace esvr2 {
             cv::Mat mImageLeft, mImageRight;
             std::string mPath;
     };
+    typedef std::shared_ptr<LowLatencyVideoLoader> LowLatencyVideoLoaderPtr;
 
 }
 #endif

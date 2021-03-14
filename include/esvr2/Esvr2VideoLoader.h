@@ -50,7 +50,6 @@ namespace esvr2 {
         virtual void setDistortion( Distortion distortion )
             { mDistortion = distortion; };
 
-
         bool isReady();
 
         bool isStereo() {return mStereo;};
@@ -66,6 +65,7 @@ namespace esvr2 {
         CameraConfig getMonoCameraConfig();
         ImageData getCurMonoImageData();
     };
+    typedef std::shared_ptr<VideoLoader> VideoLoaderPtr;
 }
 
 #endif

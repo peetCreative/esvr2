@@ -55,7 +55,7 @@ namespace esvr2
         mCapture.release();
     }
 
-    void OpenCvVideoLoader::update( )
+    void OpenCvVideoLoader::update(uint64 time)
     {
         cv::Mat mMat;
 

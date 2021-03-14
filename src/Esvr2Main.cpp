@@ -1,5 +1,6 @@
 #include "Esvr2.h"
 #include "Esvr2ParseYml.h"
+#include "Esvr2NoneVideoLoader.h"
 #include "Esvr2BlackMagicVideoLoader.h"
 #include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2OpenCvVideoLoader.h"
@@ -9,6 +10,8 @@
 #include <string>
 #include <memory>
 #include <experimental/filesystem>
+#include <boost/function.hpp>
+#include <boost/bind.hpp>
 
 namespace fs = std::experimental::filesystem;
 
@@ -83,26 +86,39 @@ int main(int argc, char *argv[])
 
     //create and initialize the videoLoader
     std::shared_ptr<esvr2::VideoLoader> videoLoader = nullptr;
+    boost::function<void(Ogre::uint64)> videoLoaderUpdateFct = 0;
     switch(videoInputConfig->inputType) {
         case esvr2::IT_VIDEO_LOW_LATENCY:
 #ifdef USE_LOWLATENCYVIDEOLOADER
             videoLoader = std::make_shared<esvr2::LowLatencyVideoLoader>(
                     videoInputConfig, false);
+            videoLoaderUpdateFct =
+                    boost::bind();
 #endif
             break;
         case esvr2::IT_VIDEO_OPENCV:
-            videoLoader = std::make_shared<esvr2::OpenCvVideoLoader>(
-                    videoInputConfig);
+            {
+                esvr2::OpenCvVideoLoaderPtr openCvVideoLoader =
+                        std::make_shared<esvr2::OpenCvVideoLoader>(videoInputConfig);
+                videoLoader = openCvVideoLoader;
+                videoLoaderUpdateFct =
+                        boost::bind(&esvr2::OpenCvVideoLoader::update, openCvVideoLoader, _1);
+            }
             break;
         case esvr2::IT_VIDEO_BLACKMAGIC:
 #ifdef USE_BLACKMAGICCAMERA
-        videoLoader = std::make_shared<esvr2::BlackMagicVideoLoader>(
-                    videoInputConfig);
+            {
+                esvr2::BlackMagicVideoLoaderPtr blackMagicVideoLoader =
+                        std::make_shared<esvr2::BlackMagicVideoLoader>(videoInputConfig);
+                videoLoader = blackMagicVideoLoader;
+                videoLoaderUpdateFct =
+                        boost::bind(&esvr2::BlackMagicVideoLoader::update, blackMagicVideoLoader, _1);
+            }
 #endif
             break;
-            case esvr2::IT_NONE:
-            LOG << "no input: shutdown" << LOGEND;
-            return 1;
+        case esvr2::IT_NONE:
+            videoLoader = std::make_shared<esvr2::NoneVideoLoader>();
+            break;
     }
 
     //TODO: create poseState
@@ -125,8 +141,10 @@ int main(int argc, char *argv[])
 
 
     //create esvr2
-    esvr2::Esvr2 *esvr2 = new esvr2::Esvr2(
-            config, videoLoader, nullptr, poseState );
+    esvr2::Esvr2 *esvr2 = new esvr2::Esvr2(config);
+    esvr2->setVideoLoader(videoLoader);
+    if(videoLoaderUpdateFct)
+        esvr2->registerUpdateCallback(videoLoaderUpdateFct);
     // run esvr2
     return esvr2->run();
 }

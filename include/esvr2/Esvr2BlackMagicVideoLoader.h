@@ -3,7 +3,6 @@
 #define _Esvr2_BlackMagicVideoLoader_H_
 #ifdef USE_BLACKMAGICCAMERA
 #include "Esvr2.h"
-
 #include "Esvr2VideoLoader.h"
 
 #include "opencv2/opencv.hpp"
@@ -27,8 +26,9 @@ namespace esvr2 {
 
         bool initialize(void);
         void deinitialize(void);
-        void update( );
+        void update( uint64 time );
     };
+    typedef std::shared_ptr<BlackMagicVideoLoader> BlackMagicVideoLoaderPtr;
 }
 
 #endif

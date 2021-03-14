@@ -2,6 +2,7 @@
 #define _Esvr2_POSESTATE_H_
 
 #include "Esvr2.h"
+#include "Esvr2Component.h"
 
 #include "OgreMatrix4.h"
 #include "OgreVector3.h"
@@ -11,7 +12,7 @@
 // used for debugging
 
 namespace esvr2 {
-    class PoseState {
+    class PoseState: virtual public Component {
     protected:
         Ogre::Matrix4 mPose;
 
@@ -32,6 +33,7 @@ namespace esvr2 {
         bool validPose();
 
     };
+    typedef std::shared_ptr<PoseState> PoseStatePtr;
 }
 
 #endif
