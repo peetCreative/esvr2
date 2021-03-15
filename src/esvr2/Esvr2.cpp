@@ -2,8 +2,8 @@
 #include "Esvr2GameState.h"
 #include "Esvr2GraphicsSystem.h"
 #include "Esvr2VideoLoader.h"
+#include "Esvr2NoneVideoLoader.h"
 #include "Esvr2LaparoscopeController.h"
-#include "Esvr2LowLatencyVideoLoader.h"
 #include "Esvr2PoseState.h"
 
 #include "OgreTimer.h"
@@ -172,6 +172,11 @@ namespace esvr2 {
     int Esvr2::run()
     {
         mIsConfigured = true;
+        if (!mVideoLoader)
+        {
+            mVideoLoader = std::make_shared<NoneVideoLoader>();
+            mComponents.push_back(mVideoLoader);
+        }
         for(auto componentIt: mComponents)
         {
             if (componentIt)

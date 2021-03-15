@@ -117,7 +117,6 @@ int main(int argc, char *argv[])
 #endif
             break;
         case esvr2::IT_NONE:
-            videoLoader = std::make_shared<esvr2::NoneVideoLoader>();
             break;
     }
 
@@ -142,7 +141,8 @@ int main(int argc, char *argv[])
 
     //create esvr2
     esvr2::Esvr2 *esvr2 = new esvr2::Esvr2(config);
-    esvr2->setVideoLoader(videoLoader);
+    if (videoLoader)
+        esvr2->setVideoLoader(videoLoader);
     if(videoLoaderUpdateFct)
         esvr2->registerUpdateCallback(videoLoaderUpdateFct);
     // run esvr2
