@@ -86,7 +86,7 @@ int main(int argc, char *argv[])
 
     //create and initialize the videoLoader
     std::shared_ptr<esvr2::VideoLoader> videoLoader = nullptr;
-    boost::function<void(Ogre::uint64)> videoLoaderUpdateFct = 0;
+    boost::function<void(uint64)> videoLoaderUpdateFct = 0;
     switch(videoInputConfig->inputType) {
         case esvr2::IT_VIDEO_LOW_LATENCY:
 #ifdef USE_LOWLATENCYVIDEOLOADER
