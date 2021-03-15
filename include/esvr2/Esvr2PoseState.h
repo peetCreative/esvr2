@@ -4,9 +4,6 @@
 #include "Esvr2.h"
 #include "Esvr2Component.h"
 
-#include "OgreMatrix4.h"
-#include "OgreVector3.h"
-#include "OgreQuaternion.h"
 //Class to externally control the movements
 // of the laparoscope camera in our application
 // used for debugging
@@ -14,11 +11,11 @@
 namespace esvr2 {
     class PoseState: virtual public Component {
     protected:
-        Ogre::Matrix4 mPose;
+        RealArray16 mPose;
 
-        Ogre::Vector3 mPosition;
-        Ogre::Quaternion mOrientation;
-        void setPose(Ogre::Vector3 position, Ogre::Quaternion orientation);
+        RealArray3 mPosition;
+        RealArray4 mOrientation;
+        void setPose(RealArray3 position, RealArray4 orientation);
 
         bool mValidPose;
 
@@ -26,10 +23,10 @@ namespace esvr2 {
         PoseState();
         ~PoseState();
 
-        Ogre::Matrix4 getPose(void);
+        virtual RealArray16 getPose(void);
         //relativ to parent
-        Ogre::Vector3 getPosition(void);
-        Ogre::Quaternion getOrientation(void);
+        virtual RealArray3 getPosition(void);
+        virtual RealArray4 getOrientation(void);
         bool validPose();
 
     };

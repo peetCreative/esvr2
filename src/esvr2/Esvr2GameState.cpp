@@ -1011,10 +1011,11 @@ namespace esvr2
             Ogre::Vector3 prev_position =
                     mLaparoscopeCamerasNode->getPosition();
             Ogre::Quaternion orientation =
-                    mEsvr2->mPoseState->getOrientation();
+                    RealArray4ToQuaternion(mEsvr2->mPoseState->getOrientation());
             orientation = orientation * Ogre::Quaternion(
                     Ogre::Degree(180), Ogre::Vector3::UNIT_Z);
-            Ogre::Vector3 position = mEsvr2->mPoseState->getPosition();
+            Ogre::Vector3 position =
+                    RealArray3ToVector3(mEsvr2->mPoseState->getPosition());
             if ( !prev_orientation.orientationEquals(orientation)
                  || prev_position != position )
             {

@@ -4,6 +4,7 @@
 #include <boost/function.hpp>
 
 #include <vector>
+#include <array>
 #include <string>
 #include <memory>
 #include <iostream>
@@ -68,18 +69,21 @@ namespace esvr2 {
         WS_INSTANCED_STEREO
     } WorkspaceType;
     typedef std::vector<Real> RealVector;
+    typedef std::array<Real,3> RealArray3;
+    typedef std::array<Real,4> RealArray4;
+    typedef std::array<Real,16> RealArray16;
     typedef struct {
-        RealVector initialPose = RealVector(3);
-        RealVector eyeToHeadLeft = RealVector(3);
-        RealVector eyeToHeadRight = RealVector(3);
-        RealVector *eyeToHeadPtr[2] =  {&eyeToHeadLeft, &eyeToHeadRight};
-        RealVector projectionMatrixLeft = RealVector(16);
-        RealVector projectionMatrixRight = RealVector(16);
-        RealVector *projectionMatrixPtr[2] =
+        RealArray3 initialPose = RealArray3();
+        RealArray3 eyeToHeadLeft = RealArray3();
+        RealArray3 eyeToHeadRight = RealArray3();
+        RealArray3 *eyeToHeadPtr[2] =  {&eyeToHeadLeft, &eyeToHeadRight};
+        RealArray16 projectionMatrixLeft = RealArray16();
+        RealArray16 projectionMatrixRight = RealArray16();
+        RealArray16 *projectionMatrixPtr[2] =
                 {&projectionMatrixLeft, &projectionMatrixRight};
-        RealVector tanLeft = RealVector(4);
-        RealVector tanRight = RealVector(4);
-        RealVector *tanPtr[2] = {&tanLeft, &tanRight};
+        RealArray4 tanLeft = RealArray4();
+        RealArray4 tanRight = RealArray4();
+        RealArray4 *tanPtr[2] = {&tanLeft, &tanRight};
         unsigned int width, height;
         bool valid()
         {
@@ -100,9 +104,9 @@ namespace esvr2 {
         int width = 0;
         int height = 0;
         RealVector D = { 0, 0, 0, 0, 0 };
-        RealVector K = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        RealVector R = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        RealVector P = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        std::array<Real, 9> K = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        std::array<Real, 9> R = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+        std::array<Real, 12> P = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
         bool valid()
         {
             //TODO: check maybe also the other parameters

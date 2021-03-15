@@ -1,39 +1,40 @@
 #include "Esvr2PoseState.h"
-
+#include "Esvr2Helper.h"
 #include <OgreVector3.h>
 #include <OgreQuaternion.h>
 #include <OgreMatrix4.h>
 namespace esvr2 {
     PoseState::PoseState():
-        mPose( Ogre::Matrix4::IDENTITY ),
-        mOrientation (Ogre::Quaternion::IDENTITY),
-        mPosition (Ogre::Vector3::ZERO),
+        mPose(Matrix4ToRealArray16(Ogre::Matrix4::IDENTITY)),
+        mOrientation (QuaternionToRealArray4(Ogre::Quaternion::IDENTITY)),
+        mPosition (Vector3ToRealArray3(Ogre::Vector3::ZERO)),
         mValidPose(false){}
 
     PoseState::~PoseState(){}
 
-    Ogre::Matrix4 PoseState::getPose()
+    RealArray16 PoseState::getPose()
     {
         return mPose;
     }
 
-    Ogre::Vector3 PoseState::getPosition()
+    RealArray3 PoseState::getPosition()
     {
         return mPosition;
     }
 
-    Ogre::Quaternion PoseState::getOrientation()
+    RealArray4 PoseState::getOrientation()
     {
         return mOrientation;
     }
 
     void PoseState::setPose(
-        Ogre::Vector3 position, Ogre::Quaternion orientation )
+        RealArray3 position, RealArray4 orientation )
     {
         mPosition = position;
         mOrientation = orientation;
-        mPose = Ogre::Matrix4(orientation);
-        mPose.setTrans(position);
+        Ogre::Matrix4 pose = Ogre::Matrix4(RealArray4ToQuaternion(orientation));
+        pose.setTrans(RealArray3ToVector3(position));
+        mPose = Matrix4ToRealArray16(pose);
         mValidPose = true;
     }
 

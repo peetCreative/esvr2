@@ -4,9 +4,9 @@ namespace esvr2{
     TestPose::TestPose():
         PoseState()
     {
-        Ogre::Vector3 position( 0, 0, -0.1 );
-        Ogre::Quaternion orientation(1,0,0,0);
-        setPose( position, orientation );
+        setPose(
+            {0,0,-0.1},
+            {1,0,0,0} );
         mValidPose = true;
     }
 

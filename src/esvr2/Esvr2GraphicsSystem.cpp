@@ -356,11 +356,11 @@ namespace esvr2
             HmdConfig hmdConfig = mEsvr2->mConfig->hmdConfig;
             if(hmdConfig.valid())
             {
-                RealVector *vec = hmdConfig.projectionMatrixPtr[eye];
-                Ogre::Matrix4 projMat = RealVectorToMatrix4(*vec);
+                RealArray16 *vec = hmdConfig.projectionMatrixPtr[eye];
+                Ogre::Matrix4 projMat = RealArray16ToMatrix4(*vec);
                 mVRCameras[eye]->setCustomProjectionMatrix(true, projMat);
-                RealVector *vec1 = hmdConfig.eyeToHeadPtr[eye];
-                Ogre::Vector3 pose = RealVectorToVector3(*vec1);
+                RealArray3 *vec1 = hmdConfig.eyeToHeadPtr[eye];
+                Ogre::Vector3 pose = RealArray3ToVector3(*vec1);
                 mVRCameras[eye]->setPosition(pose);
             }
         }

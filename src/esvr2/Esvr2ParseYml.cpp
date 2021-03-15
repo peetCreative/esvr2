@@ -124,18 +124,19 @@ namespace esvr2 {
         return success;
     }
 
-    bool readSequence(YAML::Node node, RealVector *vec, int length)
+    template<int T>
+    bool readSequence(YAML::Node node, std::array<Real, T> &vec)
     {
         if (!node.IsSequence())
             return false;
         int i = 0;
         for (YAML::iterator it = node.begin(); it != node.end(); ++it)
         {
-            if (i >= length)
+            if (i >= T)
                 return false;
-            vec->at(i++) = it->as<Real>();
+            vec.at(i++) = it->as<Real>();
         }
-        if (i != length)
+        if (i != T)
             return false;
         return true;
     }
@@ -366,9 +367,9 @@ namespace esvr2 {
                 YAML::Node e2hNode = eyeNode["eye_to_head"];
                 YAML::Node pmNode = eyeNode["projection_matrix"];
                 YAML::Node tanNode = eyeNode["tan"];
-                succ = succ && e2hNode && readSequence(e2hNode, hmdConfig->eyeToHeadPtr[eye], 3);
-                succ = succ && pmNode && readSequence(pmNode, hmdConfig->projectionMatrixPtr[eye], 16);
-                succ = succ && tanNode && readSequence(tanNode, hmdConfig->tanPtr[eye], 4);
+                succ = succ && e2hNode && readSequence<3>(e2hNode, *hmdConfig->eyeToHeadPtr[eye]);
+                succ = succ && pmNode && readSequence<16>(pmNode, *hmdConfig->projectionMatrixPtr[eye]);
+                succ = succ && tanNode && readSequence<4>(tanNode, *hmdConfig->tanPtr[eye]);
             }
         }
         return succ && hmdConfig->valid();
