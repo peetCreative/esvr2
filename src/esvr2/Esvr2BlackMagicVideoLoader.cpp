@@ -63,7 +63,7 @@ namespace esvr2
         cv::Mat image(mCaptureFrameHeight, mCaptureFrameWidth, CV_8UC4);
 
         // Capture frame-by-frame
-        mCapture.CaptureImage(&image); 
+        mCapture.CaptureImage({&image});
         if(image.empty())
         {
             return;
