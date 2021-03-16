@@ -108,7 +108,6 @@ namespace esvr2 {
             mConfig(config)
     {
         mGraphicsSystem = std::make_shared<GraphicsSystem>(this);
-        mComponents.push_back(mGraphicsSystem);
     }
 
     Esvr2::~Esvr2()
@@ -179,19 +178,16 @@ namespace esvr2 {
         }
         for(auto componentIt: mComponents)
         {
-            if (componentIt)
+            if(!componentIt->initialize() )
             {
-                if(!componentIt->initialize() )
-                {
-                    LOG_ERROR << "Could not initialize a Component" << LOGEND;
-                    return 1;
-                }
+                LOG_ERROR << "Could not initialize a Component" << LOGEND;
+                return 1;
             }
         }
         // cycle until videoLoader is finished or quits
         bool allComponentsReady {false};
+        Ogre::Timer timer;
         while (!allComponentsReady){
-            Ogre::Timer timer;
             for(auto fctIt: mUpdateCallbacks)
             {
                 (fctIt)(timer.getMicroseconds());
@@ -200,6 +196,8 @@ namespace esvr2 {
                     mComponents.begin(), mComponents.end(),
                     [](ComponentPtr a){return !a->isReady();});
         }
+        mGraphicsSystem->initialize();
+        mComponents.push_back(mGraphicsSystem);
         registerUpdateCallback(
                 boost::bind(&GraphicsSystem::update, mGraphicsSystem, _1));
         if ( mConfig->multithreading )
@@ -222,7 +220,6 @@ namespace esvr2 {
             LOG << "singleThreading" << LOGEND;
             while( !getQuit() )
             {
-                Ogre::Timer timer;
                 for(auto fctIt: mUpdateCallbacks)
                 {
                     (fctIt)(timer.getMicroseconds());
