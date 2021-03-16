@@ -129,7 +129,7 @@ namespace esvr2
         Ogre::Real mAdjustProjectionPlaneInitialPitch = 0;
         Ogre::Real mAdjustProjectionPlaneRawInitialDistance = 0;
         Ogre::Real mAdjustProjectionPlaneRectInitialDistance = 0;
-        const Ogre::Real mAdjustProjectionPlaneFact = 2.0f;
+        const Ogre::Real mAdjustProjectionPlaneFact = 5.0f;
 
 
         bool mWindowHasFocus;

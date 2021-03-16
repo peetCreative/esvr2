@@ -497,9 +497,8 @@ namespace esvr2
                                          {Ogre::IdString(MENU_DISTANCE),
                                           Ogre::IdString(MENU_SETUP_DISTANCE)},
                                          "Press and hold right foot\n"
-                                         " to adjust the distance of the projection-plane \n"
-                                         "left tilt ~ push \n"
-                                         "right tilt ~ pull");
+                                         "Then turn your head\n"
+                                         "to adjust the distance of the projection-plane \n");
         ele = createInteractiveElement2D("MenuSlot4",
                                          {Ogre::IdString(MENU_GENERAL)},
                                          "Adjust Projection-Plane-Distance");
@@ -666,8 +665,8 @@ namespace esvr2
         //MENU_SETUP_EXPLANATION
         ele = createInteractiveElement2D("SetupExplanation",
                                          {Ogre::IdString(MENU_SETUP_EXPLANATION)},
-                                         "The setup is now finished.\n"
-                                         "After finish, this UI will disappear.\n"
+                                         "After finish you pressed finish,\n"
+                                         "this UI will disappear.\n"
                                          "By pressing the right foot again\n"
                                          "a menu will show up.\n"
                                          "There you can also set\n"
@@ -1749,28 +1748,33 @@ namespace esvr2
     void GameState::initAdjustProjectionPlaneDistance()
     {
         mAdjustProjectionPlaneInitialPitch =
-                getHeadOrientation().getRoll().valueRadians();
+                getHeadOrientation().getYaw().valueRadians();
         mAdjustProjectionPlaneRawInitialDistance =
                 mVRSceneNodesProjectionPlaneRaw->getPosition().z;
         mAdjustProjectionPlaneRectInitialDistance =
-                mVRSceneNodesProjectionPlaneRect->getPosition().z;
+                   mVRSceneNodesProjectionPlaneRect->getPosition().z;
     }
 
     void GameState::holdAdjustProjectionPlaneDistance(Ogre::uint64 time)
     {
+        Ogre::Real minDistance = -0.4;
+        Ogre::Real maxDistance = -10;
         Ogre::Real increment = mAdjustProjectionPlaneInitialPitch -
-                getHeadOrientation().getRoll().valueRadians();
+                getHeadOrientation().getYaw().valueRadians();
         Ogre::Real newProjectionPlaneDistanceRaw =
                 mAdjustProjectionPlaneRawInitialDistance +
                 (mAdjustProjectionPlaneFact * increment);
+        newProjectionPlaneDistanceRaw = std::min(newProjectionPlaneDistanceRaw, minDistance);
+        newProjectionPlaneDistanceRaw = std::max(newProjectionPlaneDistanceRaw, maxDistance);
         mVRSceneNodesProjectionPlaneRaw->setPosition(
                 0, 0, newProjectionPlaneDistanceRaw);
         Ogre::Real newProjectionPlaneDistanceRect =
                 mAdjustProjectionPlaneRectInitialDistance +
                 (mAdjustProjectionPlaneFact * increment);
+        newProjectionPlaneDistanceRect = std::min(newProjectionPlaneDistanceRect, minDistance);
+        newProjectionPlaneDistanceRect = std::max(newProjectionPlaneDistanceRect, maxDistance);
         mVRSceneNodesProjectionPlaneRect->setPosition(
-                0, 0, mAdjustProjectionPlaneRectInitialDistance +
-                      (mAdjustProjectionPlaneFact * increment) );
+                0, 0, newProjectionPlaneDistanceRect );
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()
