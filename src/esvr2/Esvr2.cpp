@@ -22,8 +22,7 @@ namespace esvr2 {
         ThreadParams(Esvr2 *esvr2, boost::function<void(Ogre::uint64)> updateFct):
             mEsvr2(esvr2), mUpdateFct(updateFct) {};
     };
-    typedef std::unique_ptr<ThreadParams> ThreadParamsPtr;
-    typedef std::vector<ThreadParamsPtr> ThreadParamsVec;
+    typedef std::vector<ThreadParams*> ThreadParamsVec;
 
     unsigned long updateThread(Ogre::ThreadHandle *threadHandle)
     {
@@ -203,16 +202,22 @@ namespace esvr2 {
         if ( mConfig->multithreading )
         {
             LOG << "multiThreading" << LOGEND;
+            //because ogre we need to keep track the memory the old way
             ThreadParamsVec threadParams;
             Ogre::ThreadHandleVec mThreadHandles;
+            int i = 0;
             for (auto updateCallback: mUpdateCallbacks)
             {
-                threadParams.push_back(std::make_unique<ThreadParams>(
-                        this, updateCallback));
+                ThreadParams *params = new ThreadParams(this, updateCallback);
+                threadParams.push_back(params);
                 mThreadHandles.push_back(Ogre::Threads::CreateThread(
-                        THREAD_GET( updateThread ), 0, this ));
+                        THREAD_GET( updateThread ), i++, params));
             }
             Ogre::Threads::WaitForThreads( mThreadHandles );
+            for (auto params: threadParams)
+            {
+                delete params;
+            }
         }
             //SINGLETHREADED
         else
