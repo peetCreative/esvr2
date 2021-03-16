@@ -29,6 +29,8 @@ namespace esvr2 {
         cv::Mat mUndistortMap1[2], mUndistortMap2[2];
         cv::Mat mUndistortRectifyMap1[2], mUndistortRectifyMap2[2];
 
+        cv::ColorConversionCodes mColorConversion {cv::COLOR_COLORCVT_MAX};
+
         std::mutex mMtx;
 
         bool configValid();

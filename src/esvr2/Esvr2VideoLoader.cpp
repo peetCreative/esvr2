@@ -173,15 +173,10 @@ namespace esvr2
                        cv::Size(mDestinationWidth, mDestinationHeight));
             }
 
-            if (img[eye]->type() == CV_8UC3 )
+            if (mColorConversion != cv::COLOR_COLORCVT_MAX )
             {
                 //Shouldn't matter whether BGR to BGRA or RGB to RGBA
-                cvtColor( *(img[eye]), *(img[eye]), cv::COLOR_RGB2BGRA );
-            }
-            else if (img[eye]->type() == CV_8UC4 )
-            {
-                //Shouldn't matter whether BGR to BGRA or RGB to RGBA
-                cvtColor( *(img[eye]), *(img[eye]), cv::COLOR_RGBA2BGRA );
+                cvtColor(*(img[eye]), *(img[eye]), mColorConversion );
             }
             if( img[eye]->type() != CV_8UC4 )
             {

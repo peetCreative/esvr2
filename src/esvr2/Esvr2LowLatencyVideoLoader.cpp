@@ -72,6 +72,7 @@ bool LowLatencyVideoLoader::initialize()
         mCameraConfig.cfg[LEFT]->width, mCameraConfig.cfg[LEFT]->height, 4u,
         mCameraConfig.cfg[LEFT]->width* mCameraConfig.cfg[LEFT]->height* 4u );
     updateMaps();
+    mColorConversion = cv::COLOR_RGB2BGRA;
     mReady = true;
     return true;
 }

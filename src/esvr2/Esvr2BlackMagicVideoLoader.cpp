@@ -49,6 +49,7 @@ namespace esvr2
             mCameraConfig.cfg[LEFT]->width, mCameraConfig.cfg[LEFT]->height, 4u,
             mCameraConfig.cfg[LEFT]->width* mCameraConfig.cfg[LEFT]->height* 4u );
         updateMaps();
+        mColorConversion = cv::COLOR_RGBA2BGRA;
         mReady = true;
         return true;
     }

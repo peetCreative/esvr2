@@ -774,7 +774,7 @@ namespace esvr2
             mVideoTexture[eye]->setResolution(
                     cameraConfig.cfg[eye]->width,
                     cameraConfig.cfg[eye]->height);
-            mVideoTexture[eye]->setPixelFormat(Ogre::PFG_RGBA8_UNORM);
+            mVideoTexture[eye]->setPixelFormat(Ogre::PFG_BGRA8_UNORM);
             mVideoTexture[eye]->scheduleTransitionTo(
                     Ogre::GpuResidency::Resident);
             //the staging texture to upload

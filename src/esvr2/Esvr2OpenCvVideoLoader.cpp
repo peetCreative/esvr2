@@ -32,8 +32,8 @@ namespace esvr2
 
         mCapture = cv::VideoCapture();
         cv::String path = mPath;
-        mCapture.open( path );
-//         mCapture.set(cv::CAP_PROP_MODE,  cv::CAP_MODE_RGB );
+        mCapture.open( path);
+        mCapture.set(cv::CAP_PROP_CONVERT_RGB,  true );
         if (!mCapture.isOpened()) {
             LOG << "Video could not be opened" << LOGEND;
             return false;
@@ -46,6 +46,7 @@ namespace esvr2
             mCameraConfig.cfg[LEFT]->width, mCameraConfig.cfg[LEFT]->height, 4u,
             mCameraConfig.cfg[LEFT]->width* mCameraConfig.cfg[LEFT]->height* 4u );
         updateMaps();
+        mColorConversion = cv::COLOR_RGB2BGRA;
         mReady = true;
         return true;
     }
