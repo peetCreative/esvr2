@@ -2,6 +2,7 @@
 // Created by peetcreative on 11.01.21.
 //
 #include "Esvr2Opt1Controller.h"
+#include "Esvr2Controller.h"
 #include "Esvr2InteractiveElement2D.h"
 #include "Esvr2GameState.h"
 #include "Esvr2LaparoscopeController.h"
@@ -40,6 +41,8 @@ namespace esvr2
                 boost::bind(&Opt1Controller::keyPressed, this));
         ele->setHoldFunction(
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_LEFT));
+        ele->setToggleReleaseFunction(
+                boost::bind(&Controller::stopMotion, this));
         ele = gameState->createInteractiveElement2D(
                 "Opt1Right",
                 {Ogre::IdString(MENU_OPT1)});
@@ -47,6 +50,8 @@ namespace esvr2
                 boost::bind(&Opt1Controller::keyPressed, this));
         ele->setHoldFunction(
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_RIGHT));
+        ele->setToggleReleaseFunction(
+                boost::bind(&Controller::stopMotion, this));
         ele = gameState->createInteractiveElement2D(
                 "Opt1RollLeft",
                 {Ogre::IdString(MENU_OPT1)});
@@ -54,6 +59,8 @@ namespace esvr2
                 boost::bind(&Opt1Controller::keyPressed, this));
         ele->setHoldFunction(
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_LEFT));
+        ele->setToggleReleaseFunction(
+                boost::bind(&Controller::stopMotion, this));
         ele = gameState->createInteractiveElement2D(
                 "Opt1RollRight",
                 {Ogre::IdString(MENU_OPT1)});
@@ -61,6 +68,8 @@ namespace esvr2
                 boost::bind(&Opt1Controller::keyPressed, this));
         ele->setHoldFunction(
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_ROLL_RIGHT));
+        ele->setToggleReleaseFunction(
+                boost::bind(&Controller::stopMotion, this));
         ele = gameState->createInteractiveElement2D(
                 "Opt1Up",
                 {Ogre::IdString(MENU_OPT1)});
@@ -68,6 +77,8 @@ namespace esvr2
                 boost::bind(&Opt1Controller::keyPressed, this));
         ele->setHoldFunction(
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_UP));
+        ele->setToggleReleaseFunction(
+                boost::bind(&Controller::stopMotion, this));
         ele = gameState->createInteractiveElement2D(
                 "Opt1Down",
                 {Ogre::IdString(MENU_OPT1)});
@@ -75,6 +86,8 @@ namespace esvr2
                 boost::bind(&Opt1Controller::keyPressed, this));
         ele->setHoldFunction(
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_DOWN));
+        ele->setToggleReleaseFunction(
+                boost::bind(&Controller::stopMotion, this));
         ele = gameState->createInteractiveElement2D(
                 "Opt1TransIn",
                 {Ogre::IdString(MENU_OPT1)});
@@ -82,6 +95,8 @@ namespace esvr2
                 boost::bind(&Opt1Controller::keyPressed, this));
         ele->setHoldFunction(
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_IN));
+        ele->setToggleReleaseFunction(
+                boost::bind(&Controller::stopMotion, this));
         ele = gameState->createInteractiveElement2D(
                 "Opt1TransOut",
                 {Ogre::IdString(MENU_OPT1)});
@@ -89,6 +104,8 @@ namespace esvr2
                 boost::bind(&Opt1Controller::keyPressed, this));
         ele->setHoldFunction(
                 boost::bind(&Opt1Controller::holdBtn, this, _1, DIR_TRANS_OUT));
+        ele->setToggleReleaseFunction(
+                boost::bind(&Controller::stopMotion, this));
     }
 
     void Opt1Controller::keyPressed()

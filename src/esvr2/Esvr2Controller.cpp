@@ -2,12 +2,11 @@
 // Created by peetcreative on 14.12.20.
 //
 #include "Esvr2Controller.h"
-
-#include <utility>
-
-#include "Esvr2.h"
 #include "Esvr2InteractiveElement.h"
 #include "Esvr2LaparoscopeController.h"
+
+#include <boost/bind.hpp>
+#include <utility>
 
 namespace esvr2
 {
@@ -17,5 +16,17 @@ namespace esvr2
             InteractiveElement(),
             mLaparoscopeController(std::move(laparoscopeController)),
             mGameState(gameState)
-    {}
+    {
+        mToggleReleaseCallback = boost::bind(&Controller::stopMotion, this);
+    }
+
+    // this function is called by default to stop motion
+    // after finally releasing the left button on the controller
+    void Controller::stopMotion()
+    {
+        //stop the controller from moving
+        DOFPose curDofPose;
+        if(mLaparoscopeController->getCurrentDOFPose(curDofPose))
+            mLaparoscopeController->setTargetDOFPose(curDofPose);
+    }
 }

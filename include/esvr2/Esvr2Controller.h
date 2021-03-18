@@ -39,6 +39,7 @@ namespace esvr2
         {
             return mTogglePressCallback || mHoldCallback || mToggleReleaseCallback;
         };
+        void stopMotion();
     };
     typedef std::shared_ptr<Controller> ControllerPtr;
     typedef std::vector<ControllerPtr> ControllerPtrList;
