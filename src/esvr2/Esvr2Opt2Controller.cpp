@@ -17,6 +17,19 @@ using namespace pivot_control_messages;
 
 namespace esvr2
 {
+    bool alignWithXZPlane(const Ogre::Quaternion &quad, Ogre::Quaternion &alignedQuad)
+    {
+        Ogre::Vector3 xAxisTrans = quad.xAxis();
+        if (xAxisTrans == Ogre::Vector3::UNIT_Y &&
+            xAxisTrans == -Ogre::Vector3::UNIT_Y)
+            return false;
+        Ogre::Vector3 xAxisNew(xAxisTrans.x,0,xAxisTrans.z);
+        xAxisNew.normalise();
+        Ogre::Quaternion trans = xAxisTrans.getRotationTo(xAxisNew);
+        alignedQuad = trans * quad;
+        return true;
+    }
+
     Opt2Controller::Opt2Controller(
             std::shared_ptr<LaparoscopeController> laparoscopeController,
             GameState *gameState,
@@ -34,7 +47,11 @@ namespace esvr2
 
     void Opt2Controller::startMoving()
     {
-        mStartOrientation = mGameState->getHeadOrientation();
+        if( !alignWithXZPlane(mGameState->getHeadOrientation(), mStartOrientation) )
+        {
+            //TODO: throw error
+            mStartOrientation = mGameState->getHeadOrientation();
+        }
         mStartPosition = mGameState->getHeadPosition();
         //TODO: guard
         if (!mLaparoscopeController->getCurrentDOFPose(mStartPose))
@@ -60,15 +77,9 @@ namespace esvr2
             LOG << "In Move mode but did not get DOFBoundaries" << LOGEND;
             return;
         }
-        Ogre::Vector3 xAxisTrans = currentOrientation.xAxis();
-        if (xAxisTrans == Ogre::Vector3::UNIT_Y &&
-            xAxisTrans == -Ogre::Vector3::UNIT_Y)
+        Ogre::Quaternion currentOrientationAdj;
+        if(!alignWithXZPlane(currentOrientation, currentOrientationAdj))
             return;
-        Ogre::Vector3 xAxisNew(xAxisTrans.x,0,xAxisTrans.z);
-        xAxisNew.normalise();
-        Ogre::Quaternion trans = xAxisTrans.getRotationTo(xAxisNew);
-        Ogre::Quaternion currentOrientationAdj = trans * currentOrientation;
-
         Ogre::Radian pitchDiff =
                 mStartOrientation.getPitch() - currentOrientationAdj.getPitch();
         Ogre::Radian yawDiff =
