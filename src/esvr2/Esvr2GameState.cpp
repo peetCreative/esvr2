@@ -665,7 +665,7 @@ namespace esvr2
         //MENU_SETUP_EXPLANATION
         ele = createInteractiveElement2D("SetupExplanation",
                                          {Ogre::IdString(MENU_SETUP_EXPLANATION)},
-                                         "After finish you pressed finish,\n"
+                                         "After you pressed finish,\n"
                                          "this UI will disappear.\n"
                                          "By pressing the right foot again\n"
                                          "a menu will show up.\n"
