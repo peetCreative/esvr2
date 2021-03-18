@@ -39,11 +39,11 @@ namespace esvr2
         //TODO: guard
         if (!mLaparoscopeController->getCurrentDOFPose(mStartPose))
             return;
-        mBlocked = !mGameState->isHeadPositionCentered();
-        if (mBlocked)
-            mGameState->setDebugText("too far from center");
-        else
-            mGameState->setDebugText("");
+//        mBlocked = !mGameState->isHeadPositionCentered();
+//        if (mBlocked)
+//            mGameState->setDebugText("too far from center");
+//        else
+//            mGameState->setDebugText("");
     }
 
     void Opt2Controller::hold(Ogre::uint64 time)
@@ -84,13 +84,16 @@ namespace esvr2
         pose.transZ = mStartPose.transZ +
                 mTransZFact * (posDiff.length() * zAxis.dotProduct(posDiff));
 
-        Ogre::Real transPitch = std::asin(
-                (std::sin(M_PI - mCamereaTilt) * mStartPose.transZ)/
-                mFocusDistance);
-        Ogre::Real transPitchNew = std::asin(
-                (std::sin(M_PI - mCamereaTilt) * pose.transZ)/
-                mFocusDistance);
-        pose.pitch -= transPitchNew - transPitch;
+        if (mEnableTransPitch)
+        {
+            Ogre::Real transPitch = std::asin(
+                    (std::sin(M_PI - mCamereaTilt) * mStartPose.transZ)/
+                    mFocusDistance);
+            Ogre::Real transPitchNew = std::asin(
+                    (std::sin(M_PI - mCamereaTilt) * pose.transZ)/
+                    mFocusDistance);
+            pose.pitch -= transPitchNew - transPitch;
+        }
 
         pose.yaw = std::min(pose.yaw, boundaries.yawMax);
         pose.yaw = std::max(pose.yaw, boundaries.yawMin);
@@ -102,7 +105,10 @@ namespace esvr2
         pose.transZ = std::max(pose.transZ, boundaries.transZMin);
 
         mLaparoscopeController->setTargetDOFPose(pose);
-//        mGameState->moveScreen(0);
+        if(mFollowMovements)
+        {
+            mGameState->moveScreen(0);
+        }
     }
 
     std::string Opt2Controller::getControllerMenuId() {

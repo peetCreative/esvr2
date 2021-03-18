@@ -23,6 +23,8 @@ namespace esvr2
         Ogre::Real mCamereaTilt;
         Ogre::Real mFocusDistance;
         bool mBlocked = false;
+        bool mEnableTransPitch = false;
+        bool mFollowMovements = false;
     public:
         Opt2Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,
