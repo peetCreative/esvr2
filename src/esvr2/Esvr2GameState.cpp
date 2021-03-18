@@ -1243,6 +1243,7 @@ namespace esvr2
         }
         else if (mCurrentController &&
                 mCurrentController->isActiveOnPress() &&
+                mUIStatus == UI_NONE &&
                 arg.keysym.scancode == SDL_SCANCODE_N )
         {
             mUIActive = true;
