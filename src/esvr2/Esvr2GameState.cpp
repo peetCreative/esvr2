@@ -1183,16 +1183,12 @@ namespace esvr2
                 if( !evt.key.repeat )
                 {
                     bool handled = keyPressed(evt.key);
-                    if (!handled && mCurrentController)
-                        mCurrentController->keyPressed(evt.key);
                 }
                 break;
             case SDL_KEYUP:
                 if( !evt.key.repeat )
                 {
                     bool handled = keyReleased( evt.key );
-                    if (!handled && mCurrentController)
-                        mCurrentController->keyReleased(evt.key);
                 }
                 break;
         }

@@ -31,8 +31,6 @@ namespace esvr2
         Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,
                 GameState *gameState);
-        virtual bool keyPressed( const SDL_KeyboardEvent &arg ) {return false;};
-        virtual bool keyReleased( const SDL_KeyboardEvent &arg ) {return false;};
         virtual void headPoseUpdated() {};
         virtual std::string getControllerMenuId() = 0;
         virtual bool isActiveOnPress()
