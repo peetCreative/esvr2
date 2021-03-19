@@ -207,6 +207,10 @@ namespace esvr2 {
             allComponentsReady = mComponents.end() == std::find_if(
                     mComponents.begin(), mComponents.end(),
                     [](ComponentPtr a){return !a->isReady();});
+            if (getQuit())
+            {
+                return 0;
+            }
         }
         mGraphicsSystem->initialize();
         mComponents.push_back(mGraphicsSystem);
