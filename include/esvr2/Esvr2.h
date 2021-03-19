@@ -212,6 +212,8 @@ namespace esvr2 {
                 std::shared_ptr<LaparoscopeController> laparoscopeController);
         bool setPoseState(
                 std::shared_ptr<PoseState> poseState);
+        bool getHeadPose(
+                std::array<Real, 3> &translation, std::array<Real, 4> &rotation);
         bool registerUpdateCallback(const boost::function<void(uint64)>);
         ~Esvr2();
         int run();

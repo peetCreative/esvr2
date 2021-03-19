@@ -160,6 +160,19 @@ namespace esvr2 {
         return true;
     }
 
+    bool Esvr2::getHeadPose(std::array<Real, 3> &translation, std::array<Real, 4> &rotation) {
+        //TODO: make this thread safe
+        if(mGraphicsSystem && mGraphicsSystem->isReady())
+        {
+            Ogre::Vector3 headPosition = mGraphicsSystem->getGameState()->getHeadPosition();
+            Ogre::Quaternion headOrientation = mGraphicsSystem->getGameState()->getHeadOrientation();
+            translation = {headPosition.x, headPosition.y, headPosition.z};
+            rotation = {headOrientation.w, headOrientation.x, headOrientation.y, headOrientation.z};
+            return true;
+        }
+        return false;
+    }
+
     bool Esvr2::registerUpdateCallback(
             const boost::function<void(uint64)> updateFunction)
     {
