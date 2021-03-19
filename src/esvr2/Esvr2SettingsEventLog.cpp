@@ -22,9 +22,9 @@ namespace esvr2
         time_t nowTm = std::chrono::system_clock::to_time_t(now);
         std::stringstream filePath;
         filePath << folderPath
-            << "/esvr2SettingsLog"
-            << std::put_time(std::localtime(&nowTm), "%F-%H-%M-%S")
-            << ".yml";
+                 << "/esvr2SettingsLog"
+                 << std::put_time(std::localtime(&nowTm), "%FT%H:%M:%S")
+                 << ".yml";
         YAML::Node rootNode;
         rootNode["Duration"] = msTime;
         YAML::Node logsNode;
