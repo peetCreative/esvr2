@@ -475,7 +475,7 @@ namespace esvr2
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_ADJUST_TO_HEAD), mAdjustToHeadHightIE));
         ele = createInteractiveElement2D("InfoBox",
                                    {Ogre::IdString(MENU_ADJUST_TO_HEAD)},
-                                   "Press right foot to adjust\n"
+                                   "Hold the right foot-pedal to adjust\n"
                                    "the projection-plane to hight of head");
         //RESET PROJECTION PLANE DISTANCE
         ele = createInteractiveElement2D("MenuSlot3",
@@ -496,12 +496,12 @@ namespace esvr2
         ele = createInteractiveElement2D("InfoBox",
                                          {Ogre::IdString(MENU_DISTANCE),
                                           Ogre::IdString(MENU_SETUP_DISTANCE)},
-                                         "Press and hold right foot\n"
-                                         "Then turn your head\n"
-                                         "to adjust the distance of the projection-plane \n");
+                                         "Hold the right foot-pedal\n"
+                                         "and turn your head\n"
+                                         "to adjust the scaling.\n");
         ele = createInteractiveElement2D("MenuSlot4",
                                          {Ogre::IdString(MENU_GENERAL)},
-                                         "Adjust Projection-Plane-Distance");
+                                         "Adjust Scaling");
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_DISTANCE), mAdjustProjectionPlaneDistanceIE));
         // MOVE SCREEN
@@ -520,7 +520,8 @@ namespace esvr2
         ele = createInteractiveElement2D("InfoBox",
                                          {Ogre::IdString(MENU_MOVE),
                                           Ogre::IdString(MENU_SETUP_MOVE)},
-                                         "Press and hold the right foot\n"
+                                         "Hold the right foot-pedal\n"
+                                         "and move your head\n"
                                          "to move the projection-plane\n"
                                          " to a comfortable position.");
         //CHANGE DISTORTION
@@ -608,8 +609,8 @@ namespace esvr2
                                          "using the dial on the lower right of the headset\n\n"
                                          "You can take off the headset at anytime you want.\n"
                                          "If you do so make sure\n"
-                                         "that you are not pressing a foot-switch.\n"
-                                         "To continue, press the right foot.");
+                                         "that you are not pressing a foot-pedal.\n"
+                                         "To continue, click the right foot-pedal.");
         mSetupStartIE = std::make_shared<InteractiveElement>();
         mSetupStartIE->setTogglePressFunction(
                 boost::bind(&GameState::setupStart, this));
@@ -618,8 +619,8 @@ namespace esvr2
         ele = createInteractiveElement2D("InfoBox",
                                          {Ogre::IdString(MENU_SETUP_CURSOR)},
                                         "Navigate the red dot\n"
-                                        "using your head to Next\n"
-                                        "and press the right foot\n"
+                                        "using your head to the top-right \"Next\" button \n"
+                                        "and click the right foot-pedal\n"
                                         "to select it.");
         ele = createInteractiveElement2D("AVictimBox",
                                          {Ogre::IdString(MENU_SETUP_CURSOR)},
@@ -645,7 +646,7 @@ namespace esvr2
         ele = createInteractiveElement2D("SetupBtn2",
                                          {Ogre::IdString(MENU_SETUP_MOVE)},
                                          "Next\n"
-                                         "Adjust Projection-Plane-Distance");
+                                         "Scaling");
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_SETUP_DISTANCE), mAdjustProjectionPlaneDistanceIE));
         //MENU_SETUP_DISTANCE
@@ -665,18 +666,18 @@ namespace esvr2
         //MENU_SETUP_EXPLANATION
         ele = createInteractiveElement2D("SetupExplanation",
                                          {Ogre::IdString(MENU_SETUP_EXPLANATION)},
-                                         "After you pressed finish,\n"
+                                         "After you clicked \"Finish\",\n"
                                          "this UI will disappear.\n"
-                                         "By pressing the right foot again\n"
+                                         "By hold the LEFT foot-pedal you activate\n"
+                                         "the camera-controller.\n"
+                                         "By clicking the RIGHT foot-pedal again\n"
                                          "a menu will show up.\n"
-                                         "There you can also set\n"
-                                         "the camera-controller and the distortion.\n"
-                                         "By pressing the left foot you activate\n"
-                                         "the camera-controller");
+                                         "Please follow the instruction\n"
+                                         "of the super-visor.");
         ele = createInteractiveElement2D("SetupBtn1",
                                          {Ogre::IdString(MENU_SETUP_EXPLANATION)},
                                          "Back\n"
-                                         "Adjust Projection-Plane-Distance");
+                                         "Adjust Scaling");
         ele->setTogglePressFunction(
                 boost::bind(&GameState::goToMenu, this, Ogre::IdString(MENU_SETUP_DISTANCE), mAdjustProjectionPlaneDistanceIE));
         ele = createInteractiveElement2D("SetupBtn2",

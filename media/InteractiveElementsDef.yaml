@@ -229,6 +229,7 @@ interactive_bord:
       uv_size_x: 0.5
       uv_size_y: 0.1
       bg_color:
+        r: 0.2
         a: 1.0
     - id: SetupBtn2
       uv_x: 0.5
@@ -236,4 +237,5 @@ interactive_bord:
       uv_size_x: 0.5
       uv_size_y: 0.1
       bg_color:
+        r: 0.2
         a: 1.0
