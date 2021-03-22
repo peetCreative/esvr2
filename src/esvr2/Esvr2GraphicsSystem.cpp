@@ -916,6 +916,7 @@ namespace esvr2
         LOG << "write Settings Event Log to File " << mEsvr2->mConfig->logFolder << LOGEND;
         writeSettingsEventLog(
                 mEsvr2->mConfig->logFolder,
+                mEsvr2->mConfig->logPrefix,
                 mGameState->mSettingsEventLogs,
                 mLastStartTime);
         mQuit = true;

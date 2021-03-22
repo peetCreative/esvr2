@@ -28,6 +28,7 @@ namespace esvr2
 
     bool writeSettingsEventLog(
             std::string folderPath,
+            std::string prefix,
             SettingsEventLogList logList,
             Ogre::uint64 msTime);
 

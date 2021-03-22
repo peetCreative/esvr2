@@ -166,6 +166,7 @@ namespace esvr2 {
         Real ctlOpt2TransZFact = 2.0;
         std::string resourcePath = "Resources.cfg";
         std::string logFolder = ".";
+        std::string logPrefix = "";
         std::string serialPort = "/dev/ttyUSB0";
         bool centerProjectionPlane = false;
         ControllerType controllerType = CT_NONE;

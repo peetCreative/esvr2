@@ -15,6 +15,7 @@ namespace esvr2
 {
     bool writeSettingsEventLog(
             std::string folderPath,
+            std::string prefix,
             SettingsEventLogList logList,
             Ogre::uint64 msTime)
     {
@@ -22,7 +23,8 @@ namespace esvr2
         time_t nowTm = std::chrono::system_clock::to_time_t(now);
         std::stringstream filePath;
         filePath << folderPath
-                 << "/esvr2SettingsLog"
+                 << "/esvr2SettingsLog_"
+                 << prefix << "_"
                  << std::put_time(std::localtime(&nowTm), "%FT%H:%M:%S")
                  << ".yml";
         YAML::Node rootNode;

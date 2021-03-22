@@ -427,6 +427,8 @@ namespace esvr2 {
             config->resourcePath = param.as<std::string>();
         if (YAML::Node param = doc["log_folder"])
             config->logFolder = param.as<std::string>();
+        if (YAML::Node param = doc["log_prefix"])
+            config->logPrefix = param.as<std::string>();
         if (YAML::Node param = doc["serial_port"])
             config->serialPort = param.as<std::string>();
         if (YAML::Node param = doc["center_projection_plane"])
