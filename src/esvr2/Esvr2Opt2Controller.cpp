@@ -80,12 +80,16 @@ namespace esvr2
         Ogre::Quaternion currentOrientationAdj;
         if(!alignWithXZPlane(currentOrientation, currentOrientationAdj))
             return;
+        Ogre::Quaternion diffOrientation = mStartOrientation.Inverse() * currentOrientationAdj;
         Ogre::Radian pitchDiff =
-                mStartOrientation.getPitch() - currentOrientationAdj.getPitch();
+                -diffOrientation.getPitch();
+//                mStartOrientation.getPitch() - currentOrientationAdj.getPitch();
         Ogre::Radian yawDiff =
-                mStartOrientation.getYaw() - currentOrientationAdj.getYaw();
+                -diffOrientation.getYaw();
+//                mStartOrientation.getYaw() - currentOrientationAdj.getYaw();
         Ogre::Radian rollDiff =
-                mStartOrientation.getRoll() - currentOrientationAdj.getRoll();
+                -diffOrientation.getRoll();
+//                mStartOrientation.getRoll() - currentOrientationAdj.getRoll();
         Ogre::Vector3 zAxis = currentOrientation.zAxis();
         Ogre::Vector3 posDiff = mStartPosition - currentPosition;
 
