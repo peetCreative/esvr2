@@ -24,12 +24,15 @@ namespace esvr2 {
         size_t mDestinationDepth, mDestinationLength;
 
         unsigned char *mBuffers[2][2];
+        unsigned char *mBlackBuffer;
         StereoCameraConfig mCameraConfig;
 
         cv::Mat mUndistortMap1[2], mUndistortMap2[2];
         cv::Mat mUndistortRectifyMap1[2], mUndistortRectifyMap2[2];
 
         cv::ColorConversionCodes mColorConversion {cv::COLOR_COLORCVT_MAX};
+
+        bool mShow {true};
 
         std::mutex mMtx;
 
@@ -55,6 +58,9 @@ namespace esvr2 {
         bool isReady();
 
         bool isStereo() {return mStereo;};
+
+        void setShow(bool show) {mShow = show;};
+        bool isShow() {return mShow;};
 
         //should probably be called initialize implementations or by graphics
         bool updateDestinationSize(

@@ -215,7 +215,11 @@ namespace esvr2
             stereoImageData.img[eye].height = mDestinationHeight;
             stereoImageData.img[eye].depth = mDestinationDepth;
             stereoImageData.img[eye].length = mDestinationLength;
-            stereoImageData.img[eye].data = mBuffers[mCur][eye];
+            if (mShow)
+                stereoImageData.img[eye].data = mBuffers[mCur][eye];
+            else
+                stereoImageData.img[eye].data = mBlackBuffer;
+
         }
         return stereoImageData;
     }
@@ -234,7 +238,10 @@ namespace esvr2
         imageData.height = mDestinationHeight;
         imageData.depth = mDestinationDepth;
         imageData.length = mDestinationLength;
-        imageData.data = mBuffers[mCur][LEFT];
+        if(mShow)
+            imageData.data = mBuffers[mCur][LEFT];
+        else
+            imageData.data = mBlackBuffer;
         return imageData;
     }
 
@@ -262,6 +269,15 @@ namespace esvr2
                                         Ogre::MEMCATEGORY_RESOURCE ) );
                     memset(mBuffers[i][j], 0, length);
                 }
+            if (mBlackBuffer)
+            {
+                OGRE_FREE_SIMD(
+                        mBlackBuffer, Ogre::MEMCATEGORY_RESOURCE );
+            }
+            mBlackBuffer = reinterpret_cast<Ogre::uint8*>(
+                    OGRE_MALLOC_SIMD( length,
+                                      Ogre::MEMCATEGORY_RESOURCE ) );
+            memset(mBlackBuffer, 0, length);
         }
         mDestinationWidth = width;
         mDestinationHeight = height;
