@@ -220,6 +220,7 @@ namespace esvr2 {
         int run();
         unsigned long updateThread(
                 boost::function<void(uint64)> updateFct);
+        void quit();
 
     private:
         bool getQuit();

@@ -114,6 +114,12 @@ namespace esvr2 {
 
     }
 
+    void Esvr2::quit()
+    {
+        if (mGraphicsSystem)
+            mGraphicsSystem->quit();
+    }
+
     bool Esvr2::getQuit()
     {
         return
