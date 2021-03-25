@@ -169,6 +169,7 @@ namespace esvr2 {
         std::string resourcePath = "Resources.cfg";
         std::string logFolder = ".";
         std::string logPrefix = "";
+        std::string cachePrefixParticipantId = "";
         std::string serialPort = "/dev/ttyUSB0";
         bool centerProjectionPlane = false;
         ControllerType controllerType = CT_NONE;

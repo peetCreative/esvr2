@@ -439,6 +439,8 @@ namespace esvr2 {
             config->logFolder = param.as<std::string>();
         if (YAML::Node param = doc["log_prefix"])
             config->logPrefix = param.as<std::string>();
+        if (YAML::Node param = doc["cache_prefix_participant_id"])
+            config->cachePrefixParticipantId = param.as<std::string>();
         if (YAML::Node param = doc["serial_port"])
             config->serialPort = param.as<std::string>();
         if (YAML::Node param = doc["center_projection_plane"])
@@ -512,9 +514,8 @@ namespace esvr2 {
 
     bool readCacheYml(std::shared_ptr<Esvr2Config> config) {
         std::stringstream filePath;
-        filePath << config->logFolder
-                 << "/esvr2Cache_"
-                 << config->logPrefix << ".yml";
+        filePath << "/tmp/esvr2Cache_"
+                 << config->cachePrefixParticipantId << ".yml";
         LOG << "file_name:" << filePath.str() << LOGEND;
         std::ifstream fin(filePath.str());
         if (!fin.good()) {
@@ -536,9 +537,8 @@ namespace esvr2 {
         rootNode["cached_projection_plane_distance"] =
                 config->cachedProjectionPlaneDistance;
         std::stringstream filePath;
-        filePath << config->logFolder
-                 << "/esvr2Cache_"
-                 << config->logPrefix << ".yml";
+        filePath << "/tmp/esvr2Cache_"
+                 << config->cachePrefixParticipantId << ".yml";
         LOG << "file_name:" << filePath.str() << LOGEND;
         std::ofstream fout;
         fout.open(filePath.str());
