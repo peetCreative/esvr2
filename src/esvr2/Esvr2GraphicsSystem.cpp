@@ -537,6 +537,7 @@ namespace esvr2
         //Resources
         setupResources();
         loadResources();
+        mLoadCacheSucc = readCacheYml(mEsvr2->mConfig);
 
         //we need to create them here because SceneManager needs them
         setupLaparoscopeTextures();
@@ -919,6 +920,7 @@ namespace esvr2
                 mEsvr2->mConfig->logPrefix,
                 mGameState->mSettingsEventLogs,
                 mLastStartTime);
+        writeCacheYml(mEsvr2->mConfig);
         mQuit = true;
     }
 

@@ -205,8 +205,10 @@ namespace esvr2
         void resetProjectionPlaneDistance();
         void initAdjustProjectionPlaneDistance();
         void holdAdjustProjectionPlaneDistance(Ogre::uint64 time);
+        void releaseAdjustProjectionPlaneDistance();
 
         void moveScreenInit();
+        void moveScreenStop();
 
         void setupStart();
         void setupFinish();

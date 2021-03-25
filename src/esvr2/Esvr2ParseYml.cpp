@@ -125,6 +125,16 @@ namespace esvr2 {
     }
 
     template<int T>
+    bool sequenceToString(const std::array<Real, T> &vec, std::stringstream &ss)
+    {
+        ss << "[";
+        for(Real val: vec)
+            ss << val;
+        ss << "]";
+        return true;
+    }
+
+    template<int T>
     bool readSequence(YAML::Node node, std::array<Real, T> &vec)
     {
         if (!node.IsSequence())
@@ -487,5 +497,53 @@ namespace esvr2 {
         if (!success)
             LOG << "Failed to parse camera calibration from file [" << file_name << " %s]" << LOGEND;
         return success;
+    }
+
+    bool readCacheYmlIntern(
+        std::istream& in, std::shared_ptr<Esvr2Config> config)
+    {
+        YAML::Node doc = YAML::Load(in);
+        if (YAML::Node param = doc["cached_projection_plane_orientation"])
+            readSequence<4>(param, config->cachedProjectionPlaneOrientation);
+        if (YAML::Node param = doc["cached_projection_plane_distance"])
+            config->cachedProjectionPlaneDistance = param.as<Real>();
+        return true;
+    }
+
+    bool readCacheYml(std::shared_ptr<Esvr2Config> config) {
+        std::stringstream filePath;
+        filePath << config->logFolder
+                 << "/esvr2Cache_"
+                 << config->logPrefix << ".yml";
+        LOG << "file_name:" << filePath.str() << LOGEND;
+        std::ifstream fin(filePath.str());
+        if (!fin.good()) {
+            LOG << "Unable to open cache-file [" << filePath.str() << "]" << LOGEND;
+            return false;
+        }
+        bool success = readCacheYmlIntern(fin, config);
+        if (!success)
+            LOG << "Failed to parse cache-file ["
+                << filePath.str() << "]" << LOGEND;
+        return success;
+    }
+
+    bool writeCacheYml(std::shared_ptr<Esvr2Config> config)
+    {
+        YAML::Node rootNode;
+        for(Real val: config->cachedProjectionPlaneOrientation)
+            rootNode["cached_projection_plane_orientation"].push_back(val);
+        rootNode["cached_projection_plane_distance"] =
+                config->cachedProjectionPlaneDistance;
+        std::stringstream filePath;
+        filePath << config->logFolder
+                 << "/esvr2Cache_"
+                 << config->logPrefix << ".yml";
+        LOG << "file_name:" << filePath.str() << LOGEND;
+        std::ofstream fout;
+        fout.open(filePath.str());
+        fout << rootNode;
+        fout.close();
+        return true;
     }
 } //namespace esvr2

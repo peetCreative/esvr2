@@ -150,6 +150,8 @@ namespace esvr2 {
         Real headHight = 1.7f;
         Real centerEpsilon = 0.1;
         Real initialProjectionPlaneDistance = 2.0f;
+        Real cachedProjectionPlaneDistance = 2.0f;
+        RealArray4 cachedProjectionPlaneOrientation = {0.0f, 0.0f, 0.0f, 0.0f};
         Real infoScreenDistance = 1.0f;
         //the laparoscope is 30° tilted
         int ctlDelay = 25;

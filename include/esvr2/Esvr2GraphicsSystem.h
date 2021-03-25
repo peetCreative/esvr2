@@ -57,6 +57,7 @@ namespace esvr2
         Ogre::String                mWriteAccessFolder {""};
         bool                        mUseMicrocodeCache {true};
         bool                        mUseHlmsDiskCache {true};
+        bool                        mLoadCacheSucc {false};
 
         //Ogre Workspaces
         Ogre::CompositorWorkspace *mLaparoscopeWorkspaces[2] {nullptr, nullptr};

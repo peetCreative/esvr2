@@ -492,7 +492,7 @@ namespace esvr2
         mAdjustProjectionPlaneDistanceIE->setHoldFunction(
                 boost::bind(&GameState::holdAdjustProjectionPlaneDistance, this, _1));
         mAdjustProjectionPlaneDistanceIE->setToggleReleaseFunction(
-                boost::bind(&GameState::addSettingsEventLog, this, "adjustProjectionPlaneDistance"));
+                boost::bind(&GameState::releaseAdjustProjectionPlaneDistance, this));
         ele = createInteractiveElement2D("InfoBox",
                                          {Ogre::IdString(MENU_DISTANCE),
                                           Ogre::IdString(MENU_SETUP_DISTANCE)},
@@ -511,7 +511,7 @@ namespace esvr2
         mMoveIE->setHoldFunction(
                 boost::bind(&GameState::moveScreen, this, _1));
         mMoveIE->setToggleReleaseFunction(
-                boost::bind(&GameState::addSettingsEventLog, this, "moveScreen"));
+                boost::bind(&GameState::moveScreenStop, this));
         ele = createInteractiveElement2D("MenuSlot5",
                    {Ogre::IdString(MENU_GENERAL)},
                    "MoveScreen");
@@ -1606,7 +1606,6 @@ namespace esvr2
         mInfoScreenSceneNode->attachObject( mVRInfoScreen );
         //for debugging
 //        mInfoScreenSceneNode->attachObject( createAxisIntern(sceneManager));
-        Ogre::Real dist = mCorrectProjPlaneDistance[DIST_RAW];
         mInfoScreenSceneNode->setPosition( 0, 0, -mEsvr2->mConfig->infoScreenDistance);
     }
 
@@ -1701,6 +1700,14 @@ namespace esvr2
                 mVRCamerasNode->getPosition());
     }
 
+    void GameState::moveScreenStop()
+    {
+        addSettingsEventLog("moveScreen");
+        mEsvr2->mConfig->cachedProjectionPlaneOrientation =
+                QuaternionToRealArray4(
+                        mVRSceneNodeProjectionPlanesOrigin->getOrientation());
+    }
+
     void GameState::moveScreen(Ogre::uint64 time)
     {
         //TODO: guard mVRSceneNodeProjectionPlanesOrigin and
@@ -1773,6 +1780,13 @@ namespace esvr2
         newProjectionPlaneDistanceRect = std::max(newProjectionPlaneDistanceRect, maxDistance);
         mVRSceneNodesProjectionPlaneRect->setPosition(
                 0, 0, newProjectionPlaneDistanceRect );
+    }
+
+    void GameState::releaseAdjustProjectionPlaneDistance()
+    {
+        addSettingsEventLog("adjustProjectionPlaneDistance");
+        mEsvr2->mConfig->cachedProjectionPlaneDistance =
+            mVRSceneNodesProjectionPlaneRaw->getPosition().z;
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()
@@ -1850,7 +1864,22 @@ namespace esvr2
     void GameState::setupStart()
     {
         adjustToHeadHight();
-        moveScreen(0);
+        if (mGraphicsSystem->mLoadCacheSucc)
+        {
+            Ogre::Quaternion cachedHeadOrientation =
+                    RealArray4ToQuaternion(
+                            mEsvr2->mConfig->cachedProjectionPlaneOrientation);
+            mVRSceneNodeProjectionPlanesOrigin->setOrientation(
+                    cachedHeadOrientation);
+            Ogre::Real distance = mEsvr2->mConfig->cachedProjectionPlaneDistance;
+            mVRSceneNodesProjectionPlaneRaw->setPosition(0, 0, distance);
+            mVRSceneNodesProjectionPlaneRect->setPosition(0, 0, 0);
+        }
+        else
+        {
+            moveScreen(0);
+        }
+
         //detach from parent
         mInfoScreenStaticSceneNode->detachObject(mVRInfoScreen);
         mInfoScreenSceneNode->attachObject(mVRInfoScreen);
