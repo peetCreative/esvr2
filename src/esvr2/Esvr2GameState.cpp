@@ -1762,22 +1762,22 @@ namespace esvr2
 
     void GameState::holdAdjustProjectionPlaneDistance(Ogre::uint64 time)
     {
-        Ogre::Real minDistance = -0.4;
-        Ogre::Real maxDistance = -10;
+        Ogre::Real minDistance = mEsvr2->mConfig->projectionPlaneMinDistance;
+        Ogre::Real maxDistance = mEsvr2->mConfig->projectionPlaneMaxDistance;
         Ogre::Real increment = mAdjustProjectionPlaneInitialPitch -
                 getHeadOrientation().getYaw().valueRadians();
         Ogre::Real newProjectionPlaneDistanceRaw =
                 mAdjustProjectionPlaneRawInitialDistance +
                 (mAdjustProjectionPlaneFact * increment);
-        newProjectionPlaneDistanceRaw = std::min(newProjectionPlaneDistanceRaw, minDistance);
-        newProjectionPlaneDistanceRaw = std::max(newProjectionPlaneDistanceRaw, maxDistance);
+        newProjectionPlaneDistanceRaw = std::min(newProjectionPlaneDistanceRaw, -minDistance);
+        newProjectionPlaneDistanceRaw = std::max(newProjectionPlaneDistanceRaw, -maxDistance);
         mVRSceneNodesProjectionPlaneRaw->setPosition(
                 0, 0, newProjectionPlaneDistanceRaw);
         Ogre::Real newProjectionPlaneDistanceRect =
                 mAdjustProjectionPlaneRectInitialDistance +
                 (mAdjustProjectionPlaneFact * increment);
-        newProjectionPlaneDistanceRect = std::min(newProjectionPlaneDistanceRect, minDistance);
-        newProjectionPlaneDistanceRect = std::max(newProjectionPlaneDistanceRect, maxDistance);
+        newProjectionPlaneDistanceRect = std::min(newProjectionPlaneDistanceRect, -minDistance);
+        newProjectionPlaneDistanceRect = std::max(newProjectionPlaneDistanceRect, -maxDistance);
         mVRSceneNodesProjectionPlaneRect->setPosition(
                 0, 0, newProjectionPlaneDistanceRect );
     }
@@ -1786,7 +1786,7 @@ namespace esvr2
     {
         addSettingsEventLog("adjustProjectionPlaneDistance");
         mEsvr2->mConfig->cachedProjectionPlaneDistance =
-            mVRSceneNodesProjectionPlaneRaw->getPosition().z;
+            -mVRSceneNodesProjectionPlaneRaw->getPosition().z;
     }
 
     Ogre::Quaternion GameState::getHeadOrientation()
@@ -1867,17 +1867,26 @@ namespace esvr2
         if (mGraphicsSystem->mLoadCacheSucc)
         {
             Ogre::Quaternion cachedHeadOrientation =
-                    RealArray4ToQuaternion(
-                            mEsvr2->mConfig->cachedProjectionPlaneOrientation);
-            mVRSceneNodeProjectionPlanesOrigin->setOrientation(
-                    cachedHeadOrientation);
+            RealArray4ToQuaternion(
+                mEsvr2->mConfig->cachedProjectionPlaneOrientation);
+            if (cachedHeadOrientation != Ogre::Quaternion::ZERO)
+                mVRSceneNodeProjectionPlanesOrigin->setOrientation(
+                        cachedHeadOrientation);
+            else
+                LOG << "WRONG QUATERNION LOADED FROM CACHE!!!!!!!!!!!!!!!!!!" << LOGEND;
             Ogre::Real distance = mEsvr2->mConfig->cachedProjectionPlaneDistance;
-            mVRSceneNodesProjectionPlaneRaw->setPosition(0, 0, distance);
-            mVRSceneNodesProjectionPlaneRect->setPosition(0, 0, 0);
+            mVRSceneNodesProjectionPlaneRaw->setPosition(0, 0, -distance);
+            mVRSceneNodesProjectionPlaneRect->setPosition(0, 0, -distance);
+
         }
         else
         {
             moveScreen(0);
+            mEsvr2->mConfig->cachedProjectionPlaneOrientation =
+                QuaternionToRealArray4(
+                    mVRSceneNodeProjectionPlanesOrigin->getOrientation());
+            mEsvr2->mConfig->cachedProjectionPlaneDistance =
+                -mVRSceneNodesProjectionPlaneRaw->getPosition().z;
         }
 
         //detach from parent
