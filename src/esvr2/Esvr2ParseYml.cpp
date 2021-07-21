@@ -2,6 +2,9 @@
 
 #include "Esvr2.h"
 #include "Esvr2InteractiveElement2DDef.h"
+#include "Esvr2Helper.h"
+
+#include "OgreQuaternion.h"
 
 #include <yaml-cpp/yaml.h>
 #include <fstream>
@@ -505,10 +508,27 @@ namespace esvr2 {
         std::istream& in, std::shared_ptr<Esvr2Config> config)
     {
         YAML::Node doc = YAML::Load(in);
+        RealArray4 orientatioArray = {0.0f,0.0f,0.0f,0.0f};
         if (YAML::Node param = doc["cached_projection_plane_orientation"])
-            readSequence<4>(param, config->cachedProjectionPlaneOrientation);
+            readSequence<4>(param, orientatioArray);
+        Ogre::Quaternion orientation = RealArray4ToQuaternion(orientatioArray);
+        if (orientation != Ogre::Quaternion::ZERO && !orientation.isNaN())
+            config->cachedProjectionPlaneOrientation = orientatioArray;
+        else
+            return false;
+        Real distance = 0;
         if (YAML::Node param = doc["cached_projection_plane_distance"])
-            config->cachedProjectionPlaneDistance = param.as<Real>();
+             distance = param.as<Real>();
+        if (distance != 0
+            && distance >= config->projectionPlaneMinDistance
+            && distance <= config->projectionPlaneMaxDistance)
+        {
+            config->cachedProjectionPlaneDistance = distance;
+        }
+        else
+        {
+            return false;
+        }
         return true;
     }
 
