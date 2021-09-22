@@ -17,7 +17,8 @@ namespace esvr2
 {
     class LaparoscopeController;
     class GameState;
-    /* This class is to be overwritten to implement different
+    //! \brief Abstract super class for different Cameracontrol UI-Implementations
+    /*! This class is to be overwritten to implement different
      * modalities to control the Laparoscope.
      * It can use the OpenVR transforms, add things to the VR scene
      * and to the  Controll UI.

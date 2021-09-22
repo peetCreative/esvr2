@@ -42,18 +42,20 @@ namespace esvr2 {
         CT_OPT2
     } ControllerType;
     //TODO: rename to VideoInput
+    //! \brief Defines Videoinput
     typedef enum {
         IT_NONE,
         IT_VIDEO_LOW_LATENCY,
         IT_VIDEO_OPENCV,
         IT_VIDEO_BLACKMAGIC
     } InputType;
+    //! \deprecated allways use VRT_TO_SQUARE
     typedef enum {
         VRT_TO_SQUARE,
         VRT_TO_2D_RECTANGLE
     } VideoRenderTarget;
-    /* Type defines how to interpreste the incoming images from videoloader
-     * TODO: rename to VideoFormat or something else
+    //! \brief Type defines how to interpreste the incoming images from videoloader
+    /*! \TODO: rename to VideoFormat or something else
      */
     typedef enum {
         VIT_NONE,
@@ -62,20 +64,18 @@ namespace esvr2 {
         VIT_STEREO_VERTICAL_SPLIT,
         VIT_STEREO_HORIZONTAL_SPLIT
     } VideoInputType;
-    /* Defines wether the images from Videoloader should be projected  with Undistortion and/or be rectified
-     */
+    //! \brief Defines wether the images from Videoloader should be projected  with Undistortion and/or be rectified
     typedef enum {
         DIST_RAW,
         DIST_UNDISTORT,
         DIST_UNDISTORT_RECTIFY
     } Distortion;
-    /* Used when images are split horizontally or vertically
-     */
+    //! \brief Used when images are split horizontally or vertically
     typedef enum {
         ORIENTATION_VERTICAL,
         ORIENTATION_HORIZONTAL
     } Orientation;
-    /* wether to use in compositor the possibility of instanced Stereo,
+    /*! whether to use in compositor the possibility of instanced Stereo,
      * which might be little faster.
      * However it's hard to render objects only in one side with this methode
      * Therefore we are using multiple compositor passes
@@ -88,8 +88,8 @@ namespace esvr2 {
     typedef std::array<Real,3> RealArray3;
     typedef std::array<Real,4> RealArray4;
     typedef std::array<Real,16> RealArray16;
-    /* Config for the used HMD
-     * storing the projection Matrix and Transformations
+    //! \brief Config for the used HMD
+    /* storing the projection Matrix and Transformations
      */
     typedef struct {
         RealArray3 initialPose = RealArray3();
@@ -104,6 +104,8 @@ namespace esvr2 {
         RealArray4 tanRight = RealArray4();
         RealArray4 *tanPtr[2] = {&tanLeft, &tanRight};
         unsigned int width, height;
+        //! \brief checks if projectionMatrix and tan is set correct
+        //! \return valid
         bool valid()
         {
           return  projectionMatrixLeft[0] && projectionMatrixLeft[2] &&
@@ -118,52 +120,54 @@ namespace esvr2 {
                   tanRight[0] && tanRight[1] && tanRight[2] && tanRight[3];
         };
     } HmdConfig;
-    /* Camera Config of the used Laparoscope Cameras
+    /*! Camera Config of the used Laparoscope Cameras
      */
     typedef struct {
         std::string eye_str = "";
         int width = 0;
         int height = 0;
-        // Distortion parameteres
+        //! Distortion parameteres
         RealVector D = { 0, 0, 0, 0, 0 };
-        // Camera Matrix
+        //! Camera Matrix
         std::array<Real, 9> K = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        // Rectification Matrix
+        //! Rectification Matrix
         std::array<Real, 9> R = { 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        // Projection Matrix
+        //! Projection Matrix
         std::array<Real, 12> P = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-        /*
-         * check if the with and height is not null
-         * TODO: check maybe also the other parameters
+        //! \brief check if the with and height is not null
+        /* TODO: check maybe also the other parameters
          */
         bool valid()
         {
             return width != 0 && height != 0;
         };
     } CameraConfig;
-    /* Structure to hold stereo Camera configs
-     */
+    //! \brief Structure to hold stereo Camera configs
     typedef struct {
+        //! left camera config
         CameraConfig  leftCameraConfig = CameraConfig();
+        //! right camera config
         CameraConfig  rightCameraConfig = CameraConfig();
+        //! use this to get pointers of the left and right CameraConfigs
         CameraConfig* cfg[2] = {&leftCameraConfig, &rightCameraConfig};
-        //Distance from left to right
+        //! Distance from left to right
         Real leftToRight = 0;
     } StereoCameraConfig;
-    /* Structure to hold so the data and meta data of images from VideoLoader
-     * similar implementation to cv::Mat*
+    //! \brief Structure to hold so the data and meta data of images from VideoLoader
+    /*! similar implementation to cv::Mat*
      */
     typedef struct {
-        //-1 invalid frame
+        //! seqeunce number
+        //! -1 invalid frame
         int seq = -1;
-        // # bytes
+        //! number of bytes
         size_t length = 0;
         size_t height = 0;
         size_t width = 0;
         size_t depth = 0;
-        // pointer to data
+        //! pointer to data
         unsigned char *data = nullptr;
-        // check if the structure is valid
+        //! \brief check if the structure is valid
         bool valid()
         {
             return seq != -1 && length != 0 &&
@@ -171,82 +175,99 @@ namespace esvr2 {
                 data != nullptr;
         };
     } ImageData;
-
+    //! \brief hold two imagedata structures
     typedef struct {
         ImageData img[2];
     } StereoImageData;
-    /* Structure to hold varius config to be passed around
+    /*! Structure to hold varius config to be passed around
      */
     typedef struct {
-        // wether VideoLoader provides images
+        //! whether VideoLoader provides images
         bool showVideo = true;
-        // wether to show the ogre dialog before starting the application
+        //! whether to show the ogre dialog before starting the application
         bool showOgreDialog = false;
-        // enable/disable multithreading
+        //! enable/disable multithreading
         bool multithreading = false;
-        // meaningless because it's always stereo
+        //! meaningless because it's always stereo
         bool isStereo = true;
-        // wether to first run through tutorial
+        //! wether to first run through tutorial
         bool startWithSetup = true;
-        // wether to render to screen from debugging position
+        //! wether to render to screen from debugging position
         bool debugScreen = false;
-        // start application at specific screen number
+        //! start application at specific screen number
         int screen = 0;
-        // initial head hight if we don't have information from HMD
+        //! initial head hight if we don't have information from HMD
         Real headHight = 1.7f;
-        // the threshold to move the head and not beeing centered anymore
+        //! the threshold to move the head and not beeing centered anymore
         Real centerEpsilon = 0.1;
-        // Distance of the virtual projection plane at the beginning
+        //! Distance of the virtual projection plane at the beginning
         Real initialProjectionPlaneDistance = 2.0f;
-        // Distance of the last time the application was started projectionplane distance
+        //! Distance of the last time the application was started projectionplane distance
         Real cachedProjectionPlaneDistance = 2.0f;
-        // minimal Distance to projection plane to configure
+        //! minimal Distance to projection plane to configure
         Real projectionPlaneMinDistance = 0.4f;
-        // max Distance to projection plane to configure
+        //! max Distance to projection plane to configure
         Real projectionPlaneMaxDistance = 10.0f;
-        // cache where the projection plane has been
+        //! cache where the projection plane has been
         RealArray4 cachedProjectionPlaneOrientation = {0.0f, 0.0f, 0.0f, 0.0f};
-        // Distance of the menu projection plane
+        //! Distance of the menu projection plane
         Real infoScreenDistance = 1.0f;
-        // how many micro secs to wait before send new command in opt 0 and 1
+        //! how many micro secs to wait before send new command in opt 0 and 1
         int ctlDelay = 25;
-        //the laparoscope is 30° tilted
+        //! the laparoscope is 30° tilted
         Real ctlCameraTilt = 0.52359;
+        //! the distance to focus
         Real ctlFocusDistance = 0.2;
+        //! stepwidth of in yaw in rad
         Real ctlStepYaw = 0.01;
+        //! stepwidth of in pitch in rad
         Real ctlStepPitch = 0.01;
+        //! stepwidth of in roll in rad
         Real ctlStepRoll = 0.01;
+        //! stepwidth of in trans_z in rad
         Real ctlStepTransZ = 0.001;
         Real ctlOpt0ThresholdTransZ = 0.01;
         Real ctlOpt0ThresholdYawDeg = 5;
         Real ctlOpt0ThresholdPitchDeg = 5;
         Real ctlOpt0ThresholdRollDeg = 5;
         Real ctlOpt2TransZFact = 2.0;
+        //! Ogre Resources config file
         std::string resourcePath = "Resources.cfg";
+        //! Folder to put config file
         std::string logFolder = ".";
+        //! Prefix to put infront of log files
         std::string logPrefix = "";
+        //! Prefix to put infront of log files
         std::string cachePrefixParticipantId = "";
+
+        //! deprecated path to serial port
         std::string serialPort = "/dev/ttyUSB0";
+        //! if the ProjectionPlanes are centered by the camera matrix
         bool centerProjectionPlane = false;
+        //! choosen camera controller
         ControllerType controllerType = CT_NONE;
+        //! \deprecated used workspace type
         WorkspaceType workspaceType = WS_TWO_CAMERAS_STEREO;
+        //! \deprecated used workspace type
         VideoRenderTarget videoRenderTarget = VRT_TO_SQUARE;
+        //! Configuration of the Headset
         HmdConfig hmdConfig = HmdConfig();
     } Esvr2Config;
     typedef std::shared_ptr<Esvr2Config> Esvr2ConfigPtr;
 
-    /*
-     * Structure to configure the VideoLoader also used by the projection
-     */
+    //! \brief Structure to configure the VideoLoader also used by the projection
     typedef struct {
         InputType inputType = IT_NONE;
         VideoInputType videoInputType = VIT_NONE;
         // if from videofile path to it
         std::string path = "";
+        //! if the images are coming as stereo
         bool isStereo = true;
+        //! if we need to undistort/rectify the immage
         Distortion distortion = DIST_RAW;
-        // if we need to wait until the stereoCameraConfig is valid
+        //! if we need to wait until the stereoCameraConfig is valid
         bool wait4CameraConfig = false;
+        //! Camera Calibrations of the Stereo/Monocameras
         StereoCameraConfig stereoCameraConfig = StereoCameraConfig();
     } VideoInputConfig;
     typedef std::shared_ptr<VideoInputConfig> VideoInputConfigPtr;
@@ -265,26 +286,21 @@ namespace esvr2 {
     class GameState;
     class OpenVRCompositorListener;
     class Component;
+    //! Mainclass for the VR-Application
     class Esvr2 {
         friend GraphicsSystem;
         friend GameState;
         friend OpenVRCompositorListener;
     public:
-        // Main Constructor for the VR Application
         Esvr2( Esvr2ConfigPtr config);
-        // Sets the VideoLoader object if needed
         bool setVideoLoader(
                 std::shared_ptr<VideoLoader> videoLoader);
-        // to be used by applications implementing their own LaparoscopeController
         bool setLaparoscopeController(
                 std::shared_ptr<LaparoscopeController> laparoscopeController);
-        //to be used by applications implementing their own PoseState
         bool setPoseState(
                 std::shared_ptr<PoseState> poseState);
-        //to be used by applications retrieving the current Headpose
         bool getHeadPose(
                 std::array<Real, 3> &translation, std::array<Real, 4> &rotation);
-        // registers a callback function, which is regularly updated
         bool registerUpdateCallback(const boost::function<void(uint64)>);
         ~Esvr2();
         // starts the mainloop

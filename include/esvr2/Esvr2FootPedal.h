@@ -22,6 +22,8 @@ namespace esvr2
     };
 
     typedef struct sp_port* SerialPortPtr;
+    //! \brief Footpedal based on a Arduino connected by a serial console
+    //! \deprecated not usefull as we have a USB footpedal
     class FootPedal
     {
     private:

@@ -24,6 +24,7 @@ namespace esvr2 {
     };
     typedef std::vector<ThreadParams*> ThreadParamsVec;
 
+    //! \brief callback to update the loop of esvr2
     unsigned long updateThread(Ogre::ThreadHandle *threadHandle)
     {
         ThreadParams *tp =
@@ -33,6 +34,7 @@ namespace esvr2 {
 
     THREAD_DECLARE( updateThread )
 
+    //! \brief convert string to ControllerType
     ControllerType getControllerType(std::string input_str)
     {
         ControllerType controllerType = CT_NONE;
@@ -45,6 +47,7 @@ namespace esvr2 {
         return controllerType;
     }
 
+    //! \brief convert string to VideoInputType
     VideoInputType getVideoInputType(std::string input_str)
     {
         VideoInputType input = VIT_NONE;
@@ -59,6 +62,7 @@ namespace esvr2 {
         return input;
     }
 
+    //! \brief convert string to InputType
     InputType getInputType(std::string input_str)
     {
         InputType input = IT_NONE;
@@ -71,6 +75,7 @@ namespace esvr2 {
         return input;
     }
 
+    //! \brief convert string to VideoRenderTarget
     VideoRenderTarget getRenderVideoTarget(std::string input_str)
     {
         VideoRenderTarget input = VRT_TO_SQUARE;
@@ -81,6 +86,7 @@ namespace esvr2 {
         return input;
     }
 
+    //! \brief convert string to WorkspaceType
     WorkspaceType getWorkspaceType(std::string workspace_str)
     {
         WorkspaceType workspace = WS_TWO_CAMERAS_STEREO;
@@ -91,6 +97,7 @@ namespace esvr2 {
         return workspace;
     }
 
+    //! \brief convert string to Distortion
     Distortion getDistortionType( std::string distortion_str )
     {
         Distortion distortion = DIST_RAW;
@@ -103,23 +110,28 @@ namespace esvr2 {
         return distortion;
     }
 
+    //! \brief constructor of the Esvr2 Object
+    //! \param config fully configured Esvr2Config
     Esvr2::Esvr2(std::shared_ptr<Esvr2Config> config):
             mConfig(config)
     {
         mGraphicsSystem = std::make_shared<GraphicsSystem>(this);
     }
 
+    //! \brief Deconstructor of the Esvr2 Object
     Esvr2::~Esvr2()
     {
 
     }
 
+    //! \brief makes the Application stop
     void Esvr2::quit()
     {
         if (mGraphicsSystem)
             mGraphicsSystem->quit();
     }
 
+    //! \brief Checks if any component is to be stopped
     bool Esvr2::getQuit()
     {
         return
@@ -129,6 +141,7 @@ namespace esvr2 {
                     [](ComponentPtr c){return c->getQuit();});
     }
 
+    //! \brief Sets the VideoLoader object if needed
     bool Esvr2::setVideoLoader(VideoLoaderPtr videoLoader)
     {
         if (mIsConfigured)
@@ -141,6 +154,8 @@ namespace esvr2 {
         return true;
     }
 
+    //! \brief Sets the LaparoscopeController object
+    //! to make Robot or simulated camera move
     bool Esvr2::setLaparoscopeController(
             LaparoscopeControllerPtr laparoscopeController)
     {
@@ -154,6 +169,8 @@ namespace esvr2 {
         return true;
     }
 
+    //! \brief Sets the PoseState object
+    //! to make the application know where the laparoscope is
     bool Esvr2::setPoseState(PoseStatePtr poseState)
     {
         if (mIsConfigured)
@@ -166,6 +183,11 @@ namespace esvr2 {
         return true;
     }
 
+    //! \brief Function to get the tracked head position
+    /*! \param rotation Quaternion of the VR-Headset Orientation
+     *  \param translation 3D-Vector of the VR-Headset Position
+     *  \return success
+     */
     bool Esvr2::getHeadPose(std::array<Real, 3> &translation, std::array<Real, 4> &rotation) {
         //TODO: make this thread safe
         if(mGraphicsSystem && mGraphicsSystem->isReady())
@@ -179,6 +201,8 @@ namespace esvr2 {
         return false;
     }
 
+    //! \brief Function to register more function, which are called in the update loop
+    //! \return success
     bool Esvr2::registerUpdateCallback(
             const boost::function<void(uint64)> updateFunction)
     {
@@ -186,6 +210,8 @@ namespace esvr2 {
         return true;
     }
 
+    //! \brief function to start the VR-Application
+    //! \return c-style success of application
     int Esvr2::run()
     {
         mIsConfigured = true;

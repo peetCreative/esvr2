@@ -33,7 +33,7 @@
 
 namespace esvr2
 {
-    //Define what is modified when the mouse is moved
+    //! \brief Define what is modified when the mouse is moved
     typedef enum {
         MM_NONE,
         MM_ORIENTATION,
@@ -41,6 +41,7 @@ namespace esvr2
         MM_ROLL
     } MouseManipulationType;
 
+    //! \brief State of the Menü/Cameracontroller
     enum UIStatusType {
         UI_NONE,
         UI_GENERAL,
@@ -48,6 +49,7 @@ namespace esvr2
         UI_CONTROLLER_ACTIVE
     };
 
+    //! \brief State and Management of the virtual Objects
     class GameState
     {
     friend GraphicsSystem;
@@ -146,7 +148,6 @@ namespace esvr2
 
         SettingsEventLogList mSettingsEventLogs;
 
-        void createProjectionRectangle2D();
         void createVRProjectionPlanes();
         Ogre::ManualObject *createAxisIntern( Ogre::SceneManager *sceneManager );
         void createLaparoscopeAxisCamera(void );

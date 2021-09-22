@@ -31,6 +31,10 @@
 
 namespace esvr2
 {
+    /*! \brief Constructor of GameState
+     * \param esvr2 ptr to Esvr2 Instance
+     * \param graphicsSystem ptr to GraphicsSystem Instance
+     */
     GameState::GameState(Esvr2 *esvr2, GraphicsSystem *graphicsSystem):
             mEsvr2(esvr2),
             mGraphicsSystem( graphicsSystem ),
@@ -102,6 +106,9 @@ namespace esvr2
 
     }
 
+    /*! \brief calculate the position of the projection plane
+     * \param center center the projection plane in the camera calibration camera matrix
+     */
     void GameState::calcAlign(bool center)
     {
         StereoCameraConfig cameraConfig =
@@ -156,50 +163,8 @@ namespace esvr2
         }
     }
 
-    //TODO: compiles but doesn't work
-    void GameState::createProjectionRectangle2D()
-    {
-        mProjectionRectangle2D = mGraphicsSystem->mVRSceneManager
-                ->createRectangle2D(Ogre::SCENE_DYNAMIC);
-        mProjectionRectangle2D->setName("Rectangle2D");
-        mProjectionRectangle2D->initialize(
-            Ogre::BT_DEFAULT,
-            Ogre::Rectangle2D::GeometryFlagQuad | Ogre::Rectangle2D::GeometryFlagNormals);
-
-        // There's just simply no documentation
-        mProjectionRectangle2D->setGeometry(
-            Ogre::Vector2(-1.0f, -1.0f),
-            Ogre::Vector2(2.0f,2.0f)
-        );
-        mProjectionRectangle2D->setDatablock(mDatablockName[LEFT]);
-        mProjectionRectangle2D->setRenderQueueGroup( 212u );
-        mGraphicsSystem->mVRSceneManager->getRootSceneNode( Ogre::SCENE_DYNAMIC )
-            ->attachObject(mProjectionRectangle2D);
-
-        Ogre::MaterialManager &materialManager =
-            Ogre::MaterialManager::getSingleton();
-
-        Ogre::MaterialPtr material =
-            materialManager.getByName( "SkyPostprocess", "Popular" );
-        if( material )
-        {
-            LOG << "Could set material" << LOGEND;
-            mProjectionRectangle2D->setMaterial(material);
-        }
-        else
-        {
-            LOG << "Error" << LOGEND;
-            Ogre::ResourceManager::ResourceMapIterator it = materialManager.getResourceIterator();
-            Ogre::ResourcePtr res;
-            for(auto i = it.begin();
-                i != it.end(); i++)
-            {
-                res = i->second;
-                LOG << res->getName() << LOGEND;
-            }
-        }
-    }
-
+    /*! \brief create the virtual projection plane
+     */
     void GameState::createVRProjectionPlanes()
     {
         bool alldata =
@@ -282,6 +247,10 @@ namespace esvr2
         }
     }
 
+    /*! \brief creates a virtual axis object
+     * \param sceneManager ptr to the corresponding sceneManager Object
+     * \return ptr to the created object
+     */
     Ogre::ManualObject *GameState::createAxisIntern( Ogre::SceneManager *sceneManager )
     {
         Ogre::ManualObject *axis =
@@ -334,6 +303,10 @@ namespace esvr2
         return axis;
     }
 
+    /*! \brief create virtual axis at the origin in the laparoscopic images
+     * needs PoseState Component
+     * kind of \deprecated
+     */
     void GameState::createLaparoscopeAxisCamera(void)
     {
         mAxis = createAxisIntern(mGraphicsSystem->mLaparoscopeSceneManager);
@@ -350,6 +323,9 @@ namespace esvr2
         camerasNode->attachObject(mAxisCameras);
     }
 
+    /*! \brief create virtual axis at the Cameraposition in the VR Scene
+     * \deprecated not used
+     */
     void GameState::createVRAxisCamera(void)
     {
         mAxisVROrigin = createAxisIntern(mGraphicsSystem->mVRSceneManager);
@@ -366,6 +342,9 @@ namespace esvr2
         mVRCamerasNode->attachObject(mAxisVRCameras);
     }
 
+    /*! \brief create some points for tooltips in the image
+     *! \deprecated
+     */
     void GameState::createTooltips( void )
     {
         mLaparoscopeSceneNodeTooltips = mGraphicsSystem->mLaparoscopeSceneManager->getRootSceneNode(
@@ -383,7 +362,8 @@ namespace esvr2
         mLaparoscopeSceneNodeTooltips->attachObject( mTooltips );
     }
 
-
+    /*! \brief create a cube for debugging in the vr scene
+     */
     void GameState::createMesh()
     {
         Ogre::Item *mCube = mGraphicsSystem->mVRSceneManager
@@ -440,6 +420,7 @@ namespace esvr2
         pcEnt->setVisibilityFlags( 0x1 << 2 );
     }
 #endif
+    // \brief create 2D-overlay objects in the Laparoscopic Scene for Menu
     void GameState::createVROverlays(void)
     {
         addViewDirectionIndicator();
@@ -687,6 +668,7 @@ namespace esvr2
                 boost::bind(&GameState::setupFinish, this));
     }
 
+    //! \brief add small red dot in the menu
     void GameState::addViewDirectionIndicator()
     {
         Ogre::v1::OverlayManager &overlayManager =
@@ -703,9 +685,16 @@ namespace esvr2
         overlayViewDirectionIndicator->add2D(mViewingDirectionIndicator);
         overlayViewDirectionIndicator->setRenderQueueGroup(254);
         overlayViewDirectionIndicator->show();
-
     }
 
+    //! \brief creates a 2D-overlay object
+    /*! Creates an a 2D-overlay object in the laparoscopic scene for the menu
+     *  hereby the look is defined by InteractiveElementsDef.yaml
+     *  \param defName name of an object, which was configured in InteractiveElementsDef.yaml
+     *  \param menus list of menu names, when the overlay should be visible
+     *  \param text the text in the overlay
+     *  \return ptr to the interactiveElement
+     */
     InteractiveElement2DPtr GameState::createInteractiveElement2D(
             Ogre::String defName,
             std::vector<Ogre::IdString> menus,
