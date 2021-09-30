@@ -7,6 +7,9 @@ namespace esvr2
 {
     //! \brief Abstract Component, which can run independently in a thread
     //! if one component is stopped every component is stopped
+    /*!
+     * \addtogroup Components
+     */
     class Component
     {
     public:

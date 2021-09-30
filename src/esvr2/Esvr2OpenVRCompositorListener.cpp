@@ -440,12 +440,12 @@ namespace esvr2
     }
 
     //-------------------------------------------------------------------------
-    void OpenVRCompositorListener::setWaitingMode( VrWaitingMode::VrWaitingMode waitingMode )
+    void OpenVRCompositorListener::setWaitingMode( VrWaitingMode waitingMode )
     {
         mWaitingMode = waitingMode;
     }
     //-------------------------------------------------------------------------
-    void OpenVRCompositorListener::setGlitchFree( VrWaitingMode::VrWaitingMode firstGlitchFreeMode )
+    void OpenVRCompositorListener::setGlitchFree( VrWaitingMode firstGlitchFreeMode )
     {
         mFirstGlitchFreeMode = firstGlitchFreeMode;
     }

@@ -10,6 +10,14 @@
 #include "OgreVector3.h"
 namespace esvr2
 {
+    //! \brief Laparoscope Controller inducing a constant movement in a certain direction when activated
+    /*! \remarks
+     * when activating the controller and moving the head
+     * to a certain direction (up, down, left, right) the viewing angles supposed
+     * to move in this direction.
+     *
+     * \addtogroup Controllers
+     */
     class Opt0Controller : public Controller
     {
     private:

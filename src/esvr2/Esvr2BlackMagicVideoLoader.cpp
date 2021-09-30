@@ -26,9 +26,9 @@ namespace esvr2
 
     BlackMagicVideoLoader::~BlackMagicVideoLoader() {}
 
+    //! TODO: more configuration for BlackMagicCapture could be available
     bool BlackMagicVideoLoader::initialize(void)
     {
-        //TODO: more configuration for BlackMagicCapture could be available
         if (!mCapture.OpenCamera()) {
             LOG << "Video could not be opened" << LOGEND;
             return false;
@@ -59,6 +59,9 @@ namespace esvr2
         mCapture.CloseCamera();
     }
 
+    /*! takes the image from Capture Object and converts it to openCV
+     * the rest are the functions from the superclass VideoLoader doing
+     */
     void BlackMagicVideoLoader::update( uint64 time )
     {
         cv::Mat image(mCaptureFrameHeight, mCaptureFrameWidth, CV_8UC4);

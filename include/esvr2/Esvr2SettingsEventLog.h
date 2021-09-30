@@ -13,6 +13,7 @@
 
 namespace esvr2
 {
+    //! \brief Structure to be written out for logging
     struct SettingsEventLog
     {
         Ogre::uint64 time = 0;
@@ -26,6 +27,15 @@ namespace esvr2
     };
     typedef std::vector<SettingsEventLog> SettingsEventLogList;
 
+    //! Writes out a line in the configured SettingsEventLog file
+    /*!
+     *
+     * @param folderPath Path to the folder log is written to
+     * @param prefix used to differentiat between users
+     * @param logList A list of SettingsEventLog s
+     * @param msTime A Time stamp
+     * @return success
+     */
     bool writeSettingsEventLog(
             std::string folderPath,
             std::string prefix,

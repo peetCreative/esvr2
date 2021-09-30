@@ -13,6 +13,7 @@ using namespace pivot_control_messages;
 
 namespace esvr2
 {
+    //! \brief Superclass wrapping the PivotController together as a Component
     class LaparoscopeController :
             virtual public Component,
             virtual public PivotController {

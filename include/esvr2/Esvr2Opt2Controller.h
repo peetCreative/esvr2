@@ -13,6 +13,17 @@ using namespace pivot_control_messages;
 
 namespace esvr2
 {
+    //! \brief Laparoscope Controller, which directly follows the head-motions when activated
+    /*! \remarks
+     * When holding the left footpedal (activating non-visible interactive element),
+     * the controller tracks the rotational angles/ and forward backward distance
+     * of the head movements and translates them into pitch/yaw/trans_z movements
+     *
+     * roll movements are supposed to be compensated
+     * as the surgeon assumes the image to be horizontially aligned
+     *
+     * \addtogroup Controllers
+     */
     class Opt2Controller : public Controller
     {
     private:

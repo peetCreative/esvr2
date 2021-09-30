@@ -11,6 +11,7 @@
 namespace esvr2 {
     class GraphicsSystem;
 
+    //! \brief VideoLoader only using OpenCV functions
     class OpenCvVideoLoader : public VideoLoader
     {
         std::string mPath;

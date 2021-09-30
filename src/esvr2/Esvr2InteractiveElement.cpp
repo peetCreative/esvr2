@@ -44,9 +44,14 @@ namespace esvr2
     {
         mHoldCallback = holdCallback;
     }
+
     void InteractiveElement::setToggleReleaseFunction(
             const boost::function<void(void)> toggleReleaseCallback)
     {
         mToggleReleaseCallback = toggleReleaseCallback;
+    }
+
+    bool InteractiveElement::isActivatable() {
+        return mTogglePressCallback || mHoldCallback || mTogglePressCallback;
     }
 }

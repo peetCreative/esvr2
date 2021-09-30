@@ -272,11 +272,17 @@ namespace esvr2 {
     } VideoInputConfig;
     typedef std::shared_ptr<VideoInputConfig> VideoInputConfigPtr;
 
+    //! \brief convert string to ControllerType
     ControllerType getControllerType(std::string input_str);
+    //! \brief convert string to VideoInputType
     VideoInputType getVideoInputType(std::string input_str);
+    //! \brief convert string to InputType
     InputType getInputType(std::string input_str);
+    //! \brief convert string to VideoRenderTarget
     VideoRenderTarget getRenderVideoTarget(std::string input_str);
+    //! \brief convert string to WorkspaceType
     WorkspaceType getWorkspaceType(std::string workspace_str);
+    //! \brief convert string to Distortion
     Distortion getDistortionType( std::string distortion_str );
 
     class VideoLoader;
@@ -292,24 +298,42 @@ namespace esvr2 {
         friend GameState;
         friend OpenVRCompositorListener;
     public:
+        //! \brief constructor of the Esvr2 Object
+        //! \param config fully configured Esvr2Config
         Esvr2( Esvr2ConfigPtr config);
+        //! \brief Deconstructor of the Esvr2 Object
+        ~Esvr2();
+        //! \brief Sets the VideoLoader object if needed
         bool setVideoLoader(
                 std::shared_ptr<VideoLoader> videoLoader);
+        //! \brief Sets the LaparoscopeController object
+        //! to make Robot or simulated camera move
         bool setLaparoscopeController(
                 std::shared_ptr<LaparoscopeController> laparoscopeController);
+        //! \brief Sets the PoseState object
+        //! to make the application know where the laparoscope is
         bool setPoseState(
                 std::shared_ptr<PoseState> poseState);
+        //! \brief Function to get the tracked head position
+        /*! \param rotation Quaternion of the VR-Headset Orientation
+         *  \param translation 3D-Vector of the VR-Headset Position
+         *  \return success
+         */
         bool getHeadPose(
                 std::array<Real, 3> &translation, std::array<Real, 4> &rotation);
+        //! \brief Function to register more function, which are called in the update loop
+        //! \return success
         bool registerUpdateCallback(const boost::function<void(uint64)>);
-        ~Esvr2();
-        // starts the mainloop
+        //! \brief function to start the VR-Application (main loop)
+        //! \return c-style success of application
         int run();
         unsigned long updateThread(
                 boost::function<void(uint64)> updateFct);
+        //! \brief makes the Application stop
         void quit();
 
     private:
+        //! \brief Checks if any component is to be stopped
         bool getQuit();
     private:
 

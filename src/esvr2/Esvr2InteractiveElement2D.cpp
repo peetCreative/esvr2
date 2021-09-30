@@ -189,8 +189,4 @@ namespace esvr2
     {
         return std::find(mVisibleInMenus.begin(), mVisibleInMenus.end(), menu) != mVisibleInMenus.end();
     }
-
-    bool InteractiveElement2D::isActivatable() {
-        return mTogglePressCallback || mHoldCallback || mTogglePressCallback;
-    }
 }

@@ -12,9 +12,16 @@
 namespace esvr2 {
     class GraphicsSystem;
 
+    //! \brief a VideoLoader for [_Blackmagic_](https://www.blackmagicdesign.com/) Capturecards.
+    /*!
+     * \inherit VideoLoader
+     * \addtogroup Components
+     */
     class BlackMagicVideoLoader : public VideoLoader
     {
+        //! \brief ptr to the VideoInputConfig
         VideoInputConfigPtr mVideoInputConfig;
+        //! Capture of the Blackmagic library
         CBlackMagicCapture mCapture;
         int mCaptureFrameWidth;
         int mCaptureFrameHeight;

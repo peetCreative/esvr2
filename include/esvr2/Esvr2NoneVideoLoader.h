@@ -4,6 +4,7 @@
 
 namespace esvr2
 {
+    //! \brief Dummy Videoloader for Debugging
     class NoneVideoLoader: virtual public VideoLoader
     {
     public:

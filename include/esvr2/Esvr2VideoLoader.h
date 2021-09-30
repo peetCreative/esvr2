@@ -11,6 +11,15 @@
 namespace esvr2 {
     class GraphicsSystem;
 
+    //! \brief Exchangable superclass to provide Video-Images
+    /*! Overwrite the functions from Component and in them the images
+     * using the functions:
+     * - setImageDataFromSplit
+     * - setImageDataFromSplitSliced
+     * - setImageDataFromRaw
+     * - setImageData
+     * \addtogroup Components
+     */
     class VideoLoader : virtual public Component
     {
     protected:
@@ -39,13 +48,13 @@ namespace esvr2 {
         bool configValid();
         bool buffersValid();
 
-        //split image vertical or horizontal
+        //! \brief split image vertical or horizontal
         void setImageDataFromSplit( const cv::Mat *img, Orientation orientation );
-        //split and then apply on demand undistortion and rectification
+        //! \brief split and then apply on demand undistortion and rectification
         void setImageDataFromSplitSliced(const cv::Mat *img );
-        //apply on demand undistortion and rectification
+        //! \brief apply on demand undistortion and rectification
         void setImageDataFromRaw( cv::Mat *left, cv::Mat *right );
-        //simply ImageData
+        //! \brief simply ImageData
         void setImageData( cv::Mat *left, cv::Mat *right );
     public:
         VideoLoader( Distortion distortion, bool stereo );

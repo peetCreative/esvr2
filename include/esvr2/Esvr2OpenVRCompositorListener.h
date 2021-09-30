@@ -25,20 +25,18 @@
 
 namespace esvr2
 {
-    namespace VrWaitingMode
+    //! \brief mode defining, when to update the tracking position in the renderpipeline
+    //! for more information about this see OpenVR example in Ogre 2.2
+    enum VrWaitingMode
     {
-        //for more information about this see OpenVR example in Ogre 2.2
-        enum VrWaitingMode
-        {
-            AfterSwap,
-            BeforeSceneGraph,
-            AfterSceneGraph,
-            BeforeShadowmaps,
-            BeforeFrustumCulling,
-            AfterFrustumCulling,
-            NumVrWaitingModes
-        };
-    }
+        AfterSwap,
+        BeforeSceneGraph,
+        AfterSceneGraph,
+        BeforeShadowmaps,
+        BeforeFrustumCulling,
+        AfterFrustumCulling,
+        NumVrWaitingModes
+    };
 
     Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix34_t matPose );
     Ogre::Matrix4 convertSteamVRMatrixToMatrix( vr::HmdMatrix44_t matPose );
@@ -64,8 +62,8 @@ namespace esvr2
 
         int mValidPoseCount;
 
-        VrWaitingMode::VrWaitingMode mWaitingMode;
-        VrWaitingMode::VrWaitingMode mFirstGlitchFreeMode;
+        VrWaitingMode mWaitingMode;
+        VrWaitingMode mFirstGlitchFreeMode;
         bool                    mMustSyncAtEndOfFrame;
 
         bool mTrackPose;
@@ -98,12 +96,13 @@ namespace esvr2
         virtual void passSceneAfterFrustumCulling( Ogre::CompositorPassScene *pass );
 
         /// See VrWaitingMode::VrWaitingMode
-        void setWaitingMode( VrWaitingMode::VrWaitingMode waitingMode );
-        VrWaitingMode::VrWaitingMode getWaitingMode(void)   { return mWaitingMode; }
+        void setWaitingMode( VrWaitingMode waitingMode );
+        VrWaitingMode getWaitingMode(void)   { return mWaitingMode; }
 
         void triggerWriteTexture(){mWriteTexture = true;};
 
-        /** When operating in VrWaitingMode::AfterSceneGraph or later, there's a chance
+        /** Remarks from Ogre VR-Example:
+         * When operating in VrWaitingMode::AfterSceneGraph or later, there's a chance
             graphical artifacts appear if the camera transform is immediately changed after
             calling WaitGetPoses instead of waiting for the next frame.
 
@@ -123,9 +122,10 @@ namespace esvr2
                 setGlitchFree( VrWaitingMode::NumVrWaitingModes );
             Means that any waiting mode is allowed to have glitches
         */
-        void setGlitchFree( VrWaitingMode::VrWaitingMode firstGlitchFreeMode );
+        void setGlitchFree( VrWaitingMode firstGlitchFreeMode );
 
-        /** Returns true if the current waiting mode can update the camera immediately,
+        /** Remarks from Ogre VR-Example:
+         * Returns true if the current waiting mode can update the camera immediately,
             false if it must wait until the end of the frame.
         @remarks
             VrWaitingMode::BeforeSceneGraph and earlier always returns true.

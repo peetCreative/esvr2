@@ -20,8 +20,6 @@ namespace esvr2
         mToggleReleaseCallback = boost::bind(&Controller::stopMotion, this);
     }
 
-    //! \brief this function is called by default to stop motion
-    //! called after finally releasing the left button (n) on the controller
     void Controller::stopMotion()
     {
         //stop the controller from moving

@@ -34,6 +34,10 @@ namespace esvr2
 
     class VideoLoader;
 
+    //! Class managing the Ogre Systems as well as the Gamestate
+    /*!
+     * \addtogroup Components
+     */
     class GraphicsSystem :
             public virtual Component
     {
@@ -113,31 +117,55 @@ namespace esvr2
         Ogre::uint64 mLastStartTime {0};
 
         //intern functions
+        //! \brief parse the Ogre resource config file
+        //! mostly copied from Ogre-Examples
         void setupResources(void);
+        //! \brief load Ogre resources
+        //! mostly copied from Ogre-Examples
         void loadResources(void);
+        //! \brief register the Hlms Systems
+        //! mostly copied from Ogre-Examples
         void registerHlms(void);
+        //! mostly copied from Ogre-Examples
         void loadTextureCache(void);
+        //! mostly copied from Ogre-Examples
         void loadHlmsDiskCache(void);
-        void chooseSceneManager(void);
+        //! \brief creates the SceneManagere Instances for the VR and the Laparoscopic Environments
+        void createSceneManager(void);
+        //! \brief create the virtual cameras for the overlays in the images
         void createLaparoscopeCameras(void);
+        //! \brief create the virtual cameras for the VR-Environment
         void createVRCameras(void);
+        //! \brief setup the data structures where the laparoscopic images go to
         void setupImageData(void);
+        //! \brief when Debugging create the Camerea, CompositorManager and the SceneManager
         void setupDebugScreen();
 
+        //! \brief Upload Videodata to GPU
         void uploadVideoData2GPU(void);
+        //! \brief setup the VR-Textures (memory in the GPU to render VR-Environment to)
         void setupVRTextures(void);
+        //! \brief setup the CompositorManagers
         void setupVRCompositor(void);
+        //! \brief setup the Laparoscope-Textures (memory in the GPU to copy Laparoscope Image to)
         void setupLaparoscopeTextures();
+        //! \brief setup the CompositorManagers for the overlays onto Laparoscope images
         void setupLaparoscopeCompositors(void);
+        //! \brief setup the Menuplane-Textures (memory in the GPU to copy Laparoscope Image to)
+        void setupInfoScreenTextures();
+        //! \brief setup the CompositorManagers for the overlays in Laparoscope
+        void setupInfoScreenCompositor();
 
+        //! \brief callback for SDL-WindowEvents
         void handleWindowEvent( const SDL_Event& evt );
+        //! \brief callback for SDL-Events
+        /*! handles quit and WindowEvent and pass them on to GameState
+         */
         void pumpSDLEvents();
 #ifdef USE_FOOTPEDAL
         void pumpFootPedalEvents();
 #endif // USE_FOOTPEDAL
 
-        void setupInfoScreenTextures();
-        void setupInfoScreenCompositor();
 
     public:
         GraphicsSystem( Esvr2 *esvr2);
@@ -152,12 +180,13 @@ namespace esvr2
         GameState *getGameState();
 
         //Ogre getters and setters
-
-        //get variables
+        //! \brief quit the application and write out a settings Log
         void quit() override;
-        bool getQuit() override;
+        //! \brief checks using SDL Window if it is visible
         bool isRenderWindowVisible( void );
+        //! \brief checks if the Laparoscope-videostream is running
         bool getShowVideo( void ) { return mShowVideo; };
+        //! \brief toggle playing Laparoscope-videostream
         void toggleShowVideo( void ) { mShowVideo = !mShowVideo; };
     };
 }

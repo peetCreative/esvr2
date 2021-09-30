@@ -20,6 +20,8 @@ namespace esvr2
         INDEX_ALPHA
     } colorIndexType;
 
+    //! \brief Structure with all visual attributes of a 2D-InteractiveElement
+    //! read from the InteractiveElementsDef.yaml
     struct InteractiveElement2DDef {
         std::string id = "";
         std::string text = "";
@@ -42,12 +44,16 @@ namespace esvr2
     typedef std::shared_ptr<InteractiveElement2DDef> InteractiveElement2DDefPtr;
     typedef std::vector<InteractiveElement2DDefPtr> InteractiveElement2DDefList;
 
+    //! \brief Definition of a Color
     struct ColorDef {
         std::string name = "";
+        //! \brief RGBA
         std::vector<Real> color = {0,0,0,0};
     };
     typedef std::vector<ColorDef> ColorDefList;
 
+    //! \brief Structure with the config of the menu projection plane
+    //! and the available Defintions for InteractiveElements2D
     struct InteractiveElementConfig {
         Real width = 1.28;
         Real height = 0.72;

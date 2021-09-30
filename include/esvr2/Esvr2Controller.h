@@ -32,12 +32,16 @@ namespace esvr2
         Controller(
                 std::shared_ptr<LaparoscopeController> laparoscopeController,
                 GameState *gameState);
+        //! \brief called on every update
+        /*!
+         * \deprecated not used now
+         */
         virtual void headPoseUpdated() {};
+        //! \brief gives the menuID for the implemented Controller
         virtual std::string getControllerMenuId() = 0;
-        virtual bool isActiveOnPress()
-        {
-            return mTogglePressCallback || mHoldCallback || mToggleReleaseCallback;
-        };
+        /*\brief this function is called by default to stop motion
+         * called after finally releasing the left button (n) on the controller
+         */
         void stopMotion();
     };
     typedef std::shared_ptr<Controller> ControllerPtr;

@@ -23,6 +23,16 @@ namespace esvr2
         DIR_TRANS_OUT
     };
 
+    //! \brief Laparoscope Controller inducing a constant movement
+    //! in a certain direction when when the interactive elements are held
+    /*! \remarks
+     * The controller features six interactive elements/ buttons
+     * (left, right, up, down, in, out).
+     * By holding them a constant motion in this direction
+     * is supposed to be induced
+     * It works similar to Controller0
+     * \addtogroup Controllers
+     */
     class Opt1Controller: public Controller
     {
     private:

@@ -1,3 +1,7 @@
+/** \file Esvr2ParseYml.h
+ * File containing definitions for methods parsing diverse Yaml-Files.
+ * \author Peter Klausing
+ */
 #include "Esvr2ParseYml.h"
 
 #include "Esvr2.h"
@@ -21,6 +25,8 @@ namespace esvr2 {
     static const char P_YML_NAME[]      = "projection_matrix";
     static const char DMODEL_YML_NAME[] = "distortion_model";
 
+    //! \brief A simple definition of a matrix to be used
+    //! to write back floating point numbers
     struct SimpleMatrix
     {
       int rows;

@@ -10,7 +10,11 @@
 
 namespace esvr2 {
 
-    class LowLatencyVideoLoader : public VideoLoader
+    //! \brief a VideoLoader for Capturecards featuring Video4Linux
+    /*!
+     * \inherit VideoLoader
+     */
+class LowLatencyVideoLoader : public VideoLoader
     {
         public:
             LowLatencyVideoLoader(

@@ -1,6 +1,7 @@
-/** Class for visualisation of pointclouds.
+/** \file Esvr2PointCloud.h File containing a Class for visualisation of pointclouds.
  * The class can be intialized with a array of points organized like: [0]=P1x [1]=P1y [2]=P1z
  * [3]=P2x [4]=P2y [5]=P2z ...
+ * \deprecated This feature is atm not used or tested
  */
 #ifndef _Esvr2_POINTCLOUD_H_
 #define _Esvr2_POINTCLOUD_H_

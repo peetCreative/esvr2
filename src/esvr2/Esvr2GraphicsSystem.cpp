@@ -306,7 +306,7 @@ namespace esvr2
     }
 
     //-----------------------------------------------------------------------------------
-    void GraphicsSystem::chooseSceneManager(void)
+    void GraphicsSystem::createSceneManager(void)
     {
 #if OGRE_DEBUG_MODE
         //Debugging multithreaded code is a PITA, disable it.
@@ -526,7 +526,7 @@ namespace esvr2
 
         //we need to do this before setup resources,
         //for no reason
-        chooseSceneManager();
+        createSceneManager();
         mOverlaySystem = OGRE_NEW Ogre::v1::OverlaySystem();
         mEmptySceneManager->addRenderQueueListener( mOverlaySystem );
         mEmptySceneManager->getRenderQueue()->setSortRenderQueue(
@@ -829,8 +829,6 @@ namespace esvr2
         }
     }
 
-    //Upload Videodata to GPU
-    //Update Laparoscope Pose
     void GraphicsSystem::uploadVideoData2GPU(void)
     {
         if ( mFrameCnt >=
@@ -922,11 +920,6 @@ namespace esvr2
                 mLastStartTime);
         writeCacheYml(mEsvr2->mConfig);
         mQuit = true;
-    }
-
-    bool GraphicsSystem::getQuit()
-    {
-        return mQuit;
     }
 
     void GraphicsSystem::handleWindowEvent( const SDL_Event& evt )

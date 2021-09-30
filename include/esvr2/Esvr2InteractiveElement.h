@@ -10,6 +10,9 @@
 
 namespace esvr2
 {
+    //! \brief Superclass for non/visible elements in the Info/Menu Projectionplane
+    /*! To make Elements Interactive register functions for press, hold and releasse
+     */
     class InteractiveElement
     {
     protected:
@@ -21,15 +24,26 @@ namespace esvr2
         InteractiveElement(const boost::function<void(void)> togglePressCallback,
                            const boost::function<void(Ogre::uint64)> hold,
                            const boost::function<void(void)> toggleReleaseCallback);
+        //! \brief calls the registred press callback
         void togglePress();
-        void hold(Ogre::uint64);
+        //! \brief calls the registred hold callback
+        //! @param currentTimeMs  time since the last call
+        void hold(Ogre::uint64 currentTimeMs);
+        //! \brief calls the registred release callback
         void toggleRelease();
+        //! \brief register the press callback
         void setTogglePressFunction(
                 const boost::function<void(void)> togglePressCallback);
+        //! \brief register the hold callback
         void setHoldFunction(
                 const boost::function<void(Ogre::uint64)> holdCallback);
+        //! \brief register the release callback
         void setToggleReleaseFunction(
                 const boost::function<void(void)> togglePressCallback);
+        //! \brief check if this Controller is activable
+        /*! @return false if no callbacks are registered
+         */
+        bool isActivatable();
     };
     typedef std::shared_ptr <InteractiveElement> InteractiveElementPtr;
     typedef std::vector <InteractiveElementPtr> InteractiveElementList;
